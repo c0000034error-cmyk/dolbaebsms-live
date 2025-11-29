@@ -65,21 +65,9 @@
             50% { transform: scale(1.2); }
         }
 
-        @keyframes reactionPop {
-            0% { transform: scale(0); opacity: 0; }
-            70% { transform: scale(1.1); opacity: 1; }
-            100% { transform: scale(1); opacity: 1; }
-        }
-
-        @keyframes pulseGlow {
-            0%, 100% { 
-                transform: scale(1);
-                box-shadow: 0 0 10px var(--primary-glow);
-            }
-            50% { 
-                transform: scale(1.02);
-                box-shadow: 0 0 20px var(--primary-glow);
-            }
+        @keyframes recording {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.1); opacity: 0.7; }
         }
 
         body {
@@ -131,7 +119,6 @@
         .logo {
             font-size: 4rem;
             color: var(--primary);
-            animation: pulseGlow 2s ease-in-out infinite;
         }
 
         .auth-buttons {
@@ -219,23 +206,47 @@
             flex-shrink: 0;
         }
 
+        .search-container {
+            padding: 0.8rem;
+            background: var(--surface-light);
+            border-bottom: 1px solid var(--surface);
+            width: 100%;
+        }
+
+        .search-box {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+            width: 100%;
+        }
+
+        .search-input {
+            flex: 1;
+            padding: 0.8rem 1rem;
+            border: 1px solid var(--surface);
+            border-radius: 20px;
+            background: var(--background);
+            color: var(--text);
+            font-size: 1rem;
+            min-height: 44px;
+        }
+
         .chats-container {
             flex: 1;
             overflow-y: auto;
-            padding: 1rem;
+            padding: 0.8rem;
             -webkit-overflow-scrolling: touch;
             width: 100%;
             transform: translateZ(0);
         }
 
         .chat-item {
-            padding: 1.2rem;
+            padding: 1rem;
             margin: 0.5rem 0;
             background: var(--surface-light);
             border-radius: 16px;
             cursor: pointer;
             transition: all 0.3s ease;
-            animation: fadeInUp 0.5s ease-out;
             position: relative;
             width: 100%;
         }
@@ -282,10 +293,10 @@
             border-radius: 12px;
             padding: 2px 6px;
             border: 1px solid var(--surface-light);
+            font-size: 0.8rem;
         }
 
         .reaction {
-            font-size: 0.8rem;
             cursor: pointer;
             transition: transform 0.2s ease;
             transform: translateZ(0);
@@ -324,13 +335,9 @@
             transform: translateZ(0);
         }
 
-        .reaction-emoji:hover {
-            transform: scale(1.2);
-            background: var(--surface);
-        }
-
+        /* КОМПАКТНЫЙ ВВОД ДЛЯ ТЕЛЕФОНОВ */
         .message-input-area {
-            padding: 0.8rem;
+            padding: 0.6rem;
             background: var(--surface-light);
             border-top: 1px solid var(--surface);
             width: 100%;
@@ -339,26 +346,26 @@
 
         .input-with-buttons {
             display: flex;
-            gap: 0.6rem;
+            gap: 0.4rem;
             align-items: center;
             width: 100%;
         }
 
         .message-input {
             flex: 1;
-            padding: 0.8rem 1rem;
+            padding: 0.6rem 0.8rem;
             border: 1px solid var(--surface);
             border-radius: 20px;
             background: var(--background);
             color: var(--text);
-            font-size: 1rem;
-            min-height: 44px;
+            font-size: 0.9rem;
+            min-height: 40px;
             transform: translateZ(0);
         }
 
         .send-btn {
-            width: 44px;
-            height: 44px;
+            width: 40px;
+            height: 40px;
             background: var(--primary);
             color: white;
             border: none;
@@ -367,14 +374,14 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1rem;
+            font-size: 0.9rem;
             flex-shrink: 0;
             transform: translateZ(0);
         }
 
         .media-btn {
-            width: 44px;
-            height: 44px;
+            width: 40px;
+            height: 40px;
             background: var(--photo);
             color: white;
             border: none;
@@ -383,14 +390,35 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1rem;
+            font-size: 0.9rem;
             flex-shrink: 0;
             transform: translateZ(0);
         }
 
+        .voice-btn {
+            width: 40px;
+            height: 40px;
+            background: var(--voice);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.9rem;
+            flex-shrink: 0;
+            transform: translateZ(0);
+        }
+
+        .voice-btn.recording {
+            animation: recording 1s infinite;
+            background: var(--error);
+        }
+
         .media-preview {
             display: none;
-            margin-bottom: 0.8rem;
+            margin-bottom: 0.6rem;
             text-align: center;
         }
 
@@ -399,8 +427,8 @@
         }
 
         .preview-content {
-            max-width: 150px;
-            max-height: 150px;
+            max-width: 120px;
+            max-height: 120px;
             border-radius: 12px;
             overflow: hidden;
             margin: 0 auto;
@@ -421,13 +449,60 @@
             color: white;
             border: none;
             border-radius: 50%;
-            width: 24px;
-            height: 24px;
+            width: 20px;
+            height: 20px;
             cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 0.7rem;
+            font-size: 0.6rem;
+        }
+
+        /* Голосовые сообщения */
+        .voice-message {
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+            padding: 0.5rem;
+        }
+
+        .voice-player {
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+            flex: 1;
+        }
+
+        .voice-visualizer {
+            display: flex;
+            align-items: end;
+            gap: 2px;
+            height: 25px;
+            flex: 1;
+        }
+
+        .voice-bar {
+            width: 2px;
+            background: white;
+            border-radius: 1px;
+            transition: all 0.3s ease;
+            opacity: 0.7;
+        }
+
+        .voice-bar.active {
+            animation: reactionBounce 0.6s ease-in-out infinite;
+        }
+
+        .recording-info {
+            display: none;
+            text-align: center;
+            color: var(--error);
+            margin-top: 0.5rem;
+            font-size: 0.8rem;
+        }
+
+        .recording-info.active {
+            display: block;
         }
 
         /* Оптимизации для производительности */
@@ -437,26 +512,8 @@
             perspective: 1000px;
         }
 
-        /* Улучшенная прокрутка */
-        .messages-area {
-            scroll-behavior: smooth;
-        }
-
-        .messages-area::-webkit-scrollbar {
-            width: 3px;
-        }
-        
-        .messages-area::-webkit-scrollbar-track {
-            background: transparent;
-        }
-        
-        .messages-area::-webkit-scrollbar-thumb {
-            background: var(--primary);
-            border-radius: 2px;
-        }
-
-        /* Адаптация для маленьких экранов */
-        @media (max-width: 360px) {
+        /* Адаптация для очень маленьких экранов */
+        @media (max-width: 320px) {
             .chat-header {
                 padding: 0.6rem 0.8rem;
                 min-height: 50px;
@@ -472,17 +529,28 @@
                 max-width: 90%;
                 padding: 0.6rem 0.8rem;
                 border-radius: 16px;
-            }
-            
-            .message-input {
-                padding: 0.6rem 0.8rem;
-                min-height: 40px;
                 font-size: 0.9rem;
             }
             
-            .send-btn, .media-btn {
-                width: 40px;
-                height: 40px;
+            .message-input {
+                padding: 0.5rem 0.7rem;
+                min-height: 36px;
+                font-size: 0.85rem;
+            }
+            
+            .send-btn, .media-btn, .voice-btn {
+                width: 36px;
+                height: 36px;
+                font-size: 0.8rem;
+            }
+
+            .input-with-buttons {
+                gap: 0.3rem;
+            }
+
+            .search-input {
+                padding: 0.6rem 0.8rem;
+                min-height: 40px;
                 font-size: 0.9rem;
             }
         }
@@ -520,7 +588,7 @@
         <!-- Register Screen -->
         <div class="screen" id="register">
             <div class="chat-header">
-                <button class="btn btn-secondary" onclick="showScreen('welcome')" style="width: auto; background: none; border: none; color: var(--text);">
+                <button class="btn btn-secondary" onclick="showScreen('welcome')" style="width: auto; background: none; border: none; color: var(--text); padding: 0.5rem;">
                     ← Назад
                 </button>
                 <div style="flex: 1; text-align: center;">
@@ -545,7 +613,7 @@
         <!-- Login Screen -->
         <div class="screen" id="login">
             <div class="chat-header">
-                <button class="btn btn-secondary" onclick="showScreen('welcome')" style="width: auto; background: none; border: none; color: var(--text);">
+                <button class="btn btn-secondary" onclick="showScreen('welcome')" style="width: auto; background: none; border: none; color: var(--text); padding: 0.5rem;">
                     ← Назад
                 </button>
                 <div style="flex: 1; text-align: center;">
@@ -577,15 +645,15 @@
                     <div id="userName">Пользователь</div>
                     <div style="font-size: 0.8rem; color: var(--text-secondary);">🟢 В сети</div>
                 </div>
-                <button class="btn btn-danger" onclick="logout()" style="width: auto; background: var(--error); color: white; border: none; padding: 0.5rem 1rem;">
+                <button class="btn btn-danger" onclick="logout()" style="width: auto; background: var(--error); color: white; border: none; padding: 0.4rem 0.8rem; font-size: 0.9rem;">
                     Выйти
                 </button>
             </div>
 
             <div class="search-container">
                 <div class="search-box">
-                    <input type="text" class="search-input" id="searchInput" placeholder="Поиск пользователей...">
-                    <button class="btn btn-primary" onclick="searchUser()" style="width: auto; padding: 0.5rem 1rem;">
+                    <input type="text" class="search-input" id="searchInput" placeholder="Поиск пользователей..." onkeypress="handleSearchKeyPress(event)">
+                    <button class="btn btn-primary" onclick="searchUser()" style="width: auto; padding: 0.4rem 0.8rem; font-size: 0.9rem;">
                         Найти
                     </button>
                 </div>
@@ -602,7 +670,7 @@
         <!-- Chat Messages Screen -->
         <div class="screen" id="chatMessages">
             <div class="chat-header">
-                <button class="btn btn-secondary" onclick="showScreen('chatList')" style="width: auto; background: none; border: none; color: var(--text);">
+                <button class="btn btn-secondary" onclick="showScreen('chatList')" style="width: auto; background: none; border: none; color: var(--text); padding: 0.5rem;">
                     ← Назад
                 </button>
                 <div style="flex: 1; text-align: center;">
@@ -627,6 +695,9 @@
                 </div>
                 
                 <div class="input-with-buttons">
+                    <button class="voice-btn" id="voiceBtn" onclick="toggleVoiceRecording()">
+                        🎤
+                    </button>
                     <button class="media-btn" onclick="openMediaPicker()">
                         ⊕
                     </button>
@@ -634,6 +705,9 @@
                     <button class="send-btn" onclick="sendMessage()">
                         →
                     </button>
+                </div>
+                <div class="recording-info" id="recordingInfo">
+                    Запись... Нажмите чтобы остановить
                 </div>
             </div>
         </div>
@@ -683,6 +757,11 @@
         let currentMediaFile = null;
         let currentMediaType = null;
         let activeReactionPicker = null;
+        let isRecording = false;
+        let mediaRecorder = null;
+        let audioChunks = [];
+        let currentAudio = null;
+        let currentlyPlayingMessageId = null;
 
         // Реакции
         const REACTIONS = {
@@ -829,6 +908,58 @@
             showScreen('welcome');
         }
 
+        // Поиск пользователей
+        function searchUser() {
+            const searchTerm = getElement('searchInput').value.trim();
+            const resultsContainer = getElement('searchResults');
+            
+            resultsContainer.innerHTML = '';
+            
+            if (!searchTerm) {
+                displayChatsList(Array.from(userChats.values()));
+                return;
+            }
+
+            const usersRef = database.ref('users');
+            usersRef.orderByChild('username')
+                   .startAt(searchTerm)
+                   .endAt(searchTerm + '\uf8ff')
+                   .once('value')
+                   .then((snapshot) => {
+                resultsContainer.innerHTML = '<div style="padding: 0.8rem; color: var(--text-secondary); font-size: 0.9rem;">Результаты поиска:</div>';
+                
+                let found = false;
+                if (snapshot.exists()) {
+                    snapshot.forEach((childSnapshot) => {
+                        const user = childSnapshot.val();
+                        if (user.username !== currentUser) {
+                            found = true;
+                            const userDiv = document.createElement('div');
+                            userDiv.className = 'chat-item';
+                            userDiv.onclick = () => startChat(user.username);
+                            userDiv.innerHTML = `
+                                <div style="font-weight: bold;">${user.username}</div>
+                                <div style="font-size: 0.8rem; color: var(--text-secondary);">
+                                    ${user.isOnline ? '🟢 онлайн' : '⚫ не в сети'}
+                                </div>
+                            `;
+                            resultsContainer.appendChild(userDiv);
+                        }
+                    });
+                }
+                
+                if (!found) {
+                    resultsContainer.innerHTML += '<div class="chat-item" style="text-align: center; opacity: 0.7;">Пользователи не найдены</div>';
+                }
+            });
+        }
+
+        function handleSearchKeyPress(event) {
+            if (event.key === 'Enter') {
+                searchUser();
+            }
+        }
+
         // Слушатель для автоматического обновления списка чатов
         function startChatListListener() {
             if (!currentUser) return;
@@ -914,52 +1045,8 @@
             });
         }
 
-        function searchUser() {
-            const searchTerm = getElement('searchInput').value.trim();
-            const resultsContainer = getElement('searchResults');
-            
-            resultsContainer.innerHTML = '';
-            
-            if (!searchTerm) {
-                displayChatsList(Array.from(userChats.values()));
-                return;
-            }
-
-            const usersRef = database.ref('users');
-            usersRef.orderByChild('username')
-                   .startAt(searchTerm)
-                   .endAt(searchTerm + '\uf8ff')
-                   .once('value')
-                   .then((snapshot) => {
-                resultsContainer.innerHTML = '<div style="padding: 1rem; color: var(--text-secondary);">Результаты поиска:</div>';
-                
-                let found = false;
-                if (snapshot.exists()) {
-                    snapshot.forEach((childSnapshot) => {
-                        const user = childSnapshot.val();
-                        if (user.username !== currentUser) {
-                            found = true;
-                            const userDiv = document.createElement('div');
-                            userDiv.className = 'chat-item';
-                            userDiv.onclick = () => startChat(user.username);
-                            userDiv.innerHTML = `
-                                <div style="font-weight: bold;">${user.username}</div>
-                                <div style="font-size: 0.8rem; color: var(--text-secondary);">
-                                    ${user.isOnline ? '🟢 онлайн' : '⚫ не в сети'}
-                                </div>
-                            `;
-                            resultsContainer.appendChild(userDiv);
-                        }
-                    });
-                }
-                
-                if (!found) {
-                    resultsContainer.innerHTML += '<div class="chat-item">Пользователи не найдены</div>';
-                }
-            });
-        }
-
         function startChat(username) {
+            stopCurrentAudio();
             removeMediaPreview();
             currentChatWith = username;
             getElement('searchInput').value = '';
@@ -972,10 +1059,8 @@
 
         function loadChatMessages() {
             const messagesContainer = getElement('messages');
-            const messageInputArea = getElement('messageInputArea');
             
             messagesContainer.innerHTML = '';
-            messageInputArea.classList.remove('hidden');
             lastMessages.clear();
             currentMessages = {};
 
@@ -1009,7 +1094,112 @@
             });
         }
 
-        // Универсальный выбор медиа
+        // Голосовые сообщения
+        function toggleVoiceRecording() {
+            if (!isRecording) {
+                startVoiceRecording();
+            } else {
+                stopVoiceRecording();
+            }
+        }
+
+        function startVoiceRecording() {
+            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                alert('Ваш браузер не поддерживает запись аудио');
+                return;
+            }
+
+            navigator.mediaDevices.getUserMedia({ audio: true })
+                .then(stream => {
+                    isRecording = true;
+                    mediaRecorder = new MediaRecorder(stream);
+                    audioChunks = [];
+
+                    mediaRecorder.ondataavailable = event => {
+                        audioChunks.push(event.data);
+                    };
+
+                    mediaRecorder.onstop = () => {
+                        const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+                        sendVoiceMessage(audioBlob);
+                    };
+
+                    mediaRecorder.start();
+                    
+                    getElement('voiceBtn').classList.add('recording');
+                    getElement('recordingInfo').classList.add('active');
+                })
+                .catch(error => {
+                    console.error('Ошибка доступа к микрофону:', error);
+                    alert('Не удалось получить доступ к микрофону');
+                });
+        }
+
+        function stopVoiceRecording() {
+            if (mediaRecorder && isRecording) {
+                mediaRecorder.stop();
+                isRecording = false;
+                
+                mediaRecorder.stream.getTracks().forEach(track => track.stop());
+                
+                getElement('voiceBtn').classList.remove('recording');
+                getElement('recordingInfo').classList.remove('active');
+            }
+        }
+
+        function sendVoiceMessage(audioBlob) {
+            if (!currentUser || !currentChatWith) return;
+
+            const reader = new FileReader();
+            reader.readAsDataURL(audioBlob);
+            reader.onloadend = function() {
+                const base64Audio = reader.result;
+                
+                const chatId = generateChatId(currentUser, currentChatWith);
+                const messagesRef = database.ref('messages/' + chatId);
+
+                const messageData = {
+                    sender: currentUser,
+                    type: 'voice',
+                    audioData: base64Audio,
+                    duration: '0:05',
+                    timestamp: Date.now(),
+                    reactions: {}
+                };
+
+                messagesRef.push(messageData);
+            };
+        }
+
+        function toggleVoicePlayback(messageId, audioData) {
+            if (currentlyPlayingMessageId === messageId) {
+                stopCurrentAudio();
+            } else {
+                stopCurrentAudio();
+                
+                currentAudio = new Audio(audioData);
+                currentlyPlayingMessageId = messageId;
+                
+                currentAudio.play().catch(error => {
+                    console.error('Ошибка воспроизведения:', error);
+                    stopCurrentAudio();
+                });
+                
+                currentAudio.onended = () => {
+                    stopCurrentAudio();
+                };
+            }
+        }
+
+        function stopCurrentAudio() {
+            if (currentAudio) {
+                currentAudio.pause();
+                currentAudio = null;
+            }
+            currentlyPlayingMessageId = null;
+        }
+
+        // Медиа сообщения
         function openMediaPicker() {
             getElement('mediaInput').click();
         }
@@ -1021,7 +1211,6 @@
         function handleMediaSelection(file) {
             if (!file) return;
 
-            // Определяем тип медиа
             if (file.type.startsWith('image/')) {
                 currentMediaType = 'photo';
             } else if (file.type.startsWith('video/')) {
@@ -1127,7 +1316,6 @@
 
         // Реакции на сообщения
         function showReactionPicker(messageId, event) {
-            // Закрываем предыдущий пикер
             if (activeReactionPicker) {
                 activeReactionPicker.remove();
             }
@@ -1135,16 +1323,17 @@
             const picker = document.createElement('div');
             picker.className = 'reaction-picker active';
             
-            // Добавляем эмодзи реакций
             Object.entries(REACTIONS).forEach(([type, emoji]) => {
                 const emojiSpan = document.createElement('span');
                 emojiSpan.className = 'reaction-emoji';
                 emojiSpan.textContent = emoji;
-                emojiSpan.onclick = () => addReaction(messageId, type);
+                emojiSpan.onclick = (e) => {
+                    e.stopPropagation();
+                    addReaction(messageId, type);
+                };
                 picker.appendChild(emojiSpan);
             });
 
-            // Позиционируем пикер
             const rect = event.target.getBoundingClientRect();
             picker.style.bottom = `${window.innerHeight - rect.top + 10}px`;
             picker.style.left = `${rect.left}px`;
@@ -1152,7 +1341,6 @@
             document.body.appendChild(picker);
             activeReactionPicker = picker;
 
-            // Закрытие пикера при клике вне его
             setTimeout(() => {
                 const closePicker = (e) => {
                     if (!picker.contains(e.target)) {
@@ -1166,10 +1354,16 @@
         }
 
         function addReaction(messageId, reactionType) {
+            if (!currentUser) return;
+            
             const chatId = generateChatId(currentUser, currentChatWith);
             const reactionRef = database.ref(`messages/${chatId}/${messageId}/reactions/${currentUser}`);
             
-            reactionRef.set(reactionType);
+            reactionRef.set(reactionType).then(() => {
+                console.log('Реакция добавлена:', reactionType);
+            }).catch(error => {
+                console.error('Ошибка добавления реакции:', error);
+            });
             
             if (activeReactionPicker) {
                 activeReactionPicker.remove();
@@ -1179,6 +1373,9 @@
 
         // Отображение сообщений с реакциями
         function displayMessage(message, messageId) {
+            if (lastMessages.has(messageId)) return;
+            lastMessages.add(messageId);
+
             const messagesContainer = getElement('messages');
             const messageDiv = document.createElement('div');
             
@@ -1189,7 +1386,26 @@
 
             let messageContent = '';
             
-            if (message.type === 'photo' || message.type === 'video') {
+            if (message.type === 'voice') {
+                messageContent = `
+                    <div class="voice-message">
+                        <button onclick="toggleVoicePlayback('${messageId}', '${message.audioData}')" 
+                                style="background: none; border: none; color: white; font-size: 1.2rem;">
+                            ${currentlyPlayingMessageId === messageId ? '⏸️' : '▶️'}
+                        </button>
+                        <div class="voice-player">
+                            <div class="voice-visualizer">
+                                <div class="voice-bar ${currentlyPlayingMessageId === messageId ? 'active' : ''}"></div>
+                                <div class="voice-bar ${currentlyPlayingMessageId === messageId ? 'active' : ''}"></div>
+                                <div class="voice-bar ${currentlyPlayingMessageId === messageId ? 'active' : ''}"></div>
+                                <div class="voice-bar ${currentlyPlayingMessageId === messageId ? 'active' : ''}"></div>
+                            </div>
+                            <div style="font-size: 0.8rem; color: rgba(255,255,255,0.8);">${message.duration || '0:05'}</div>
+                        </div>
+                        ${displayReactions(message.reactions, messageId)}
+                    </div>
+                `;
+            } else if (message.type === 'photo' || message.type === 'video') {
                 const mediaElement = message.type === 'photo' ? 
                     `<img src="${message.mediaUrl}" alt="Фото" style="max-width: 200px; border-radius: 8px;">` :
                     `<video controls style="max-width: 200px; border-radius: 8px;">
@@ -1213,21 +1429,18 @@
             
             messageDiv.innerHTML = messageContent;
             
-            // Долгое нажатие для реакций
-            let pressTimer;
-            messageDiv.addEventListener('touchstart', (e) => {
-                pressTimer = setTimeout(() => {
-                    showReactionPicker(messageId, e);
-                }, 500);
-            });
-            
-            messageDiv.addEventListener('touchend', () => {
-                clearTimeout(pressTimer);
-            });
-            
+            // Добавляем обработчики для реакций
             messageDiv.addEventListener('contextmenu', (e) => {
                 e.preventDefault();
                 showReactionPicker(messageId, e);
+            });
+
+            messageDiv.addEventListener('touchstart', (e) => {
+                const pressTimer = setTimeout(() => {
+                    showReactionPicker(messageId, e);
+                }, 500);
+                
+                messageDiv.addEventListener('touchend', () => clearTimeout(pressTimer), { once: true });
             });
 
             messagesContainer.appendChild(messageDiv);
@@ -1278,12 +1491,6 @@
                 getElement('loginPassword').value = savedPassword;
                 getElement('rememberLogin').checked = true;
             }
-        });
-
-        // Оптимизация скролла
-        let scrollTimeout;
-        getElement('messages').addEventListener('scroll', function() {
-            clearTimeout(scrollTimeout);
         });
     </script>
 </body>
