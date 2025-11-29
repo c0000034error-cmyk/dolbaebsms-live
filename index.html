@@ -300,72 +300,111 @@
             const mediaRecorderRef = useRef(null);
             const messagesEndRef = useRef(null);
 
+            // Оптимизированная загрузка чатов - слушаем только чаты текущего пользователя
             useEffect(() => {
                 if (currentUser) {
                     setAreChatsLoading(true);
                     const userRef = ref(db, `users/${currentUser}`);
                     update(userRef, { isOnline: true, lastSeen: Date.now() });
                     
+                    // Создаем список чатов для прослушивания
+                    const chatListeners = [];
+                    
+                    // Слушаем изменения в разделе messages, но только для релевантных чатов
                     const messagesRef = ref(db, 'messages');
                     const unsubscribe = onValue(messagesRef, (snapshot) => {
-                        setAreChatsLoading(false);
                         const data = snapshot.val();
                         if (!data) { 
                             setChats([]); 
+                            setAreChatsLoading(false);
                             return; 
                         }
                         
                         const newChats = new Map();
+                        let loadedChats = 0;
+                        const totalRelevantChats = Object.keys(data).filter(chatId => {
+                            const usersInChat = chatId.split('_');
+                            return usersInChat.includes(currentUser);
+                        }).length;
                         
-                        // Перебираем все чаты
+                        if (totalRelevantChats === 0) {
+                            setAreChatsLoading(false);
+                            setChats([]);
+                            return;
+                        }
+                        
+                        // Обрабатываем каждый релевантный чат
                         Object.entries(data).forEach(([chatId, chatMessages]) => {
-                            // Проверяем, относится ли чат к текущему пользователю
                             const usersInChat = chatId.split('_');
                             if (usersInChat.includes(currentUser)) {
-                                // Находим собеседника
                                 const otherUser = usersInChat.find(user => user !== currentUser) || currentUser;
                                 
-                                if (chatMessages) {
-                                    // Получаем все сообщения и фильтруем удаленные
-                                    const msgList = Object.values(chatMessages)
+                                if (chatMessages && Object.keys(chatMessages).length > 0) {
+                                    // Находим последнее сообщение
+                                    const messagesList = Object.values(chatMessages)
                                         .filter(m => m && !m.deleted)
                                         .sort((a, b) => b.timestamp - a.timestamp);
                                     
-                                    if (msgList.length > 0) {
+                                    if (messagesList.length > 0) {
                                         newChats.set(otherUser, { 
                                             user: otherUser, 
-                                            lastMessage: msgList[0], 
-                                            timestamp: msgList[0].timestamp 
+                                            lastMessage: messagesList[0], 
+                                            timestamp: messagesList[0].timestamp 
                                         });
                                     }
+                                }
+                                loadedChats++;
+                                
+                                // Когда все чаты обработаны, обновляем состояние
+                                if (loadedChats === totalRelevantChats) {
+                                    setChats(Array.from(newChats.values()).sort((a, b) => b.timestamp - a.timestamp));
+                                    setAreChatsLoading(false);
                                 }
                             }
                         });
                         
-                        setChats(Array.from(newChats.values()).sort((a, b) => b.timestamp - a.timestamp));
+                        // Если нет релевантных чатов с сообщениями
+                        if (totalRelevantChats === 0) {
+                            setAreChatsLoading(false);
+                        }
                     });
                     
                     return () => { 
                         off(messagesRef); 
                         update(userRef, { isOnline: false }).catch(()=>{}); 
+                        chatListeners.forEach(unsub => unsub());
                     };
                 }
             }, [currentUser]);
 
+            // Загрузка сообщений активного чата
             useEffect(() => {
                 if (currentUser && activeChatUser) {
                     const chatId = [currentUser, activeChatUser].sort().join('_');
                     const chatRef = ref(db, `messages/${chatId}`);
-                    const unsubscribe = onValue(chatRef, (snapshot) => {
+                    
+                    // Ограничиваем количество загружаемых сообщений для производительности
+                    const chatQuery = query(chatRef, orderByChild('timestamp'));
+                    
+                    const unsubscribe = onValue(chatQuery, (snapshot) => {
                         const data = snapshot.val();
-                        setMessages(data ? Object.entries(data).map(([k, v]) => ({ ...v, id: k })).sort((a, b) => a.timestamp - b.timestamp) : []);
+                        const messagesData = data ? Object.entries(data)
+                            .map(([k, v]) => ({ ...v, id: k }))
+                            .filter(msg => !msg.deleted)
+                            .sort((a, b) => a.timestamp - b.timestamp) : [];
+                        setMessages(messagesData);
                     });
+                    
                     setShowMobileSidebar(false);
-                    return () => off(chatRef);
-                } else { setShowMobileSidebar(true); }
+                    return () => off(chatQuery);
+                } else { 
+                    setShowMobileSidebar(true); 
+                }
             }, [currentUser, activeChatUser]);
 
-            useEffect(() => { messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [messages, isRecording]);
+            useEffect(() => { 
+                messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }); 
+            }, [messages, isRecording]);
 
             const handleAuth = () => {
                 if (!usernameInput.trim() || !passwordInput.trim()) return;
@@ -375,28 +414,47 @@
                     const data = snapshot.val();
                     if (isLoginView) {
                         if (data && data.password === passwordInput) {
-                            localStorage.setItem('dolbaeb_user', cleanUsername); setCurrentUser(cleanUsername); setAuthError('');
-                        } else { setAuthError('Неверный логин или пароль'); }
+                            localStorage.setItem('dolbaeb_user', cleanUsername); 
+                            setCurrentUser(cleanUsername); 
+                            setAuthError('');
+                        } else { 
+                            setAuthError('Неверный логин или пароль'); 
+                        }
                     } else {
-                        if (data) { setAuthError('Пользователь уже существует'); }
-                        else {
-                            set(userRef, { username: cleanUsername, password: passwordInput, createdAt: Date.now(), isOnline: true, lastSeen: Date.now() })
-                            .then(() => { localStorage.setItem('dolbaeb_user', cleanUsername); setCurrentUser(cleanUsername); setAuthError(''); });
+                        if (data) { 
+                            setAuthError('Пользователь уже существует'); 
+                        } else {
+                            set(userRef, { 
+                                username: cleanUsername, 
+                                password: passwordInput, 
+                                createdAt: Date.now(), 
+                                isOnline: true, 
+                                lastSeen: Date.now() 
+                            }).then(() => { 
+                                localStorage.setItem('dolbaeb_user', cleanUsername); 
+                                setCurrentUser(cleanUsername); 
+                                setAuthError(''); 
+                            });
                         }
                     }
                 }, { onlyOnce: true });
             };
 
             const handleLogout = () => {
-                if(currentUser) update(ref(db, `users/${currentUser}`), { isOnline: false, lastSeen: Date.now() });
-                localStorage.removeItem('dolbaeb_user'); setCurrentUser(null); setActiveChatUser(null); setChats([]); setIsSettingsOpen(false);
+                if(currentUser) {
+                    update(ref(db, `users/${currentUser}`), { isOnline: false, lastSeen: Date.now() });
+                }
+                localStorage.removeItem('dolbaeb_user'); 
+                setCurrentUser(null); 
+                setActiveChatUser(null); 
+                setChats([]); 
+                setIsSettingsOpen(false);
             };
 
             const handleSendMessage = async (type = 'text', content = messageInput) => {
                 if ((!content.trim() && type === 'text') || !currentUser || !activeChatUser) return;
                 
                 const chatId = [currentUser, activeChatUser].sort().join('_');
-                console.log('Sending to chat:', chatId);
                 
                 try {
                     const messageRef = push(ref(db, `messages/${chatId}`));
@@ -422,7 +480,10 @@
 
             const handleSearch = (term) => {
                 setSearchQuery(term);
-                if (!term.trim()) { setSearchResults([]); return; }
+                if (!term.trim()) { 
+                    setSearchResults([]); 
+                    return; 
+                }
                 const q = query(ref(db, 'users'), orderByChild('username'), startAt(term), endAt(term + '\uf8ff'));
                 onValue(q, (snapshot) => {
                     const data = snapshot.val();
@@ -432,16 +493,21 @@
 
             const handleFileUpload = (e, type) => {
                 const file = e.target.files?.[0];
-                // Limit set to 8MB
-                if (!file || file.size > 8 * 1024 * 1024) { alert('Файл слишком большой. Максимум 8MB'); return; }
+                if (!file || file.size > 8 * 1024 * 1024) { 
+                    alert('Файл слишком большой. Максимум 8MB'); 
+                    return; 
+                }
                 const reader = new FileReader();
                 reader.onload = (ev) => handleSendMessage(type, ev.target.result);
-                reader.readAsDataURL(file); e.target.value = '';
+                reader.readAsDataURL(file); 
+                e.target.value = '';
             };
 
             const toggleRecording = async () => {
-                if (isRecording) { mediaRecorderRef.current?.stop(); setIsRecording(false); }
-                else {
+                if (isRecording) { 
+                    mediaRecorderRef.current?.stop(); 
+                    setIsRecording(false); 
+                } else {
                     try {
                         const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
                         const mimeType = MediaRecorder.isTypeSupported('audio/webm') ? 'audio/webm' : 
@@ -450,7 +516,9 @@
                         const mediaRecorder = mimeType ? new MediaRecorder(stream, { mimeType }) : new MediaRecorder(stream);
                         const audioChunks = [];
                         
-                        mediaRecorder.ondataavailable = (e) => { if (e.data.size > 0) audioChunks.push(e.data); };
+                        mediaRecorder.ondataavailable = (e) => { 
+                            if (e.data.size > 0) audioChunks.push(e.data); 
+                        };
                         mediaRecorder.onstop = () => {
                             const blob = new Blob(audioChunks, { type: mediaRecorder.mimeType || 'audio/webm' });
                             const reader = new FileReader();
@@ -458,8 +526,12 @@
                             reader.readAsDataURL(blob);
                             stream.getTracks().forEach(t => t.stop());
                         };
-                        mediaRecorder.start(); setIsRecording(true); mediaRecorderRef.current = mediaRecorder;
-                    } catch (err) { alert("Нет доступа к микрофону"); }
+                        mediaRecorder.start(); 
+                        setIsRecording(true); 
+                        mediaRecorderRef.current = mediaRecorder;
+                    } catch (err) { 
+                        alert("Нет доступа к микрофону"); 
+                    }
                 }
             };
 
@@ -546,7 +618,16 @@
                                 <h3 className="font-bold text-slate-200">{activeChatUser}</h3>
                             </div>
                             <div className="flex-1 overflow-y-auto p-4 custom-scrollbar">
-                                {messages.filter(m => !m.deleted).map(msg => <MessageBubble key={msg.id} message={msg} isOwn={msg.sender === currentUser} chatId={[currentUser, activeChatUser].sort().join('_')} messageId={msg.id} currentUser={currentUser} />)}
+                                {messages.filter(m => !m.deleted).map(msg => (
+                                    <MessageBubble 
+                                        key={msg.id} 
+                                        message={msg} 
+                                        isOwn={msg.sender === currentUser} 
+                                        chatId={[currentUser, activeChatUser].sort().join('_')} 
+                                        messageId={msg.id} 
+                                        currentUser={currentUser} 
+                                    />
+                                ))}
                                 <div ref={messagesEndRef} />
                             </div>
                             <div className="p-3 bg-slate-900 border-t border-slate-800 safe-area-bottom">
@@ -557,7 +638,18 @@
                                         <button onClick={toggleRecording} className={`p-2 rounded-lg ${isRecording ? 'text-red-500 animate-pulse' : 'text-slate-400 hover:text-indigo-400'}`}>{isRecording ? <div className="w-5 h-5 bg-red-500 rounded-sm" /> : <Mic size={20} />}</button>
                                     </div>
                                     <div className="flex-1 min-w-0 bg-slate-800 rounded-2xl border border-slate-700">
-                                        <textarea value={messageInput} onChange={e => setMessageInput(e.target.value)} onKeyPress={e => { if(e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSendMessage('text'); }}} placeholder={isRecording ? "Запись..." : "Сообщение..."} className="w-full bg-transparent text-white px-4 py-3 outline-none resize-none h-[50px] custom-scrollbar" />
+                                        <textarea 
+                                            value={messageInput} 
+                                            onChange={e => setMessageInput(e.target.value)} 
+                                            onKeyPress={e => { 
+                                                if(e.key === 'Enter' && !e.shiftKey) { 
+                                                    e.preventDefault(); 
+                                                    handleSendMessage('text'); 
+                                                }
+                                            }} 
+                                            placeholder={isRecording ? "Запись..." : "Сообщение..."} 
+                                            className="w-full bg-transparent text-white px-4 py-3 outline-none resize-none h-[50px] custom-scrollbar" 
+                                        />
                                     </div>
                                     <button onClick={() => handleSendMessage('text')} disabled={!messageInput.trim() && !isRecording} className="p-3 bg-indigo-600 text-white rounded-xl hover:bg-indigo-500 shadow-lg shadow-indigo-600/20 shrink-0"><Send size={20} /></button>
                                 </div>
