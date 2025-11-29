@@ -382,6 +382,8 @@
 
         let currentUser = null;
         let currentChatWith = null;
+        let messageListener = null;
+        let lastMessages = new Set();
 
         function showScreen(screenId) {
             console.log("Переход на экран:", screenId);
@@ -622,11 +624,17 @@
             
             messagesContainer.innerHTML = '';
             messageInputArea.classList.remove('hidden');
+            lastMessages.clear(); // Очищаем кэш сообщений
 
             if (!currentUser || !currentChatWith) return;
 
             const chatId = generateChatId(currentUser, currentChatWith);
             const messagesRef = database.ref('messages/' + chatId);
+
+            // Отключаем предыдущий слушатель
+            if (messageListener) {
+                messagesRef.off('child_added', messageListener);
+            }
 
             // Загружаем существующие сообщения
             messagesRef.orderByChild('timestamp').once('value').then((snapshot) => {
@@ -645,13 +653,23 @@
             });
 
             // Слушаем новые сообщения
-            messagesRef.orderByChild('timestamp').on('child_added', (snapshot) => {
+            messageListener = messagesRef.orderByChild('timestamp').on('child_added', (snapshot) => {
                 const message = snapshot.val();
                 displayMessage(message);
             });
         }
 
         function displayMessage(message) {
+            // Создаем уникальный ID для сообщения чтобы избежать дублирования
+            const messageId = `${message.sender}_${message.timestamp}_${message.text.substring(0, 20)}`;
+            
+            // Проверяем чтобы не дублировать
+            if (lastMessages.has(messageId)) {
+                return;
+            }
+            
+            lastMessages.add(messageId);
+            
             const messagesContainer = document.getElementById('messages');
             const messageDiv = document.createElement('div');
             
@@ -661,6 +679,12 @@
             
             messagesContainer.appendChild(messageDiv);
             messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            
+            // Очищаем старые сообщения из кэша
+            if (lastMessages.size > 50) {
+                const firstMessage = lastMessages.values().next().value;
+                lastMessages.delete(firstMessage);
+            }
         }
 
         function sendMessage() {
