@@ -105,6 +105,11 @@
             border: 2px solid var(--primary);
         }
 
+        .btn-danger {
+            background: var(--error);
+            color: white;
+        }
+
         /* Forms */
         .form-container {
             padding: 1rem;
@@ -180,11 +185,38 @@
             border-radius: 16px;
             background: var(--surface-light);
             word-wrap: break-word;
+            position: relative;
         }
 
         .message.sent {
             background: var(--primary);
             align-self: flex-end;
+        }
+
+        .message-actions {
+            position: absolute;
+            top: -10px;
+            right: 10px;
+            display: none;
+            gap: 5px;
+        }
+
+        .message:hover .message-actions {
+            display: flex;
+        }
+
+        .delete-btn {
+            background: var(--error);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 25px;
+            height: 25px;
+            cursor: pointer;
+            font-size: 0.7rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
         .message-input-area {
@@ -242,12 +274,20 @@
             color: var(--text);
             font-size: 1rem;
         }
+
+        .remember-me {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
     </style>
 </head>
 <body>
     <div class="app-container">
         <!-- Welcome Screen -->
-        <div class="screen welcome-screen active">
+        <div class="screen welcome-screen active" id="welcomeScreen">
             <div class="logo">
                 <i class="fas fa-comment-dots"></i>
             </div>
@@ -273,6 +313,10 @@
                 <h2 style="text-align: center;">Создать аккаунт</h2>
                 <input type="text" class="safe-input" id="regUsername" placeholder="Логин" required>
                 <input type="password" class="safe-input" id="regPassword" placeholder="Пароль" required>
+                <div class="remember-me">
+                    <input type="checkbox" id="rememberReg">
+                    <label for="rememberReg">Запомнить меня</label>
+                </div>
                 <button class="btn btn-primary" onclick="register()">
                     Создать аккаунт
                 </button>
@@ -290,6 +334,10 @@
                 <h2 style="text-align: center;">Вход в аккаунт</h2>
                 <input type="text" class="safe-input" id="loginUsername" placeholder="Логин" required>
                 <input type="password" class="safe-input" id="loginPassword" placeholder="Пароль" required>
+                <div class="remember-me">
+                    <input type="checkbox" id="rememberLogin" checked>
+                    <label for="rememberLogin">Запомнить меня</label>
+                </div>
                 <button class="btn btn-primary" onclick="login()">
                     Войти
                 </button>
@@ -304,7 +352,7 @@
                     <div id="userName">Пользователь</div>
                     <div style="font-size: 0.8rem; color: var(--text-secondary);">🟢 В сети</div>
                 </div>
-                <button class="btn btn-secondary" onclick="logout()" style="width: auto;">
+                <button class="btn btn-danger" onclick="logout()" style="width: auto;">
                     Выйти
                 </button>
             </div>
@@ -384,6 +432,26 @@
         let currentChatWith = null;
         let messageListener = null;
         let lastMessages = new Set();
+        let currentMessages = {}; // Храним ID сообщений для удаления
+
+        // ПРОВЕРЯЕМ СОХРАНЕННОГО ПОЛЬЗОВАТЕЛЯ ПРИ ЗАГРУЗКЕ
+        window.addEventListener('load', function() {
+            const savedUser = localStorage.getItem('savedUser');
+            const savedPassword = localStorage.getItem('savedPassword');
+            
+            if (savedUser && savedPassword) {
+                document.getElementById('loginUsername').value = savedUser;
+                document.getElementById('loginPassword').value = savedPassword;
+                document.getElementById('rememberLogin').checked = true;
+                
+                // Автоматически входим если есть сохраненные данные
+                setTimeout(() => {
+                    if (confirm('Найдены сохраненные данные. Войти автоматически?')) {
+                        loginUser(savedUser);
+                    }
+                }, 1000);
+            }
+        });
 
         function showScreen(screenId) {
             console.log("Переход на экран:", screenId);
@@ -400,6 +468,7 @@
         function register() {
             const username = document.getElementById('regUsername').value.trim();
             const password = document.getElementById('regPassword').value;
+            const remember = document.getElementById('rememberReg').checked;
 
             if (!username || !password) {
                 alert('Заполните все поля');
@@ -418,7 +487,7 @@
             usersRef.once('value').then((snapshot) => {
                 if (snapshot.exists()) {
                     alert('Этот логин уже занят');
-                return;
+                    return;
                 } else {
                     usersRef.set({
                         username: username,
@@ -427,6 +496,13 @@
                         isOnline: true
                     }).then(() => {
                         console.log("Пользователь создан");
+                        
+                        // Сохраняем данные если выбрано "Запомнить меня"
+                        if (remember) {
+                            localStorage.setItem('savedUser', username);
+                            localStorage.setItem('savedPassword', password);
+                        }
+                        
                         loginUser(username);
                     }).catch((error) => {
                         console.error("Ошибка создания:", error);
@@ -442,6 +518,7 @@
         function login() {
             const username = document.getElementById('loginUsername').value.trim();
             const password = document.getElementById('loginPassword').value;
+            const remember = document.getElementById('rememberLogin').checked;
 
             if (!username || !password) {
                 alert('Заполните все поля');
@@ -461,6 +538,16 @@
                 const userData = snapshot.val();
                 
                 if (userData.password === password) {
+                    // Сохраняем данные если выбрано "Запомнить меня"
+                    if (remember) {
+                        localStorage.setItem('savedUser', username);
+                        localStorage.setItem('savedPassword', password);
+                    } else {
+                        // Удаляем сохраненные данные если не запоминать
+                        localStorage.removeItem('savedUser');
+                        localStorage.removeItem('savedPassword');
+                    }
+                    
                     loginUser(username);
                 } else {
                     alert('Неверный пароль');
@@ -485,6 +572,54 @@
             document.getElementById('userName').textContent = username;
             document.getElementById('userAvatar').textContent = username.charAt(0).toUpperCase();
             loadChatsList();
+        }
+
+        function logout() {
+            console.log("Выход из системы");
+            
+            if (currentUser) {
+                const userRef = database.ref('users/' + currentUser);
+                userRef.update({
+                    isOnline: false,
+                    lastSeen: Date.now()
+                }).then(() => {
+                    console.log("Статус обновлен, выполняем выход");
+                    performLogout();
+                }).catch((error) => {
+                    console.error("Ошибка обновления статуса:", error);
+                    performLogout();
+                });
+            } else {
+                performLogout();
+            }
+        }
+
+        function performLogout() {
+            // Очищаем все переменные
+            currentUser = null;
+            currentChatWith = null;
+            
+            // Отключаем слушатели сообщений
+            if (messageListener) {
+                const chatId = generateChatId(currentUser, currentChatWith);
+                const messagesRef = database.ref('messages/' + chatId);
+                messagesRef.off('child_added', messageListener);
+                messageListener = null;
+            }
+            
+            lastMessages.clear();
+            currentMessages = {};
+            
+            // Показываем экран приветствия
+            showScreen('welcome');
+            
+            // Очищаем поля ввода
+            document.getElementById('loginUsername').value = '';
+            document.getElementById('loginPassword').value = '';
+            document.getElementById('regUsername').value = '';
+            document.getElementById('regPassword').value = '';
+            
+            console.log("Выход выполнен успешно");
         }
 
         function loadChatsList() {
@@ -624,51 +759,44 @@
             
             messagesContainer.innerHTML = '';
             messageInputArea.classList.remove('hidden');
-            lastMessages.clear(); // Очищаем кэш сообщений
+            lastMessages.clear();
+            currentMessages = {};
 
             if (!currentUser || !currentChatWith) return;
 
             const chatId = generateChatId(currentUser, currentChatWith);
             const messagesRef = database.ref('messages/' + chatId);
 
-            // Отключаем предыдущий слушатель
             if (messageListener) {
                 messagesRef.off('child_added', messageListener);
             }
 
-            // Загружаем существующие сообщения
             messagesRef.orderByChild('timestamp').once('value').then((snapshot) => {
                 if (snapshot.exists()) {
-                    const messages = [];
                     snapshot.forEach((childSnapshot) => {
-                        messages.push(childSnapshot.val());
-                    });
-                    
-                    messages.sort((a, b) => a.timestamp - b.timestamp);
-                    
-                    messages.forEach(message => {
-                        displayMessage(message);
+                        const message = childSnapshot.val();
+                        const messageId = childSnapshot.key;
+                        displayMessage(message, messageId);
                     });
                 }
             });
 
-            // Слушаем новые сообщения
             messageListener = messagesRef.orderByChild('timestamp').on('child_added', (snapshot) => {
                 const message = snapshot.val();
-                displayMessage(message);
+                const messageId = snapshot.key;
+                displayMessage(message, messageId);
             });
         }
 
-        function displayMessage(message) {
-            // Создаем уникальный ID для сообщения чтобы избежать дублирования
-            const messageId = `${message.sender}_${message.timestamp}_${message.text.substring(0, 20)}`;
+        function displayMessage(message, messageId) {
+            const messageUniqueId = `${message.sender}_${message.timestamp}_${message.text.substring(0, 20)}`;
             
-            // Проверяем чтобы не дублировать
-            if (lastMessages.has(messageId)) {
+            if (lastMessages.has(messageUniqueId)) {
                 return;
             }
             
-            lastMessages.add(messageId);
+            lastMessages.add(messageUniqueId);
+            currentMessages[messageId] = message;
             
             const messagesContainer = document.getElementById('messages');
             const messageDiv = document.createElement('div');
@@ -677,13 +805,40 @@
             messageDiv.className = `message ${isOwnMessage ? 'sent' : ''}`;
             messageDiv.textContent = message.text;
             
+            // Добавляем кнопку удаления для своих сообщений
+            if (isOwnMessage) {
+                const actionsDiv = document.createElement('div');
+                actionsDiv.className = 'message-actions';
+                actionsDiv.innerHTML = `
+                    <button class="delete-btn" onclick="deleteMessage('${messageId}')" title="Удалить">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                `;
+                messageDiv.appendChild(actionsDiv);
+            }
+            
             messagesContainer.appendChild(messageDiv);
             messagesContainer.scrollTop = messagesContainer.scrollHeight;
             
-            // Очищаем старые сообщения из кэша
             if (lastMessages.size > 50) {
                 const firstMessage = lastMessages.values().next().value;
                 lastMessages.delete(firstMessage);
+            }
+        }
+
+        function deleteMessage(messageId) {
+            if (!currentUser || !currentChatWith || !messageId) return;
+            
+            if (confirm('Удалить это сообщение?')) {
+                const chatId = generateChatId(currentUser, currentChatWith);
+                const messageRef = database.ref('messages/' + chatId + '/' + messageId);
+                
+                messageRef.remove().then(() => {
+                    console.log("Сообщение удалено");
+                }).catch((error) => {
+                    console.error("Ошибка удаления:", error);
+                    alert('Ошибка удаления сообщения');
+                });
             }
         }
 
@@ -708,20 +863,6 @@
 
         function generateChatId(user1, user2) {
             return [user1, user2].sort().join('_');
-        }
-
-        function logout() {
-            if (currentUser) {
-                const userRef = database.ref('users/' + currentUser);
-                userRef.update({
-                    isOnline: false,
-                    lastSeen: Date.now()
-                });
-            }
-            
-            currentUser = null;
-            currentChatWith = null;
-            showScreen('welcome');
         }
 
         // Обработчики клавиш
