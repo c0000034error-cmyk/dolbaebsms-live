@@ -79,6 +79,17 @@
             }
         }
 
+        @keyframes messageDelete {
+            from { 
+                opacity: 1; 
+                transform: scale(1); 
+            }
+            to { 
+                opacity: 0; 
+                transform: scale(0.8) rotate(-10deg); 
+            }
+        }
+
         @keyframes recording {
             0%, 100% { transform: scale(1); opacity: 1; }
             50% { transform: scale(1.2); opacity: 0.7; }
@@ -348,9 +359,21 @@
             animation: messageSlide 0.3s ease-out;
         }
 
+        .message.deleted {
+            background: var(--surface);
+            color: var(--text-secondary);
+            font-style: italic;
+            animation: messageDelete 0.3s ease-out;
+        }
+
         .message.sent {
             background: var(--primary);
             align-self: flex-end;
+        }
+
+        .message.sent.deleted {
+            background: var(--surface);
+            color: var(--text-secondary);
         }
 
         .message.voice-message {
@@ -860,6 +883,7 @@
                 const chatId = generateChatId(currentUser, currentChatWith);
                 const messagesRef = database.ref('messages/' + chatId);
                 messagesRef.off('child_added', messageListener);
+                messagesRef.off('child_changed', messageListener);
             }
             
             if (chatListListener) {
@@ -911,7 +935,7 @@
                 }
             });
 
-            // Также слушаем изменения в существующих сообщениях
+            // Также слушаем изменения в существующих сообщениях (включая удаления)
             messagesRef.on('child_changed', (snapshot) => {
                 const chatId = snapshot.key;
                 const users = chatId.split('_');
@@ -940,7 +964,8 @@
         function isMessageUnread(message) {
             return message && 
                    message.sender !== currentUser && 
-                   (!message.read || !message.read[currentUser]);
+                   (!message.read || !message.read[currentUser]) &&
+                   !message.deleted;
         }
 
         function updateUnreadCount(user) {
@@ -968,7 +993,7 @@
                     const updates = {};
                     snapshot.forEach((childSnapshot) => {
                         const message = childSnapshot.val();
-                        if (message.sender === chatWithUser && (!message.read || !message.read[currentUser])) {
+                        if (message.sender === chatWithUser && (!message.read || !message.read[currentUser]) && !message.deleted) {
                             updates[childSnapshot.key + '/read/' + currentUser] = true;
                         }
                     });
@@ -999,7 +1024,7 @@
             let lastTimestamp = 0;
             
             Object.values(messages).forEach(message => {
-                if (message.timestamp > lastTimestamp) {
+                if (message.timestamp > lastTimestamp && !message.deleted) {
                     lastTimestamp = message.timestamp;
                     lastMessage = message;
                 }
@@ -1027,10 +1052,16 @@
                 chatItem.className = `chat-item ${isNewChat ? 'new-chat' : ''} ${hasUnread ? 'has-unread' : ''}`;
                 chatItem.onclick = () => startChat(chat.user);
                 
-                const lastMsg = chat.lastMessage ? 
-                    (chat.lastMessage.sender === currentUser ? 'Вы: ' : '') + 
-                    (chat.lastMessage.type === 'voice' ? '🎤 Голосовое сообщение' : chat.lastMessage.text) :
-                    'Нет сообщений';
+                let lastMsg = 'Нет сообщений';
+                if (chat.lastMessage) {
+                    if (chat.lastMessage.deleted) {
+                        lastMsg = '🗑️ Сообщение удалено';
+                    } else if (chat.lastMessage.sender === currentUser) {
+                        lastMsg = 'Вы: ' + (chat.lastMessage.type === 'voice' ? '🎤 Голосовое сообщение' : chat.lastMessage.text);
+                    } else {
+                        lastMsg = chat.lastMessage.type === 'voice' ? '🎤 Голосовое сообщение' : chat.lastMessage.text;
+                    }
+                }
                 
                 const unreadCount = unreadMessages.get(chat.user) || 0;
                 
@@ -1124,6 +1155,7 @@
 
             if (messageListener) {
                 messagesRef.off('child_added', messageListener);
+                messagesRef.off('child_changed', messageListener);
             }
 
             // Загружаем существующие сообщения
@@ -1132,7 +1164,7 @@
                     snapshot.forEach((childSnapshot) => {
                         const message = childSnapshot.val();
                         const messageId = childSnapshot.key;
-                        if (message.deleted !== true) {
+                        if (!message.deleted) {
                             displayMessage(message, messageId);
                         }
                     });
@@ -1146,13 +1178,45 @@
             messageListener = messagesRef.orderByChild('timestamp').on('child_added', (snapshot) => {
                 const message = snapshot.val();
                 const messageId = snapshot.key;
-                if (message.deleted !== true) {
+                if (!message.deleted) {
                     displayMessage(message, messageId);
                     
                     // Автоматически помечаем как прочитанное, если это сообщение от собеседника
                     if (message.sender === currentChatWith && (!message.read || !message.read[currentUser])) {
                         const messageRef = database.ref('messages/' + chatId + '/' + messageId + '/read/' + currentUser);
                         messageRef.set(true);
+                    }
+                }
+            });
+
+            // Слушаем изменения сообщений (для удалений)
+            messagesRef.on('child_changed', (snapshot) => {
+                const message = snapshot.val();
+                const messageId = snapshot.key;
+                
+                if (message.deleted) {
+                    // Находим и удаляем сообщение из интерфейса
+                    const messageElement = document.querySelector(`[data-message-id="${messageId}"]`);
+                    if (messageElement) {
+                        messageElement.classList.add('deleted');
+                        if (messageElement.querySelector('.message-actions')) {
+                            messageElement.querySelector('.message-actions').style.display = 'none';
+                        }
+                        
+                        // Заменяем содержимое на "Сообщение удалено"
+                        if (message.type === 'voice') {
+                            messageElement.innerHTML = `
+                                <div style="opacity: 0.7; font-style: italic;">
+                                    <i class="fas fa-trash"></i> Голосовое сообщение удалено
+                                </div>
+                            `;
+                        } else {
+                            messageElement.innerHTML = `
+                                <div style="opacity: 0.7; font-style: italic;">
+                                    <i class="fas fa-trash"></i> Сообщение удалено
+                                </div>
+                            `;
+                        }
                     }
                 }
             });
@@ -1175,6 +1239,7 @@
             const isVoiceMessage = message.type === 'voice';
             
             messageDiv.className = `message ${isOwnMessage ? 'sent' : 'received'} ${isVoiceMessage ? 'voice-message' : ''}`;
+            messageDiv.setAttribute('data-message-id', messageId);
             
             if (isVoiceMessage) {
                 const isCurrentlyPlaying = currentlyPlayingMessageId === messageId;
@@ -1281,26 +1346,47 @@
             }
         }
 
-        // УДАЛЕНИЕ СООБЩЕНИЙ
+        // УДАЛЕНИЕ СООБЩЕНИЙ - СИНХРОННОЕ ДЛЯ ВСЕХ УЧАСТНИКОВ
         function deleteMessage(messageId) {
             if (!currentUser || !currentChatWith || !messageId) return;
             
-            if (confirm('Удалить это сообщение?')) {
+            if (confirm('Удалить это сообщение? Оно будет удалено у всех участников чата.')) {
                 const chatId = generateChatId(currentUser, currentChatWith);
                 const messageRef = database.ref('messages/' + chatId + '/' + messageId);
                 
-                // Помечаем сообщение как удаленное вместо полного удаления
+                // Помечаем сообщение как удаленное - это автоматически синхронизируется со всеми участниками
                 messageRef.update({
                     deleted: true,
                     deletedAt: Date.now(),
                     deletedBy: currentUser
                 }).then(() => {
-                    console.log("Сообщение помечено как удаленное");
-                    // Автоматически обновляем чат без перезагрузки
-                    const messagesContainer = document.getElementById('messages');
-                    messagesContainer.innerHTML = '';
-                    lastMessages.clear();
-                    loadChatMessages(); // Перезагружаем сообщения
+                    console.log("Сообщение удалено для всех участников");
+                    
+                    // Локально обновляем интерфейс
+                    const messageElement = document.querySelector(`[data-message-id="${messageId}"]`);
+                    if (messageElement) {
+                        messageElement.classList.add('deleted');
+                        if (messageElement.querySelector('.message-actions')) {
+                            messageElement.querySelector('.message-actions').style.display = 'none';
+                        }
+                        
+                        const currentMessage = currentMessages[messageId];
+                        if (currentMessage) {
+                            if (currentMessage.type === 'voice') {
+                                messageElement.innerHTML = `
+                                    <div style="opacity: 0.7; font-style: italic;">
+                                        <i class="fas fa-trash"></i> Голосовое сообщение удалено
+                                    </div>
+                                `;
+                            } else {
+                                messageElement.innerHTML = `
+                                    <div style="opacity: 0.7; font-style: italic;">
+                                        <i class="fas fa-trash"></i> Сообщение удалено
+                                    </div>
+                                `;
+                            }
+                        }
+                    }
                 }).catch((error) => {
                     console.error("Ошибка удаления:", error);
                     alert('Ошибка удаления сообщения');
