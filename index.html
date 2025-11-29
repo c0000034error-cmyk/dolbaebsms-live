@@ -5,11 +5,18 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>dolbaebsms - Secure Messenger</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Безопасность -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' https://cdnjs.cloudflare.com https://www.gstatic.com; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; font-src 'self' https://cdnjs.cloudflare.com; script-src 'self' 'unsafe-inline' https://www.gstatic.com">
+    <meta name="referrer" content="no-referrer">
+    <meta name="robots" content="noindex, nofollow">
+    
     <style>
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
         }
 
         :root {
@@ -22,8 +29,6 @@
             --text-secondary: #cbd5e1;
             --success: #10b981;
             --error: #ef4444;
-            --online: #10b981;
-            --offline: #64748b;
         }
 
         body {
@@ -31,141 +36,92 @@
             background: var(--background);
             color: var(--text);
             height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
+            overflow: hidden;
+            touch-action: manipulation;
         }
 
+        /* Мобильная адаптация */
         .app-container {
-            width: 95%;
-            max-width: 400px;
-            height: 90vh;
+            width: 100%;
+            height: 100vh;
             background: var(--surface);
-            border-radius: 20px;
-            overflow: hidden;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+            position: relative;
         }
 
         .screen {
             display: none;
             flex-direction: column;
             height: 100%;
+            width: 100%;
+            position: absolute;
+            top: 0;
+            left: 0;
         }
 
         .screen.active {
             display: flex;
         }
 
+        /* Welcome Screen */
         .welcome-screen {
             justify-content: center;
             align-items: center;
             text-align: center;
-            gap: 30px;
-            padding: 20px;
+            gap: 2rem;
+            padding: 1rem;
         }
 
         .logo {
-            font-size: 48px;
+            font-size: 3rem;
             color: var(--primary);
         }
 
         .title {
-            font-size: 28px;
+            font-size: 1.5rem;
             font-weight: bold;
-        }
-
-        .subtitle {
-            color: var(--text-secondary);
-            line-height: 1.5;
         }
 
         .auth-buttons {
             display: flex;
             flex-direction: column;
-            gap: 15px;
+            gap: 1rem;
             width: 100%;
-            max-width: 280px;
+            max-width: 300px;
         }
 
-        .auth-btn {
-            padding: 15px;
-            border: 2px solid var(--primary);
+        .btn {
+            padding: 1rem;
+            border: none;
             border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-secondary {
             background: transparent;
             color: var(--primary);
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s;
+            border: 2px solid var(--primary);
         }
 
-        .auth-btn:hover {
-            background: var(--primary);
-            color: white;
-        }
-
-        .auth-form {
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-            padding: 20px;
-        }
-
-        .input-group {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
-
-        .input-group label {
-            color: var(--text-secondary);
-            font-size: 14px;
-        }
-
-        .input-group input {
-            padding: 15px;
-            border: 1px solid var(--surface-light);
-            border-radius: 12px;
-            background: var(--background);
-            color: var(--text);
-            font-size: 16px;
-        }
-
-        .submit-btn {
-            padding: 15px;
-            background: var(--primary);
-            color: white;
-            border: none;
-            border-radius: 12px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-
-        .submit-btn:hover {
-            background: var(--primary-dark);
-        }
-
-        .back-btn {
-            background: none;
-            border: none;
-            color: var(--text-secondary);
-            cursor: pointer;
-            font-size: 16px;
-            padding: 20px;
-        }
-
+        /* Chat Screen - Мобильная версия */
         .chat-screen {
             padding: 0;
         }
 
         .chat-header {
-            padding: 20px;
+            padding: 1rem;
             background: var(--surface-light);
             display: flex;
             align-items: center;
-            gap: 15px;
+            gap: 1rem;
+            border-bottom: 1px solid var(--surface);
         }
 
         .avatar {
@@ -180,67 +136,23 @@
             font-weight: bold;
         }
 
-        .main-content {
-            display: flex;
-            flex: 1;
-            overflow: hidden;
-        }
-
-        .sidebar {
-            width: 40%;
-            background: var(--surface-light);
-            border-right: 1px solid var(--surface);
-            display: flex;
-            flex-direction: column;
-            overflow-y: auto;
-        }
-
         .chat-area {
             flex: 1;
             display: flex;
             flex-direction: column;
         }
 
-        .search-section {
-            padding: 15px;
-            background: var(--surface-light);
-            border-bottom: 1px solid var(--surface);
-        }
-
-        .search-box {
-            display: flex;
-            gap: 10px;
-        }
-
-        .search-box input {
-            flex: 1;
-            padding: 12px;
-            border: 1px solid var(--surface);
-            border-radius: 20px;
-            background: var(--background);
-            color: var(--text);
-            font-size: 16px;
-        }
-
-        .search-btn {
-            padding: 12px 20px;
-            background: var(--primary);
-            color: white;
-            border: none;
-            border-radius: 20px;
-            cursor: pointer;
-        }
-
-        .chats-list {
+        /* Список чатов на весь экран */
+        .chats-container {
             flex: 1;
             overflow-y: auto;
-            padding: 10px;
+            padding: 1rem;
         }
 
         .chat-item {
-            padding: 12px;
-            margin: 5px 0;
-            background: var(--background);
+            padding: 1rem;
+            margin: 0.5rem 0;
+            background: var(--surface-light);
             border-radius: 12px;
             cursor: pointer;
             transition: all 0.3s;
@@ -250,35 +162,25 @@
             background: var(--primary);
         }
 
-        .chat-item.active {
-            background: var(--primary);
-        }
-
-        .chat-user {
-            font-weight: bold;
-            margin-bottom: 5px;
-        }
-
-        .last-message {
-            font-size: 12px;
-            color: var(--text-secondary);
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        .chat-messages {
+        /* Экран сообщений */
+        .messages-container {
             flex: 1;
-            padding: 20px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .messages-area {
+            flex: 1;
+            padding: 1rem;
             overflow-y: auto;
             display: flex;
             flex-direction: column;
-            gap: 10px;
+            gap: 0.5rem;
         }
 
         .message {
-            max-width: 80%;
-            padding: 12px 16px;
+            max-width: 85%;
+            padding: 0.8rem 1rem;
             border-radius: 16px;
             background: var(--surface-light);
             word-wrap: break-word;
@@ -289,21 +191,29 @@
             align-self: flex-end;
         }
 
-        .message-input {
-            padding: 15px 20px;
-            display: flex;
-            gap: 10px;
+        .message-input-area {
+            padding: 1rem;
             background: var(--surface-light);
+            border-top: 1px solid var(--surface);
         }
 
-        .message-input input {
+        .message-input-area.hidden {
+            display: none;
+        }
+
+        .input-with-btn {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .message-input {
             flex: 1;
-            padding: 12px;
+            padding: 0.8rem;
             border: 1px solid var(--surface);
             border-radius: 20px;
             background: var(--background);
             color: var(--text);
-            font-size: 16px;
+            font-size: 1rem;
         }
 
         .send-btn {
@@ -314,54 +224,61 @@
             border: none;
             border-radius: 50%;
             cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
         }
 
-        .search-results {
-            margin-top: 15px;
-        }
-
-        .user-result {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 12px;
-            background: var(--background);
-            margin: 5px 0;
-            border-radius: 12px;
-        }
-
-        .user-info {
-            display: flex;
-            flex-direction: column;
-        }
-
-        .user-name {
-            font-weight: bold;
-        }
-
-        .user-status {
-            font-size: 12px;
-            color: var(--text-secondary);
-        }
-
-        .start-chat-btn {
-            padding: 8px 15px;
-            background: var(--success);
-            color: white;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 14px;
-        }
-
-        .section-title {
-            padding: 15px;
-            font-size: 14px;
-            color: var(--text-secondary);
+        /* Поиск */
+        .search-container {
+            padding: 1rem;
+            background: var(--surface-light);
             border-bottom: 1px solid var(--surface);
+        }
+
+        .search-box {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .search-input {
+            flex: 1;
+            padding: 0.8rem;
+            border: 1px solid var(--surface);
+            border-radius: 20px;
+            background: var(--background);
+            color: var(--text);
+            font-size: 1rem;
+        }
+
+        /* Адаптация для телефона */
+        @media (max-width: 768px) {
+            .chat-item {
+                padding: 0.8rem;
+                margin: 0.3rem 0;
+            }
+            
+            .message {
+                max-width: 90%;
+                padding: 0.7rem 0.9rem;
+                font-size: 0.9rem;
+            }
+            
+            .btn {
+                padding: 0.9rem;
+                font-size: 0.9rem;
+            }
+        }
+
+        /* Безопасные элементы */
+        .safe-input {
+            border: 1px solid var(--surface);
+            background: var(--background);
+            color: var(--text);
+            padding: 0.8rem;
+            border-radius: 8px;
+            font-size: 1rem;
+        }
+
+        .password-field {
+            -webkit-text-security: disc;
         }
     </style>
 </head>
@@ -373,15 +290,11 @@
                 <i class="fas fa-comment-dots"></i>
             </div>
             <div class="title">dolbaebsms</div>
-            <div class="subtitle">
-                Безопасный и современный мессенджер<br>
-                Общайтесь без ограничений
-            </div>
             <div class="auth-buttons">
-                <button class="auth-btn" onclick="showScreen('register')">
+                <button class="btn btn-primary" onclick="showScreen('register')">
                     Создать аккаунт
                 </button>
-                <button class="auth-btn" onclick="showScreen('login')">
+                <button class="btn btn-secondary" onclick="showScreen('login')">
                     Войти
                 </button>
             </div>
@@ -389,20 +302,16 @@
 
         <!-- Register Screen -->
         <div class="screen" id="register">
-            <button class="back-btn" onclick="showScreen('welcome')">
-                ← Назад
-            </button>
-            <div class="auth-form">
-                <h2 style="margin-bottom: 10px; text-align: center;">Создать аккаунт</h2>
-                <div class="input-group">
-                    <label>Логин</label>
-                    <input type="text" id="regUsername" placeholder="Придумайте логин">
-                </div>
-                <div class="input-group">
-                    <label>Пароль</label>
-                    <input type="password" id="regPassword" placeholder="Создайте пароль">
-                </div>
-                <button class="submit-btn" onclick="register()">
+            <div style="padding: 1rem;">
+                <button class="btn btn-secondary" onclick="showScreen('welcome')" style="width: auto;">
+                    ← Назад
+                </button>
+            </div>
+            <div style="padding: 1rem; flex: 1; display: flex; flex-direction: column; gap: 1rem;">
+                <h2 style="text-align: center;">Создать аккаунт</h2>
+                <input type="text" class="safe-input" id="regUsername" placeholder="Логин" required>
+                <input type="password" class="safe-input password-field" id="regPassword" placeholder="Пароль" required>
+                <button class="btn btn-primary" onclick="register()">
                     Создать аккаунт
                 </button>
             </div>
@@ -410,74 +319,75 @@
 
         <!-- Login Screen -->
         <div class="screen" id="login">
-            <button class="back-btn" onclick="showScreen('welcome')">
-                ← Назад
-            </button>
-            <div class="auth-form">
-                <h2 style="margin-bottom: 10px; text-align: center;">Вход в аккаунт</h2>
-                <div class="input-group">
-                    <label>Логин</label>
-                    <input type="text" id="loginUsername" placeholder="Ваш логин">
-                </div>
-                <div class="input-group">
-                    <label>Пароль</label>
-                    <input type="password" id="loginPassword" placeholder="Ваш пароль">
-                </div>
-                <button class="submit-btn" onclick="login()">
+            <div style="padding: 1rem;">
+                <button class="btn btn-secondary" onclick="showScreen('welcome')" style="width: auto;">
+                    ← Назад
+                </button>
+            </div>
+            <div style="padding: 1rem; flex: 1; display: flex; flex-direction: column; gap: 1rem;">
+                <h2 style="text-align: center;">Вход в аккаунт</h2>
+                <input type="text" class="safe-input" id="loginUsername" placeholder="Логин" required>
+                <input type="password" class="safe-input password-field" id="loginPassword" placeholder="Пароль" required>
+                <button class="btn btn-primary" onclick="login()">
                     Войти
                 </button>
             </div>
         </div>
 
-        <!-- Chat Screen -->
-        <div class="screen chat-screen" id="chat">
+        <!-- Chat List Screen -->
+        <div class="screen chat-screen" id="chatList">
             <div class="chat-header">
                 <div class="avatar" id="userAvatar">U</div>
-                <div>
+                <div style="flex: 1;">
                     <div id="userName">Пользователь</div>
-                    <div class="user-status">🟢 В сети</div>
+                    <div style="font-size: 0.8rem; color: var(--text-secondary);">🟢 В сети</div>
                 </div>
-                <button onclick="logout()" style="margin-left: auto; background: none; border: none; color: var(--text-secondary); cursor: pointer;">
+                <button class="btn btn-secondary" onclick="logout()" style="width: auto;">
                     Выйти
                 </button>
             </div>
 
-            <div class="main-content">
-                <!-- Боковая панель с чатами -->
-                <div class="sidebar">
-                    <div class="search-section">
-                        <div class="search-box">
-                            <input type="text" id="searchInput" placeholder="Поиск...">
-                            <button class="search-btn" onclick="searchUser()">
-                                <i class="fas fa-search"></i>
-                            </button>
-                        </div>
-                    </div>
-                    <div class="section-title">Мои чаты</div>
-                    <div class="chats-list" id="chatsList">
-                        <!-- Список чатов будет здесь -->
-                    </div>
-                    <div class="search-results" id="searchResults">
-                        <!-- Результаты поиска -->
-                    </div>
+            <div class="search-container">
+                <div class="search-box">
+                    <input type="text" class="search-input" id="searchInput" placeholder="Поиск пользователей...">
+                    <button class="btn btn-primary" onclick="searchUser()" style="width: auto;">
+                        Найти
+                    </button>
                 </div>
+            </div>
 
-                <!-- Область сообщений -->
-                <div class="chat-area">
-                    <div class="chat-messages" id="messages">
-                        <div class="message">
-                            Добро пожаловать в dolbaebsms! 🎉
-                        </div>
-                        <div class="message">
-                            Выберите чат или найдите пользователя
-                        </div>
-                    </div>
-                    <div class="message-input">
-                        <input type="text" id="messageInput" placeholder="Введите сообщение...">
-                        <button class="send-btn" onclick="sendMessage()">
-                            <i class="fas fa-paper-plane"></i>
-                        </button>
-                    </div>
+            <div class="chats-container">
+                <div id="chatsList">
+                    <!-- Список чатов -->
+                </div>
+                <div id="searchResults">
+                    <!-- Результаты поиска -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Chat Messages Screen -->
+        <div class="screen chat-screen" id="chatMessages">
+            <div class="chat-header">
+                <button class="btn btn-secondary" onclick="showScreen('chatList')" style="width: auto;">
+                    ← Назад
+                </button>
+                <div style="flex: 1; text-align: center;">
+                    <div id="chatWithUser">Чат</div>
+                </div>
+                <div style="width: 60px;"></div>
+            </div>
+
+            <div class="messages-area" id="messages">
+                <!-- Сообщения -->
+            </div>
+
+            <div class="message-input-area hidden" id="messageInputArea">
+                <div class="input-with-btn">
+                    <input type="text" class="message-input" id="messageInput" placeholder="Сообщение...">
+                    <button class="send-btn" onclick="sendMessage()">
+                        <i class="fas fa-paper-plane"></i>
+                    </button>
                 </div>
             </div>
         </div>
@@ -505,18 +415,23 @@
 
         let currentUser = null;
         let currentChatWith = null;
-        let messageListeners = {};
+
+        // Шифрование паролей (базовое)
+        function hashPassword(password) {
+            let hash = 0;
+            for (let i = 0; i < password.length; i++) {
+                const char = password.charCodeAt(i);
+                hash = ((hash << 5) - hash) + char;
+                hash = hash & hash;
+            }
+            return hash.toString();
+        }
 
         function showScreen(screenId) {
             document.querySelectorAll('.screen').forEach(screen => {
                 screen.classList.remove('active');
             });
-            
-            if (screenId === 'welcome') {
-                document.querySelector('.welcome-screen').classList.add('active');
-            } else {
-                document.getElementById(screenId).classList.add('active');
-            }
+            document.getElementById(screenId).classList.add('active');
         }
 
         function register() {
@@ -528,6 +443,12 @@
                 return;
             }
 
+            if (username.length < 3) {
+                alert('Логин должен быть не менее 3 символов');
+                return;
+            }
+
+            const hashedPassword = hashPassword(password);
             const usersRef = database.ref('users/' + username);
             
             usersRef.once('value').then((snapshot) => {
@@ -536,7 +457,7 @@
                 } else {
                     usersRef.set({
                         username: username,
-                        password: password,
+                        password: hashedPassword,
                         createdAt: Date.now(),
                         isOnline: true
                     }).then(() => {
@@ -555,12 +476,13 @@
                 return;
             }
 
+            const hashedPassword = hashPassword(password);
             const usersRef = database.ref('users/' + username);
             
             usersRef.once('value').then((snapshot) => {
                 if (snapshot.exists()) {
                     const userData = snapshot.val();
-                    if (userData.password === password) {
+                    if (userData.password === hashedPassword) {
                         loginUser(username);
                     } else {
                         alert('Неверный пароль');
@@ -574,19 +496,15 @@
         function loginUser(username) {
             currentUser = username;
             
-            // Обновляем онлайн статус
             const userRef = database.ref('users/' + username);
             userRef.update({
                 isOnline: true,
                 lastSeen: Date.now()
             });
 
-            // Показываем экран чата
-            showScreen('chat');
+            showScreen('chatList');
             document.getElementById('userName').textContent = username;
             document.getElementById('userAvatar').textContent = username.charAt(0).toUpperCase();
-
-            // Загружаем список чатов
             loadChatsList();
         }
 
@@ -596,7 +514,6 @@
 
             if (!currentUser) return;
 
-            // Ищем все чаты где участвует текущий пользователь
             const messagesRef = database.ref('messages');
             messagesRef.once('value').then((snapshot) => {
                 const chats = new Map();
@@ -618,7 +535,6 @@
                     }
                 });
 
-                // Отображаем чаты
                 displayChatsList(Array.from(chats.values()));
             });
         }
@@ -641,11 +557,10 @@
             const chatsList = document.getElementById('chatsList');
             
             if (chats.length === 0) {
-                chatsList.innerHTML = '<div class="chat-item">Нет активных чатов</div>';
+                chatsList.innerHTML = '<div class="chat-item">Нет чатов</div>';
                 return;
             }
 
-            // Сортируем по времени последнего сообщения
             chats.sort((a, b) => b.timestamp - a.timestamp);
             
             chatsList.innerHTML = '';
@@ -659,8 +574,8 @@
                     'Нет сообщений';
                 
                 chatItem.innerHTML = `
-                    <div class="chat-user">${chat.user}</div>
-                    <div class="last-message">${lastMsg}</div>
+                    <div style="font-weight: bold;">${chat.user}</div>
+                    <div style="font-size: 0.8rem; color: var(--text-secondary);">${lastMsg}</div>
                 `;
                 
                 chatsList.appendChild(chatItem);
@@ -684,25 +599,29 @@
                    .endAt(searchTerm + '\uf8ff')
                    .once('value')
                    .then((snapshot) => {
-                resultsContainer.innerHTML = '<div class="section-title">Результаты поиска</div>';
+                resultsContainer.innerHTML = '<div style="padding: 1rem; color: var(--text-secondary);">Результаты поиска:</div>';
                 
+                let found = false;
                 snapshot.forEach((childSnapshot) => {
                     const user = childSnapshot.val();
                     if (user.username !== currentUser) {
+                        found = true;
                         const userDiv = document.createElement('div');
-                        userDiv.className = 'user-result';
+                        userDiv.className = 'chat-item';
+                        userDiv.onclick = () => startChat(user.username);
                         userDiv.innerHTML = `
-                            <div class="user-info">
-                                <div class="user-name">${user.username}</div>
-                                <div class="user-status">${user.isOnline ? '🟢 онлайн' : '⚫ не в сети'}</div>
+                            <div style="font-weight: bold;">${user.username}</div>
+                            <div style="font-size: 0.8rem; color: var(--text-secondary);">
+                                ${user.isOnline ? '🟢 онлайн' : '⚫ не в сети'}
                             </div>
-                            <button class="start-chat-btn" onclick="startChat('${user.username}')">
-                                Написать
-                            </button>
                         `;
                         resultsContainer.appendChild(userDiv);
                     }
                 });
+                
+                if (!found) {
+                    resultsContainer.innerHTML += '<div class="chat-item">Пользователи не найдены</div>';
+                }
             });
         }
 
@@ -710,51 +629,27 @@
             currentChatWith = username;
             document.getElementById('searchInput').value = '';
             document.getElementById('searchResults').innerHTML = '';
+            document.getElementById('chatWithUser').textContent = username;
             
-            // Обновляем активный чат в списке
-            document.querySelectorAll('.chat-item').forEach(item => {
-                item.classList.remove('active');
-            });
-            
-            // Загружаем сообщения
+            showScreen('chatMessages');
             loadChatMessages();
         }
 
         function loadChatMessages() {
             const messagesContainer = document.getElementById('messages');
+            const messageInputArea = document.getElementById('messageInputArea');
+            
             messagesContainer.innerHTML = '';
+            messageInputArea.classList.remove('hidden');
 
             if (!currentUser || !currentChatWith) return;
 
             const chatId = generateChatId(currentUser, currentChatWith);
-            
-            // Отключаем предыдущий слушатель
-            if (messageListeners[chatId]) {
-                messageListeners[chatId]();
-            }
-
             const messagesRef = database.ref('messages/' + chatId);
-            
-            // Слушаем новые сообщения
-            messageListeners[chatId] = messagesRef.orderByChild('timestamp').on('child_added', (snapshot) => {
+
+            messagesRef.orderByChild('timestamp').on('child_added', (snapshot) => {
                 const message = snapshot.val();
                 displayMessage(message);
-            });
-
-            // Загружаем существующие сообщения
-            messagesRef.orderByChild('timestamp').once('value').then((snapshot) => {
-                const messages = [];
-                snapshot.forEach((childSnapshot) => {
-                    messages.push(childSnapshot.val());
-                });
-                
-                // Сортируем по времени
-                messages.sort((a, b) => a.timestamp - b.timestamp);
-                
-                // Отображаем все сообщения
-                messages.forEach(message => {
-                    displayMessage(message);
-                });
             });
         }
 
@@ -787,9 +682,6 @@
 
             messagesRef.push(messageData);
             input.value = '';
-            
-            // Обновляем список чатов
-            setTimeout(() => loadChatsList(), 1000);
         }
 
         function generateChatId(user1, user2) {
@@ -810,7 +702,7 @@
             showScreen('welcome');
         }
 
-        // Поддержка клавиши Enter
+        // Обработчики клавиш
         document.getElementById('messageInput').addEventListener('keypress', function(e) {
             if (e.key === 'Enter') sendMessage();
         });
@@ -821,6 +713,13 @@
 
         document.getElementById('loginPassword').addEventListener('keypress', function(e) {
             if (e.key === 'Enter') login();
+        });
+
+        // Предотвращение копирования конфиденциальных данных
+        document.addEventListener('copy', function(e) {
+            if (e.target.classList.contains('password-field')) {
+                e.preventDefault();
+            }
         });
     </script>
 </body>
