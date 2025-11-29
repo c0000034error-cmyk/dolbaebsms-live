@@ -34,52 +34,6 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            overflow: hidden;
-        }
-
-        /* Анимации */
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        @keyframes slideIn {
-            from { transform: translateX(-100%); opacity: 0; }
-            to { transform: translateX(0); opacity: 1; }
-        }
-
-        @keyframes slideOut {
-            from { transform: translateX(0); opacity: 1; }
-            to { transform: translateX(100%); opacity: 0; }
-        }
-
-        @keyframes pulse {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.05); }
-        }
-
-        @keyframes bounce {
-            0%, 20%, 53%, 80%, 100% { transform: translate3d(0,0,0); }
-            40%, 43% { transform: translate3d(0,-8px,0); }
-            70% { transform: translate3d(0,-4px,0); }
-            90% { transform: translate3d(0,-2px,0); }
-        }
-
-        @keyframes messageSlide {
-            from { 
-                opacity: 0; 
-                transform: translateY(10px) scale(0.9); 
-            }
-            to { 
-                opacity: 1; 
-                transform: translateY(0) scale(1); 
-            }
-        }
-
-        @keyframes typing {
-            0% { opacity: 0.3; }
-            50% { opacity: 1; }
-            100% { opacity: 0.3; }
         }
 
         .app-container {
@@ -89,36 +43,17 @@
             background: var(--surface);
             border-radius: 20px;
             overflow: hidden;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
-            animation: fadeIn 0.6s ease-out;
-            position: relative;
-        }
-
-        /* Анимированный фон */
-        .app-container::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 2px;
-            background: linear-gradient(90deg, var(--primary), var(--success), var(--primary));
-            animation: pulse 2s infinite;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.2);
         }
 
         .screen {
             display: none;
             flex-direction: column;
             height: 100%;
-            animation: fadeIn 0.4s ease-out;
         }
 
         .screen.active {
             display: flex;
-        }
-
-        .screen.exiting {
-            animation: slideOut 0.3s ease-in forwards;
         }
 
         .welcome-screen {
@@ -132,23 +67,16 @@
         .logo {
             font-size: 48px;
             color: var(--primary);
-            animation: bounce 2s infinite;
         }
 
         .title {
             font-size: 28px;
             font-weight: bold;
-            background: linear-gradient(45deg, var(--primary), var(--success));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            animation: fadeIn 1s ease-out;
         }
 
         .subtitle {
             color: var(--text-secondary);
             line-height: 1.5;
-            animation: fadeIn 1.2s ease-out;
         }
 
         .auth-buttons {
@@ -157,7 +85,6 @@
             gap: 15px;
             width: 100%;
             max-width: 280px;
-            animation: fadeIn 1.4s ease-out;
         }
 
         .auth-btn {
@@ -169,35 +96,12 @@
             font-size: 16px;
             font-weight: 600;
             cursor: pointer;
-            transition: all 0.3s ease;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .auth-btn::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
-            transition: left 0.5s;
+            transition: all 0.3s;
         }
 
         .auth-btn:hover {
             background: var(--primary);
             color: white;
-            transform: translateY(-2px);
-            box-shadow: 0 8px 20px rgba(0, 136, 204, 0.3);
-        }
-
-        .auth-btn:hover::before {
-            left: 100%;
-        }
-
-        .auth-btn:active {
-            transform: translateY(0);
         }
 
         .auth-form {
@@ -205,14 +109,12 @@
             flex-direction: column;
             gap: 20px;
             padding: 20px;
-            animation: slideIn 0.5s ease-out;
         }
 
         .input-group {
             display: flex;
             flex-direction: column;
             gap: 8px;
-            animation: fadeIn 0.6s ease-out;
         }
 
         .input-group label {
@@ -227,26 +129,6 @@
             background: var(--background);
             color: var(--text);
             font-size: 16px;
-            transition: all 0.3s ease;
-            border: 2px solid transparent;
-        }
-
-        .input-group input:focus {
-            outline: none;
-            border-color: var(--primary);
-            box-shadow: 0 0 0 3px rgba(0, 136, 204, 0.1);
-            transform: translateY(-1px);
-        }
-
-        .input-group input:invalid {
-            border-color: var(--error);
-            animation: shake 0.5s;
-        }
-
-        @keyframes shake {
-            0%, 100% { transform: translateX(0); }
-            25% { transform: translateX(-5px); }
-            75% { transform: translateX(5px); }
         }
 
         .submit-btn {
@@ -258,37 +140,11 @@
             font-size: 16px;
             font-weight: 600;
             cursor: pointer;
-            transition: all 0.3s ease;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .submit-btn::before {
-            content: '';
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            width: 0;
-            height: 0;
-            background: rgba(255,255,255,0.2);
-            border-radius: 50%;
             transition: all 0.3s;
-            transform: translate(-50%, -50%);
-        }
-
-        .submit-btn:hover::before {
-            width: 100%;
-            height: 100%;
         }
 
         .submit-btn:hover {
             background: var(--primary-dark);
-            transform: translateY(-2px);
-            box-shadow: 0 8px 20px rgba(0, 136, 204, 0.4);
-        }
-
-        .submit-btn:active {
-            transform: translateY(0);
         }
 
         .back-btn {
@@ -298,13 +154,6 @@
             cursor: pointer;
             font-size: 16px;
             padding: 20px;
-            transition: all 0.3s ease;
-            animation: fadeIn 0.4s ease-out;
-        }
-
-        .back-btn:hover {
-            color: var(--primary);
-            transform: translateX(-3px);
         }
 
         .chat-screen {
@@ -317,7 +166,6 @@
             display: flex;
             align-items: center;
             gap: 15px;
-            animation: slideIn 0.4s ease-out;
         }
 
         .avatar {
@@ -330,7 +178,6 @@
             justify-content: center;
             color: white;
             font-weight: bold;
-            animation: pulse 2s infinite;
         }
 
         .main-content {
@@ -346,14 +193,12 @@
             display: flex;
             flex-direction: column;
             overflow-y: auto;
-            animation: slideIn 0.5s ease-out;
         }
 
         .chat-area {
             flex: 1;
             display: flex;
             flex-direction: column;
-            animation: fadeIn 0.6s ease-out;
         }
 
         .search-section {
@@ -375,13 +220,6 @@
             background: var(--background);
             color: var(--text);
             font-size: 16px;
-            transition: all 0.3s ease;
-        }
-
-        .search-box input:focus {
-            outline: none;
-            border-color: var(--primary);
-            transform: scale(1.02);
         }
 
         .search-btn {
@@ -391,12 +229,6 @@
             border: none;
             border-radius: 20px;
             cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
-        .search-btn:hover {
-            background: var(--primary-dark);
-            transform: scale(1.05);
         }
 
         .chats-list {
@@ -411,21 +243,15 @@
             background: var(--background);
             border-radius: 12px;
             cursor: pointer;
-            transition: all 0.3s ease;
-            animation: fadeIn 0.5s ease-out;
-            border: 2px solid transparent;
+            transition: all 0.3s;
         }
 
         .chat-item:hover {
             background: var(--primary);
-            transform: translateX(5px);
-            border-color: rgba(255,255,255,0.1);
         }
 
         .chat-item.active {
             background: var(--primary);
-            transform: translateX(5px);
-            box-shadow: 0 4px 12px rgba(0, 136, 204, 0.3);
         }
 
         .chat-user {
@@ -456,18 +282,11 @@
             border-radius: 16px;
             background: var(--surface-light);
             word-wrap: break-word;
-            animation: messageSlide 0.3s ease-out;
-            transition: all 0.3s ease;
-        }
-
-        .message:hover {
-            transform: scale(1.02);
         }
 
         .message.sent {
             background: var(--primary);
             align-self: flex-end;
-            animation: messageSlide 0.3s ease-out;
         }
 
         .message-input {
@@ -475,7 +294,6 @@
             display: flex;
             gap: 10px;
             background: var(--surface-light);
-            animation: fadeIn 0.5s ease-out;
         }
 
         .message-input input {
@@ -486,13 +304,6 @@
             background: var(--background);
             color: var(--text);
             font-size: 16px;
-            transition: all 0.3s ease;
-        }
-
-        .message-input input:focus {
-            outline: none;
-            border-color: var(--primary);
-            transform: scale(1.02);
         }
 
         .send-btn {
@@ -506,16 +317,6 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            transition: all 0.3s ease;
-        }
-
-        .send-btn:hover {
-            background: var(--primary-dark);
-            transform: scale(1.1) rotate(10deg);
-        }
-
-        .send-btn:active {
-            transform: scale(0.95);
         }
 
         .search-results {
@@ -530,13 +331,6 @@
             background: var(--background);
             margin: 5px 0;
             border-radius: 12px;
-            animation: fadeIn 0.4s ease-out;
-            transition: all 0.3s ease;
-        }
-
-        .user-result:hover {
-            background: var(--primary);
-            transform: translateX(3px);
         }
 
         .user-info {
@@ -561,12 +355,6 @@
             border-radius: 8px;
             cursor: pointer;
             font-size: 14px;
-            transition: all 0.3s ease;
-        }
-
-        .start-chat-btn:hover {
-            background: #0da371;
-            transform: scale(1.05);
         }
 
         .section-title {
@@ -574,45 +362,6 @@
             font-size: 14px;
             color: var(--text-secondary);
             border-bottom: 1px solid var(--surface);
-            animation: fadeIn 0.5s ease-out;
-        }
-
-        /* Анимация загрузки */
-        .loading {
-            display: inline-block;
-            width: 20px;
-            height: 20px;
-            border: 3px solid rgba(255,255,255,.3);
-            border-radius: 50%;
-            border-top-color: var(--primary);
-            animation: spin 1s ease-in-out infinite;
-        }
-
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-
-        /* Анимация появления уведомлений */
-        .notification {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            background: var(--success);
-            color: white;
-            padding: 12px 20px;
-            border-radius: 8px;
-            animation: slideIn 0.3s ease-out, slideOut 0.3s ease-in 2.7s forwards;
-            z-index: 1000;
-        }
-
-        /* Плавная прокрутка */
-        .chat-messages, .chats-list {
-            scroll-behavior: smooth;
-        }
-
-        /* Анимация для новых сообщений */
-        .message.new {
-            animation: messageSlide 0.4s ease-out, pulse 0.6s ease-out;
         }
     </style>
 </head>
@@ -629,10 +378,10 @@
                 Общайтесь без ограничений
             </div>
             <div class="auth-buttons">
-                <button class="auth-btn" onclick="animateToScreen('register')">
+                <button class="auth-btn" onclick="showScreen('register')">
                     Создать аккаунт
                 </button>
-                <button class="auth-btn" onclick="animateToScreen('login')">
+                <button class="auth-btn" onclick="showScreen('login')">
                     Войти
                 </button>
             </div>
@@ -640,44 +389,42 @@
 
         <!-- Register Screen -->
         <div class="screen" id="register">
-            <button class="back-btn" onclick="animateToScreen('welcome')">
+            <button class="back-btn" onclick="showScreen('welcome')">
                 ← Назад
             </button>
             <div class="auth-form">
                 <h2 style="margin-bottom: 10px; text-align: center;">Создать аккаунт</h2>
                 <div class="input-group">
                     <label>Логин</label>
-                    <input type="text" id="regUsername" placeholder="Придумайте логин" required>
+                    <input type="text" id="regUsername" placeholder="Придумайте логин">
                 </div>
                 <div class="input-group">
                     <label>Пароль</label>
-                    <input type="password" id="regPassword" placeholder="Создайте пароль" required>
+                    <input type="password" id="regPassword" placeholder="Создайте пароль">
                 </div>
-                <button class="submit-btn" onclick="register()" id="registerBtn">
-                    <span id="registerText">Создать аккаунт</span>
-                    <div class="loading" id="registerLoading" style="display: none;"></div>
+                <button class="submit-btn" onclick="register()">
+                    Создать аккаунт
                 </button>
             </div>
         </div>
 
         <!-- Login Screen -->
         <div class="screen" id="login">
-            <button class="back-btn" onclick="animateToScreen('welcome')">
+            <button class="back-btn" onclick="showScreen('welcome')">
                 ← Назад
             </button>
             <div class="auth-form">
                 <h2 style="margin-bottom: 10px; text-align: center;">Вход в аккаунт</h2>
                 <div class="input-group">
                     <label>Логин</label>
-                    <input type="text" id="loginUsername" placeholder="Ваш логин" required>
+                    <input type="text" id="loginUsername" placeholder="Ваш логин">
                 </div>
                 <div class="input-group">
                     <label>Пароль</label>
-                    <input type="password" id="loginPassword" placeholder="Ваш пароль" required>
+                    <input type="password" id="loginPassword" placeholder="Ваш пароль">
                 </div>
-                <button class="submit-btn" onclick="login()" id="loginBtn">
-                    <span id="loginText">Войти</span>
-                    <div class="loading" id="loginLoading" style="display: none;"></div>
+                <button class="submit-btn" onclick="login()">
+                    Войти
                 </button>
             </div>
         </div>
@@ -760,20 +507,6 @@
         let currentChatWith = null;
         let messageListeners = {};
 
-        // Анимированная смена экранов
-        function animateToScreen(screenId) {
-            const currentScreen = document.querySelector('.screen.active');
-            if (currentScreen) {
-                currentScreen.classList.add('exiting');
-                setTimeout(() => {
-                    currentScreen.classList.remove('active', 'exiting');
-                    showScreen(screenId);
-                }, 300);
-            } else {
-                showScreen(screenId);
-            }
-        }
-
         function showScreen(screenId) {
             document.querySelectorAll('.screen').forEach(screen => {
                 screen.classList.remove('active');
@@ -786,119 +519,74 @@
             }
         }
 
-        // Показать уведомление
-        function showNotification(message, type = 'success') {
-            const notification = document.createElement('div');
-            notification.className = 'notification';
-            notification.style.background = type === 'error' ? 'var(--error)' : 'var(--success)';
-            notification.textContent = message;
-            document.body.appendChild(notification);
-            
-            setTimeout(() => {
-                notification.remove();
-            }, 3000);
-        }
-
-        // Регистрация с анимацией загрузки
-        async function register() {
+        function register() {
             const username = document.getElementById('regUsername').value.trim();
             const password = document.getElementById('regPassword').value;
-            const btn = document.getElementById('registerBtn');
-            const text = document.getElementById('registerText');
-            const loading = document.getElementById('registerLoading');
 
             if (!username || !password) {
-                showNotification('Заполните все поля', 'error');
+                alert('Заполните все поля');
                 return;
             }
 
-            // Анимация загрузки
-            btn.disabled = true;
-            text.style.display = 'none';
-            loading.style.display = 'inline-block';
-
-            try {
-                const usersRef = database.ref('users/' + username);
-                const snapshot = await usersRef.once('value');
-                
+            const usersRef = database.ref('users/' + username);
+            
+            usersRef.once('value').then((snapshot) => {
                 if (snapshot.exists()) {
-                    showNotification('Этот логин уже занят', 'error');
+                    alert('Этот логин уже занят');
                 } else {
-                    await usersRef.set({
+                    usersRef.set({
                         username: username,
                         password: password,
                         createdAt: Date.now(),
                         isOnline: true
+                    }).then(() => {
+                        loginUser(username);
                     });
-                    showNotification('Аккаунт создан!');
-                    setTimeout(() => loginUser(username), 1000);
                 }
-            } catch (error) {
-                showNotification('Ошибка регистрации', 'error');
-            } finally {
-                // Сброс анимации
-                btn.disabled = false;
-                text.style.display = 'inline';
-                loading.style.display = 'none';
-            }
+            });
         }
 
-        // Вход с анимацией загрузки
-        async function login() {
+        function login() {
             const username = document.getElementById('loginUsername').value.trim();
             const password = document.getElementById('loginPassword').value;
-            const btn = document.getElementById('loginBtn');
-            const text = document.getElementById('loginText');
-            const loading = document.getElementById('loginLoading');
 
             if (!username || !password) {
-                showNotification('Заполните все поля', 'error');
+                alert('Заполните все поля');
                 return;
             }
 
-            // Анимация загрузки
-            btn.disabled = true;
-            text.style.display = 'none';
-            loading.style.display = 'inline-block';
-
-            try {
-                const usersRef = database.ref('users/' + username);
-                const snapshot = await usersRef.once('value');
-                
+            const usersRef = database.ref('users/' + username);
+            
+            usersRef.once('value').then((snapshot) => {
                 if (snapshot.exists()) {
                     const userData = snapshot.val();
                     if (userData.password === password) {
-                        showNotification('Вход выполнен!');
-                        setTimeout(() => loginUser(username), 1000);
+                        loginUser(username);
                     } else {
-                        showNotification('Неверный пароль', 'error');
+                        alert('Неверный пароль');
                     }
                 } else {
-                    showNotification('Пользователь не найден', 'error');
+                    alert('Пользователь не найден');
                 }
-            } catch (error) {
-                showNotification('Ошибка входа', 'error');
-            } finally {
-                // Сброс анимации
-                btn.disabled = false;
-                text.style.display = 'inline';
-                loading.style.display = 'none';
-            }
+            });
         }
 
-        // Остальные функции остаются такими же как в предыдущем коде
         function loginUser(username) {
             currentUser = username;
             
+            // Обновляем онлайн статус
             const userRef = database.ref('users/' + username);
             userRef.update({
                 isOnline: true,
                 lastSeen: Date.now()
             });
 
-            animateToScreen('chat');
+            // Показываем экран чата
+            showScreen('chat');
             document.getElementById('userName').textContent = username;
             document.getElementById('userAvatar').textContent = username.charAt(0).toUpperCase();
+
+            // Загружаем список чатов
             loadChatsList();
         }
 
@@ -908,6 +596,7 @@
 
             if (!currentUser) return;
 
+            // Ищем все чаты где участвует текущий пользователь
             const messagesRef = database.ref('messages');
             messagesRef.once('value').then((snapshot) => {
                 const chats = new Map();
@@ -929,6 +618,7 @@
                     }
                 });
 
+                // Отображаем чаты
                 displayChatsList(Array.from(chats.values()));
             });
         }
@@ -955,6 +645,7 @@
                 return;
             }
 
+            // Сортируем по времени последнего сообщения
             chats.sort((a, b) => b.timestamp - a.timestamp);
             
             chatsList.innerHTML = '';
@@ -1020,4 +711,117 @@
             document.getElementById('searchInput').value = '';
             document.getElementById('searchResults').innerHTML = '';
             
-            document.querySelectorAll('.chat-item').forEach(item =>
+            // Обновляем активный чат в списке
+            document.querySelectorAll('.chat-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            
+            // Загружаем сообщения
+            loadChatMessages();
+        }
+
+        function loadChatMessages() {
+            const messagesContainer = document.getElementById('messages');
+            messagesContainer.innerHTML = '';
+
+            if (!currentUser || !currentChatWith) return;
+
+            const chatId = generateChatId(currentUser, currentChatWith);
+            
+            // Отключаем предыдущий слушатель
+            if (messageListeners[chatId]) {
+                messageListeners[chatId]();
+            }
+
+            const messagesRef = database.ref('messages/' + chatId);
+            
+            // Слушаем новые сообщения
+            messageListeners[chatId] = messagesRef.orderByChild('timestamp').on('child_added', (snapshot) => {
+                const message = snapshot.val();
+                displayMessage(message);
+            });
+
+            // Загружаем существующие сообщения
+            messagesRef.orderByChild('timestamp').once('value').then((snapshot) => {
+                const messages = [];
+                snapshot.forEach((childSnapshot) => {
+                    messages.push(childSnapshot.val());
+                });
+                
+                // Сортируем по времени
+                messages.sort((a, b) => a.timestamp - b.timestamp);
+                
+                // Отображаем все сообщения
+                messages.forEach(message => {
+                    displayMessage(message);
+                });
+            });
+        }
+
+        function displayMessage(message) {
+            const messagesContainer = document.getElementById('messages');
+            const messageDiv = document.createElement('div');
+            
+            const isOwnMessage = message.sender === currentUser;
+            messageDiv.className = `message ${isOwnMessage ? 'sent' : ''}`;
+            messageDiv.textContent = message.text;
+            
+            messagesContainer.appendChild(messageDiv);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+
+        function sendMessage() {
+            const input = document.getElementById('messageInput');
+            const text = input.value.trim();
+
+            if (!text || !currentUser || !currentChatWith) return;
+
+            const chatId = generateChatId(currentUser, currentChatWith);
+            const messagesRef = database.ref('messages/' + chatId);
+
+            const messageData = {
+                sender: currentUser,
+                text: text,
+                timestamp: Date.now()
+            };
+
+            messagesRef.push(messageData);
+            input.value = '';
+            
+            // Обновляем список чатов
+            setTimeout(() => loadChatsList(), 1000);
+        }
+
+        function generateChatId(user1, user2) {
+            return [user1, user2].sort().join('_');
+        }
+
+        function logout() {
+            if (currentUser) {
+                const userRef = database.ref('users/' + currentUser);
+                userRef.update({
+                    isOnline: false,
+                    lastSeen: Date.now()
+                });
+            }
+            
+            currentUser = null;
+            currentChatWith = null;
+            showScreen('welcome');
+        }
+
+        // Поддержка клавиши Enter
+        document.getElementById('messageInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') sendMessage();
+        });
+
+        document.getElementById('regPassword').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') register();
+        });
+
+        document.getElementById('loginPassword').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') login();
+        });
+    </script>
+</body>
+</html>
