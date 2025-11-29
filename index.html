@@ -6,110 +6,407 @@
     <title>dolbaebsms - Secure Messenger</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        :root {
-            --primary: #0088cc; --primary-dark: #006699; --background: #0f172a;
-            --surface: #1e293b; --surface-light: #334155; --text: #f8fafc;
-            --text-secondary: #cbd5e1; --success: #10b981; --error: #ef4444;
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
+
+        :root {
+            --primary: #0088cc;
+            --primary-dark: #006699;
+            --background: #0f172a;
+            --surface: #1e293b;
+            --surface-light: #334155;
+            --text: #f8fafc;
+            --text-secondary: #cbd5e1;
+            --success: #10b981;
+            --error: #ef4444;
+            --online: #10b981;
+            --offline: #64748b;
+        }
+
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
-            background: var(--background); color: var(--text); height: 100vh;
-            display: flex; justify-content: center; align-items: center;
+            background: var(--background);
+            color: var(--text);
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
         }
+
         .app-container {
-            width: 95%; max-width: 400px; height: 90vh; background: var(--surface);
-            border-radius: 20px; overflow: hidden; box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+            width: 95%;
+            max-width: 400px;
+            height: 90vh;
+            background: var(--surface);
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.2);
         }
-        .screen { display: none; flex-direction: column; height: 100%; padding: 20px; }
-        .screen.active { display: flex; }
-        .welcome-screen { justify-content: center; align-items: center; text-align: center; gap: 30px; }
-        .logo { font-size: 48px; color: var(--primary); }
-        .title { font-size: 28px; font-weight: bold; }
-        .subtitle { color: var(--text-secondary); line-height: 1.5; }
-        .auth-buttons { display: flex; flex-direction: column; gap: 15px; width: 100%; max-width: 280px; }
-        .auth-btn { padding: 15px; border: 2px solid var(--primary); border-radius: 12px;
-            background: transparent; color: var(--primary); font-size: 16px; font-weight: 600;
-            cursor: pointer; transition: all 0.3s; }
-        .auth-btn:hover { background: var(--primary); color: white; }
-        .auth-form { display: flex; flex-direction: column; gap: 20px; }
-        .input-group { display: flex; flex-direction: column; gap: 8px; }
-        .input-group label { color: var(--text-secondary); font-size: 14px; }
-        .input-group input { padding: 15px; border: 1px solid var(--surface-light);
-            border-radius: 12px; background: var(--background); color: var(--text); font-size: 16px; }
-        .submit-btn { padding: 15px; background: var(--primary); color: white; border: none;
-            border-radius: 12px; font-size: 16px; font-weight: 600; cursor: pointer; }
-        .back-btn { background: none; border: none; color: var(--text-secondary); cursor: pointer; }
-        .chat-screen { padding: 0; }
-        .chat-header { padding: 20px; background: var(--surface-light); display: flex; align-items: center; gap: 15px; }
-        .avatar { width: 40px; height: 40px; background: var(--primary); border-radius: 50%;
-            display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; }
-        .chat-messages { flex: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
-        .message { max-width: 80%; padding: 12px 16px; border-radius: 16px; background: var(--surface-light); }
-        .message.sent { background: var(--primary); align-self: flex-end; }
-        .message-input { padding: 15px 20px; display: flex; gap: 10px; background: var(--surface-light); }
-        .message-input input { flex: 1; padding: 12px; border: 1px solid var(--surface);
-            border-radius: 20px; background: var(--background); color: var(--text); font-size: 16px; }
-        .send-btn { width: 44px; height: 44px; background: var(--primary); color: white;
-            border: none; border-radius: 50%; cursor: pointer; }
-        .search-section { padding: 15px 20px; background: var(--surface-light); border-bottom: 1px solid var(--surface); }
-        .search-box { display: flex; gap: 10px; }
-        .search-box input { flex: 1; padding: 12px; border: 1px solid var(--surface);
-            border-radius: 20px; background: var(--background); color: var(--text); font-size: 16px; }
-        .search-btn { padding: 12px 20px; background: var(--primary); color: white; border: none; border-radius: 20px; cursor: pointer; }
-        .search-results { margin-top: 15px; }
-        .user-result { display: flex; justify-content: space-between; align-items: center;
-            padding: 12px; background: var(--background); margin: 5px 0; border-radius: 12px; }
-        .start-chat-btn { padding: 8px 15px; background: var(--success); color: white; border: none; border-radius: 8px; cursor: pointer; }
+
+        .screen {
+            display: none;
+            flex-direction: column;
+            height: 100%;
+            padding: 20px;
+        }
+
+        .screen.active {
+            display: flex;
+        }
+
+        .welcome-screen {
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            gap: 30px;
+        }
+
+        .logo {
+            font-size: 48px;
+            color: var(--primary);
+        }
+
+        .title {
+            font-size: 28px;
+            font-weight: bold;
+        }
+
+        .subtitle {
+            color: var(--text-secondary);
+            line-height: 1.5;
+        }
+
+        .auth-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            width: 100%;
+            max-width: 280px;
+        }
+
+        .auth-btn {
+            padding: 15px;
+            border: 2px solid var(--primary);
+            border-radius: 12px;
+            background: transparent;
+            color: var(--primary);
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .auth-btn:hover {
+            background: var(--primary);
+            color: white;
+        }
+
+        .auth-form {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .input-group label {
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+
+        .input-group input {
+            padding: 15px;
+            border: 1px solid var(--surface-light);
+            border-radius: 12px;
+            background: var(--background);
+            color: var(--text);
+            font-size: 16px;
+        }
+
+        .submit-btn {
+            padding: 15px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .submit-btn:hover {
+            background: var(--primary-dark);
+        }
+
+        .back-btn {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-size: 16px;
+            padding: 10px 0;
+        }
+
+        .chat-screen {
+            padding: 0;
+        }
+
+        .chat-header {
+            padding: 20px;
+            background: var(--surface-light);
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .avatar {
+            width: 40px;
+            height: 40px;
+            background: var(--primary);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+        }
+
+        .chat-messages {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .message {
+            max-width: 80%;
+            padding: 12px 16px;
+            border-radius: 16px;
+            background: var(--surface-light);
+            word-wrap: break-word;
+        }
+
+        .message.sent {
+            background: var(--primary);
+            align-self: flex-end;
+        }
+
+        .message-input {
+            padding: 15px 20px;
+            display: flex;
+            gap: 10px;
+            background: var(--surface-light);
+        }
+
+        .message-input input {
+            flex: 1;
+            padding: 12px;
+            border: 1px solid var(--surface);
+            border-radius: 20px;
+            background: var(--background);
+            color: var(--text);
+            font-size: 16px;
+        }
+
+        .send-btn {
+            width: 44px;
+            height: 44px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .search-section {
+            padding: 15px 20px;
+            background: var(--surface-light);
+            border-bottom: 1px solid var(--surface);
+        }
+
+        .search-box {
+            display: flex;
+            gap: 10px;
+        }
+
+        .search-box input {
+            flex: 1;
+            padding: 12px;
+            border: 1px solid var(--surface);
+            border-radius: 20px;
+            background: var(--background);
+            color: var(--text);
+            font-size: 16px;
+        }
+
+        .search-btn {
+            padding: 12px 20px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+        }
+
+        .search-results {
+            margin-top: 15px;
+        }
+
+        .user-result {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px;
+            background: var(--background);
+            margin: 5px 0;
+            border-radius: 12px;
+        }
+
+        .user-info {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .user-name {
+            font-weight: bold;
+        }
+
+        .user-status {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .start-chat-btn {
+            padding: 8px 15px;
+            background: var(--success);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+        }
     </style>
 </head>
 <body>
     <div class="app-container">
+        <!-- Welcome Screen -->
         <div class="screen welcome-screen active">
-            <div class="logo"><i class="fas fa-comment-dots"></i></div>
+            <div class="logo">
+                <i class="fas fa-comment-dots"></i>
+            </div>
             <div class="title">dolbaebsms</div>
-            <div class="subtitle">Безопасный и современный мессенджер</div>
+            <div class="subtitle">
+                Безопасный и современный мессенджер<br>
+                Общайтесь без ограничений
+            </div>
             <div class="auth-buttons">
-                <button class="auth-btn" onclick="showScreen('register')">Создать аккаунт</button>
-                <button class="auth-btn" onclick="showScreen('login')">Войти</button>
+                <button class="auth-btn" onclick="showScreen('register')">
+                    Создать аккаунт
+                </button>
+                <button class="auth-btn" onclick="showScreen('login')">
+                    Войти
+                </button>
             </div>
         </div>
 
+        <!-- Register Screen -->
         <div class="screen" id="register">
-            <button class="back-btn" onclick="showScreen('welcome')">← Назад</button>
+            <button class="back-btn" onclick="showScreen('welcome')">
+                ← Назад
+            </button>
             <h2 style="margin-bottom: 30px; text-align: center;">Создать аккаунт</h2>
             <div class="auth-form">
-                <div class="input-group"><label>Логин</label><input type="text" id="regUsername" placeholder="Придумайте логин"></div>
-                <div class="input-group"><label>Пароль</label><input type="password" id="regPassword" placeholder="Создайте пароль"></div>
-                <button class="submit-btn" onclick="register()">Создать аккаунт</button>
+                <div class="input-group">
+                    <label>Логин</label>
+                    <input type="text" id="regUsername" placeholder="Придумайте логин">
+                </div>
+                <div class="input-group">
+                    <label>Пароль</label>
+                    <input type="password" id="regPassword" placeholder="Создайте пароль">
+                </div>
+                <button class="submit-btn" onclick="register()">
+                    Создать аккаунт
+                </button>
             </div>
         </div>
 
+        <!-- Login Screen -->
         <div class="screen" id="login">
-            <button class="back-btn" onclick="showScreen('welcome')">← Назад</button>
+            <button class="back-btn" onclick="showScreen('welcome')">
+                ← Назад
+            </button>
             <h2 style="margin-bottom: 30px; text-align: center;">Вход в аккаунт</h2>
             <div class="auth-form">
-                <div class="input-group"><label>Логин</label><input type="text" id="loginUsername" placeholder="Ваш логин"></div>
-                <div class="input-group"><label>Пароль</label><input type="password" id="loginPassword" placeholder="Ваш пароль"></div>
-                <button class="submit-btn" onclick="login()">Войти</button>
+                <div class="input-group">
+                    <label>Логин</label>
+                    <input type="text" id="loginUsername" placeholder="Ваш логин">
+                </div>
+                <div class="input-group">
+                    <label>Пароль</label>
+                    <input type="password" id="loginPassword" placeholder="Ваш пароль">
+                </div>
+                <button class="submit-btn" onclick="login()">
+                    Войти
+                </button>
             </div>
         </div>
 
+        <!-- Chat Screen -->
         <div class="screen chat-screen" id="chat">
             <div class="chat-header">
                 <div class="avatar" id="userAvatar">U</div>
-                <div><div id="userName">Пользователь</div><div style="font-size: 12px; color: var(--text-secondary);">🟢 В сети</div></div>
-                <button onclick="logout()" style="margin-left: auto; background: none; border: none; color: var(--text-secondary); cursor: pointer;">Выйти</button>
+                <div>
+                    <div id="userName">Пользователь</div>
+                    <div class="user-status">🟢 В сети</div>
+                </div>
+                <button onclick="logout()" style="margin-left: auto; background: none; border: none; color: var(--text-secondary); cursor: pointer;">
+                    Выйти
+                </button>
             </div>
+
+            <!-- Поиск пользователей -->
             <div class="search-section">
-                <div class="search-box"><input type="text" id="searchInput" placeholder="Найти пользователя..."><button class="search-btn" onclick="searchUser()"><i class="fas fa-search"></i></button></div>
-                <div class="search-results" id="searchResults"></div>
+                <div class="search-box">
+                    <input type="text" id="searchInput" placeholder="Найти пользователя...">
+                    <button class="search-btn" onclick="searchUser()">
+                        <i class="fas fa-search"></i>
+                    </button>
+                </div>
+                <div class="search-results" id="searchResults">
+                    <!-- Результаты поиска -->
+                </div>
             </div>
+
+            <!-- Сообщения -->
             <div class="chat-messages" id="messages">
-                <div class="message">Добро пожаловать в dolbaebsms! 🎉</div>
-                <div class="message">Найдите пользователя и начните общение</div>
+                <div class="message">
+                    Добро пожаловать в dolbaebsms! 🎉
+                </div>
+                <div class="message">
+                    Найдите пользователя и начните общение
+                </div>
             </div>
-            <div class="message-input"><input type="text" id="messageInput" placeholder="Введите сообщение..."><button class="send-btn" onclick="sendMessage()"><i class="fas fa-paper-plane"></i></button></div>
+
+            <!-- Ввод сообщения -->
+            <div class="message-input">
+                <input type="text" id="messageInput" placeholder="Введите сообщение...">
+                <button class="send-btn" onclick="sendMessage()">
+                    <i class="fas fa-paper-plane"></i>
+                </button>
+            </div>
         </div>
     </div>
 
@@ -118,11 +415,11 @@
     <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-database-compat.js"></script>
     
     <script>
-        // 🔥 🔥 🔥 ВСТАВЬ СЮДА СВОЙ КОНФИГ ИЗ FIREBASE 🔥 🔥 🔥
+        // Конфигурация Firebase
         const firebaseConfig = {
             apiKey: "AIzaSyA35T6z2FYS6m9IEJ9x7evxCphgpLhgMX4",
             authDomain: "dolbaebsms-live.firebaseapp.com",
-            databaseURL: "https://dolbaebsms-live-default-rtdb.firebaseio.com", // ← ВАЖНО: добавь эту строку
+            databaseURL: "https://dolbaebsms-live-default-rtdb.firebaseio.com",
             projectId: "dolbaebsms-live",
             storageBucket: "dolbaebsms-live.firebasestorage.app",
             messagingSenderId: "912825721862",
@@ -138,7 +435,10 @@
         let currentChatWith = null;
 
         function showScreen(screenId) {
-            document.querySelectorAll('.screen').forEach(screen => screen.classList.remove('active'));
+            document.querySelectorAll('.screen').forEach(screen => {
+                screen.classList.remove('active');
+            });
+            
             if (screenId === 'welcome') {
                 document.querySelector('.welcome-screen').classList.add('active');
             } else {
@@ -149,14 +449,26 @@
         function register() {
             const username = document.getElementById('regUsername').value.trim();
             const password = document.getElementById('regPassword').value;
-            if (!username || !password) { alert('Заполните все поля'); return; }
+
+            if (!username || !password) {
+                alert('Заполните все поля');
+                return;
+            }
+
             const usersRef = database.ref('users/' + username);
+            
             usersRef.once('value').then((snapshot) => {
                 if (snapshot.exists()) {
                     alert('Этот логин уже занят');
                 } else {
-                    usersRef.set({ username: username, password: password, createdAt: Date.now(), isOnline: true })
-                    .then(() => { loginUser(username); });
+                    usersRef.set({
+                        username: username,
+                        password: password,
+                        createdAt: Date.now(),
+                        isOnline: true
+                    }).then(() => {
+                        loginUser(username);
+                    });
                 }
             });
         }
@@ -164,8 +476,14 @@
         function login() {
             const username = document.getElementById('loginUsername').value.trim();
             const password = document.getElementById('loginPassword').value;
-            if (!username || !password) { alert('Заполните все поля'); return; }
+
+            if (!username || !password) {
+                alert('Заполните все поля');
+                return;
+            }
+
             const usersRef = database.ref('users/' + username);
+            
             usersRef.once('value').then((snapshot) => {
                 if (snapshot.exists()) {
                     const userData = snapshot.val();
@@ -182,8 +500,15 @@
 
         function loginUser(username) {
             currentUser = username;
+            
+            // Обновляем онлайн статус
             const userRef = database.ref('users/' + username);
-            userRef.update({ isOnline: true, lastSeen: Date.now() });
+            userRef.update({
+                isOnline: true,
+                lastSeen: Date.now()
+            });
+
+            // Показываем экран чата
             showScreen('chat');
             document.getElementById('userName').textContent = username;
             document.getElementById('userAvatar').textContent = username.charAt(0).toUpperCase();
@@ -192,16 +517,31 @@
         function searchUser() {
             const searchTerm = document.getElementById('searchInput').value.trim();
             const resultsContainer = document.getElementById('searchResults');
+            
             resultsContainer.innerHTML = '';
+            
             if (!searchTerm) return;
+
             const usersRef = database.ref('users');
-            usersRef.orderByChild('username').startAt(searchTerm).endAt(searchTerm + '\\uf8ff').once('value').then((snapshot) => {
+            usersRef.orderByChild('username')
+                   .startAt(searchTerm)
+                   .endAt(searchTerm + '\uf8ff')
+                   .once('value')
+                   .then((snapshot) => {
                 snapshot.forEach((childSnapshot) => {
                     const user = childSnapshot.val();
                     if (user.username !== currentUser) {
                         const userDiv = document.createElement('div');
                         userDiv.className = 'user-result';
-                        userDiv.innerHTML = `<div><strong>${user.username}</strong><div style="font-size: 12px; color: var(--text-secondary);">${user.isOnline ? '🟢 онлайн' : '⚫ не в сети'}</div></div><button class="start-chat-btn" onclick="startChat('${user.username}')">Написать</button>`;
+                        userDiv.innerHTML = `
+                            <div class="user-info">
+                                <div class="user-name">${user.username}</div>
+                                <div class="user-status">${user.isOnline ? '🟢 онлайн' : '⚫ не в сети'}</div>
+                            </div>
+                            <button class="start-chat-btn" onclick="startChat('${user.username}')">
+                                Написать
+                            </button>
+                        `;
                         resultsContainer.appendChild(userDiv);
                     }
                 });
@@ -212,44 +552,86 @@
             currentChatWith = username;
             document.getElementById('searchInput').value = '';
             document.getElementById('searchResults').innerHTML = '';
+            
+            // Показываем историю сообщений
             loadChatMessages();
         }
 
         function loadChatMessages() {
             const messagesContainer = document.getElementById('messages');
             messagesContainer.innerHTML = '';
+
             if (!currentUser || !currentChatWith) return;
-            const chatId = [currentUser, currentChatWith].sort().join('_');
+
+            const chatId = generateChatId(currentUser, currentChatWith);
             const messagesRef = database.ref('messages/' + chatId);
+
             messagesRef.orderByChild('timestamp').on('child_added', (snapshot) => {
                 const message = snapshot.val();
-                const messageDiv = document.createElement('div');
-                messageDiv.className = `message ${message.sender === currentUser ? 'sent' : ''}`;
-                messageDiv.textContent = message.text;
-                messagesContainer.appendChild(messageDiv);
-                messagesContainer.scrollTop = messagesContainer.scrollHeight;
+                displayMessage(message);
             });
+        }
+
+        function displayMessage(message) {
+            const messagesContainer = document.getElementById('messages');
+            const messageDiv = document.createElement('div');
+            
+            const isOwnMessage = message.sender === currentUser;
+            messageDiv.className = `message ${isOwnMessage ? 'sent' : ''}`;
+            messageDiv.textContent = message.text;
+            
+            messagesContainer.appendChild(messageDiv);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
         }
 
         function sendMessage() {
             const input = document.getElementById('messageInput');
             const text = input.value.trim();
+
             if (!text || !currentUser || !currentChatWith) return;
-            const chatId = [currentUser, currentChatWith].sort().join('_');
+
+            const chatId = generateChatId(currentUser, currentChatWith);
             const messagesRef = database.ref('messages/' + chatId);
-            messagesRef.push({ sender: currentUser, text: text, timestamp: Date.now() });
+
+            const messageData = {
+                sender: currentUser,
+                text: text,
+                timestamp: Date.now()
+            };
+
+            messagesRef.push(messageData);
             input.value = '';
+        }
+
+        function generateChatId(user1, user2) {
+            return [user1, user2].sort().join('_');
         }
 
         function logout() {
             if (currentUser) {
-                database.ref('users/' + currentUser).update({ isOnline: false, lastSeen: Date.now() });
+                const userRef = database.ref('users/' + currentUser);
+                userRef.update({
+                    isOnline: false,
+                    lastSeen: Date.now()
+                });
             }
-            currentUser = null; currentChatWith = null; showScreen('welcome');
+            
+            currentUser = null;
+            currentChatWith = null;
+            showScreen('welcome');
         }
 
+        // Поддержка клавиши Enter
         document.getElementById('messageInput').addEventListener('keypress', function(e) {
             if (e.key === 'Enter') sendMessage();
+        });
+
+        document.getElementById('regPassword').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') register();
+        });
+
+        document.getElementById('loginPassword').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') login();
         });
     </script>
 </body>
