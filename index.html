@@ -136,6 +136,20 @@
             color: white;
         }
 
+        /* Header Buttons */
+        .header-btn {
+            background: none;
+            border: none;
+            color: var(--text);
+            font-size: 1.2rem;
+            cursor: pointer;
+            padding: 0.5rem;
+            min-width: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
         /* Forms */
         .form-container {
             padding: 1.5rem;
@@ -353,15 +367,6 @@
             background: var(--voice);
         }
 
-        .settings-btn {
-            background: transparent;
-            color: var(--text);
-            border: none;
-            font-size: 1.2rem;
-            cursor: pointer;
-            padding: 0.5rem;
-        }
-
         /* Модальные окна */
         .modal {
             display: none;
@@ -423,13 +428,13 @@
         <!-- Register Screen -->
         <div class="screen" id="register">
             <div class="chat-header">
-                <button class="btn btn-secondary" onclick="showScreen('welcome')" style="width: auto; background: none; border: none; color: var(--text); padding: 0.5rem;">
-                    ← Назад
+                <button class="header-btn" onclick="showScreen('welcomeScreen')">
+                    ←
                 </button>
                 <div style="flex: 1; text-align: center;">
                     <div>Регистрация</div>
                 </div>
-                <div style="width: 60px;"></div>
+                <div style="width: 44px;"></div>
             </div>
             <div class="form-container">
                 <h2 style="text-align: center;">Создать аккаунт</h2>
@@ -448,13 +453,13 @@
         <!-- Login Screen -->
         <div class="screen" id="login">
             <div class="chat-header">
-                <button class="btn btn-secondary" onclick="showScreen('welcome')" style="width: auto; background: none; border: none; color: var(--text); padding: 0.5rem;">
-                    ← Назад
+                <button class="header-btn" onclick="showScreen('welcomeScreen')">
+                    ←
                 </button>
                 <div style="flex: 1; text-align: center;">
                     <div>Вход</div>
                 </div>
-                <div style="width: 60px;"></div>
+                <div style="width: 44px;"></div>
             </div>
             <div class="form-container">
                 <h2 style="text-align: center;">Вход в аккаунт</h2>
@@ -480,15 +485,18 @@
                     <div id="userName">Пользователь</div>
                     <div style="font-size: 0.8rem; color: var(--text-secondary);">🟢 В сети</div>
                 </div>
-                <button class="settings-btn" onclick="showScreen('settings')" title="Настройки">
+                <button class="header-btn" onclick="showScreen('settings')" title="Настройки">
                     ⚙️
+                </button>
+                <button class="header-btn" onclick="logout()" title="Выйти">
+                    🚪
                 </button>
             </div>
 
             <div class="search-container">
                 <div class="search-box">
                     <input type="text" class="search-input" id="searchInput" placeholder="Поиск пользователей..." onkeypress="handleSearchKeyPress(event)">
-                    <button class="btn btn-primary" onclick="searchUser()" style="width: auto; padding: 0.4rem 0.8rem; font-size: 0.9rem;">
+                    <button class="btn btn-primary" onclick="searchRealUsers()" style="width: auto; padding: 0.4rem 0.8rem; font-size: 0.9rem;">
                         Найти
                     </button>
                 </div>
@@ -505,13 +513,13 @@
         <!-- Settings Screen -->
         <div class="screen" id="settings">
             <div class="chat-header">
-                <button class="btn btn-secondary" onclick="showScreen('chatList')" style="width: auto; background: none; border: none; color: var(--text); padding: 0.5rem;">
-                    ← Назад
+                <button class="header-btn" onclick="showScreen('chatList')">
+                    ←
                 </button>
                 <div style="flex: 1; text-align: center;">
                     <div>Настройки</div>
                 </div>
-                <div style="width: 60px;"></div>
+                <div style="width: 44px;"></div>
             </div>
             <div class="settings-container">
                 <div class="settings-item" onclick="showScreen('chatList')">
@@ -536,13 +544,13 @@
         <!-- Chat Messages Screen -->
         <div class="screen" id="chatMessages">
             <div class="chat-header">
-                <button class="btn btn-secondary" onclick="showScreen('chatList')" style="width: auto; background: none; border: none; color: var(--text); padding: 0.5rem;">
-                    ← Назад
+                <button class="header-btn" onclick="showScreen('chatList')">
+                    ←
                 </button>
                 <div style="flex: 1; text-align: center;">
                     <div id="chatWithUser">Чат</div>
                 </div>
-                <div style="width: 60px;"></div>
+                <div style="width: 44px;"></div>
             </div>
 
             <div class="messages-area" id="messages">
@@ -614,7 +622,7 @@
         let currentUser = null;
         let currentChatWith = null;
 
-        // Навигация
+        // Навигация - ИСПРАВЛЕННАЯ
         function showScreen(screenId) {
             console.log('Переход на экран:', screenId);
             
@@ -625,6 +633,9 @@
             const targetScreen = document.getElementById(screenId);
             if (targetScreen) {
                 targetScreen.classList.add('active');
+            } else {
+                // Если экран не найден, показываем welcome
+                document.getElementById('welcomeScreen').classList.add('active');
             }
         }
 
@@ -648,7 +659,8 @@
                         username: username,
                         password: password,
                         createdAt: Date.now(),
-                        isOnline: true
+                        isOnline: true,
+                        lastSeen: Date.now()
                     }).then(() => {
                         loginUser(username);
                     });
@@ -695,142 +707,210 @@
             document.getElementById('userName').textContent = username;
             document.getElementById('userAvatar').textContent = username.charAt(0).toUpperCase();
             
-            // Загружаем демо чаты
-            loadDemoChats();
+            // Загружаем реальные чаты с Firebase
+            loadRealChats();
             showScreen('chatList');
         }
 
-        // Демо чаты
-        function loadDemoChats() {
+        // Загрузка реальных чатов из Firebase
+        function loadRealChats() {
             const chatsList = document.getElementById('chatsList');
-            const demoChats = [
-                { user: 'Анна', lastMsg: 'Привет! Как дела?' },
-                { user: 'Иван', lastMsg: 'Встречаемся в 18:00' },
-                { user: 'Мария', lastMsg: 'Отправила файл' }
-            ];
+            
+            // Сначала показываем загрузку
+            chatsList.innerHTML = '<div class="chat-item">Поиск пользователей...</div>';
 
-            chatsList.innerHTML = '';
-            demoChats.forEach(chat => {
-                const chatItem = document.createElement('div');
-                chatItem.className = 'chat-item';
-                chatItem.onclick = () => startChat(chat.user);
-                chatItem.innerHTML = `
-                    <div style="font-weight: bold;">${chat.user}</div>
-                    <div style="font-size: 0.8rem; color: var(--text-secondary);">
-                        ${chat.lastMsg}
-                    </div>
-                `;
-                chatsList.appendChild(chatItem);
+            // Получаем всех пользователей из Firebase
+            const usersRef = database.ref('users');
+            usersRef.once('value').then((snapshot) => {
+                const users = [];
+                snapshot.forEach((childSnapshot) => {
+                    const user = childSnapshot.val();
+                    if (user.username !== currentUser) {
+                        users.push(user);
+                    }
+                });
+
+                if (users.length === 0) {
+                    chatsList.innerHTML = '<div class="chat-item" style="text-align: center; opacity: 0.7;">Нет других пользователей</div>';
+                    return;
+                }
+
+                chatsList.innerHTML = '';
+                users.forEach(user => {
+                    const chatItem = document.createElement('div');
+                    chatItem.className = 'chat-item';
+                    chatItem.onclick = () => startChat(user.username);
+                    chatItem.innerHTML = `
+                        <div style="font-weight: bold;">${user.username}</div>
+                        <div style="font-size: 0.8rem; color: var(--text-secondary);">
+                            ${user.isOnline ? '🟢 онлайн' : '⚫ не в сети'}
+                            ${user.lastSeen ? ' • Был(а) ' + formatTime(user.lastSeen) : ''}
+                        </div>
+                    `;
+                    chatsList.appendChild(chatItem);
+                });
             });
         }
 
-        // Поиск пользователей
-        function searchUser() {
+        // Поиск реальных пользователей из Firebase
+        function searchRealUsers() {
             const searchTerm = document.getElementById('searchInput').value.trim();
             const resultsContainer = document.getElementById('searchResults');
             
             if (!searchTerm) {
                 resultsContainer.innerHTML = '';
+                loadRealChats();
                 return;
             }
 
             resultsContainer.innerHTML = '<div style="padding: 0.8rem; color: var(--text-secondary);">Результаты поиска:</div>';
             
-            // Демо результаты поиска
-            const demoResults = [
-                { user: 'Алексей', status: 'online' },
-                { user: 'Ольга', status: 'offline' }
-            ].filter(user => user.user.toLowerCase().includes(searchTerm.toLowerCase()));
-
-            if (demoResults.length === 0) {
-                resultsContainer.innerHTML += '<div class="chat-item">Пользователи не найдены</div>';
-                return;
-            }
-
-            demoResults.forEach(user => {
-                const userDiv = document.createElement('div');
-                userDiv.className = 'chat-item';
-                userDiv.onclick = () => startChat(user.user);
-                userDiv.innerHTML = `
-                    <div style="font-weight: bold;">${user.user}</div>
-                    <div style="font-size: 0.8rem; color: var(--text-secondary);">
-                        ${user.status === 'online' ? '🟢 онлайн' : '⚫ не в сети'}
-                    </div>
-                `;
-                resultsContainer.appendChild(userDiv);
+            const usersRef = database.ref('users');
+            usersRef.orderByChild('username')
+                   .startAt(searchTerm)
+                   .endAt(searchTerm + '\uf8ff')
+                   .once('value')
+                   .then((snapshot) => {
+                let found = false;
+                if (snapshot.exists()) {
+                    snapshot.forEach((childSnapshot) => {
+                        const user = childSnapshot.val();
+                        if (user.username !== currentUser) {
+                            found = true;
+                            const userDiv = document.createElement('div');
+                            userDiv.className = 'chat-item';
+                            userDiv.onclick = () => startChat(user.username);
+                            userDiv.innerHTML = `
+                                <div style="font-weight: bold;">${user.username}</div>
+                                <div style="font-size: 0.8rem; color: var(--text-secondary);">
+                                    ${user.isOnline ? '🟢 онлайн' : '⚫ не в сети'}
+                                </div>
+                            `;
+                            resultsContainer.appendChild(userDiv);
+                        }
+                    });
+                }
+                
+                if (!found) {
+                    resultsContainer.innerHTML += '<div class="chat-item" style="text-align: center; opacity: 0.7;">Пользователи не найдены</div>';
+                }
             });
         }
 
         function handleSearchKeyPress(event) {
             if (event.key === 'Enter') {
-                searchUser();
+                searchRealUsers();
             }
         }
 
-        // Открытие чата
+        // Открытие чата с реальным пользователем
         function startChat(username) {
             currentChatWith = username;
             document.getElementById('chatWithUser').textContent = username;
             document.getElementById('searchInput').value = '';
             document.getElementById('searchResults').innerHTML = '';
             
-            // Загружаем демо сообщения
-            loadDemoMessages();
+            // Загружаем реальные сообщения из Firebase
+            loadRealMessages();
             showScreen('chatMessages');
         }
 
-        function loadDemoMessages() {
+        // Загрузка реальных сообщений из Firebase
+        function loadRealMessages() {
             const messagesContainer = document.getElementById('messages');
-            const demoMessages = [
-                { text: 'Привет!', sender: 'other', time: '12:00' },
-                { text: 'Привет! Как дела?', sender: 'me', time: '12:01' },
-                { text: 'Всё отлично, спасибо!', sender: 'other', time: '12:02' }
-            ];
+            messagesContainer.innerHTML = '<div class="chat-item" style="text-align: center; opacity: 0.7;">Загрузка сообщений...</div>';
 
-            messagesContainer.innerHTML = '';
-            demoMessages.forEach(msg => {
-                const messageDiv = document.createElement('div');
-                messageDiv.className = `message ${msg.sender === 'me' ? 'sent' : ''}`;
-                messageDiv.innerHTML = `
-                    <div>${msg.text}</div>
-                    <div style="font-size: 0.7rem; opacity: 0.7; text-align: ${msg.sender === 'me' ? 'right' : 'left'}; margin-top: 0.3rem;">
-                        ${msg.time}
-                    </div>
-                `;
-                messagesContainer.appendChild(messageDiv);
+            if (!currentUser || !currentChatWith) return;
+
+            const chatId = [currentUser, currentChatWith].sort().join('_');
+            const messagesRef = database.ref('messages/' + chatId);
+
+            messagesRef.orderByChild('timestamp').once('value').then((snapshot) => {
+                messagesContainer.innerHTML = '';
+                
+                if (!snapshot.exists()) {
+                    messagesContainer.innerHTML = '<div class="message" style="text-align: center; opacity: 0.7; align-self: center;">Нет сообщений. Начните общение!</div>';
+                    return;
+                }
+
+                const messages = [];
+                snapshot.forEach((childSnapshot) => {
+                    const message = childSnapshot.val();
+                    messages.push({
+                        ...message,
+                        id: childSnapshot.key
+                    });
+                });
+
+                // Сортируем по времени
+                messages.sort((a, b) => a.timestamp - b.timestamp);
+
+                messages.forEach(msg => {
+                    if (!msg.deleted) {
+                        const messageDiv = document.createElement('div');
+                        messageDiv.className = `message ${msg.sender === currentUser ? 'sent' : ''}`;
+                        
+                        let content = '';
+                        if (msg.type === 'photo') {
+                            content = `<img src="${msg.mediaUrl}" style="max-width: 200px; border-radius: 8px;" alt="Фото">`;
+                        } else if (msg.type === 'video') {
+                            content = `<video controls style="max-width: 200px; border-radius: 8px;"><source src="${msg.mediaUrl}"></video>`;
+                        } else {
+                            content = msg.text;
+                        }
+
+                        messageDiv.innerHTML = `
+                            <div>${content}</div>
+                            <div style="font-size: 0.7rem; opacity: 0.7; text-align: ${msg.sender === currentUser ? 'right' : 'left'}; margin-top: 0.3rem;">
+                                ${formatTime(msg.timestamp)}
+                            </div>
+                        `;
+                        messagesContainer.appendChild(messageDiv);
+                    }
+                });
+                
+                // Прокрутка вниз
+                messagesContainer.scrollTop = messagesContainer.scrollHeight;
             });
-            
-            // Прокрутка вниз
-            messagesContainer.scrollTop = messagesContainer.scrollHeight;
         }
 
-        // Отправка сообщений
+        // Отправка сообщений в Firebase
         function sendMessage() {
             const input = document.getElementById('messageInput');
             const text = input.value.trim();
 
             if (!text || !currentChatWith) return;
 
-            const messagesContainer = document.getElementById('messages');
-            const messageDiv = document.createElement('div');
-            messageDiv.className = 'message sent';
-            messageDiv.innerHTML = `
-                <div>${text}</div>
-                <div style="font-size: 0.7rem; opacity: 0.7; text-align: right; margin-top: 0.3rem;">
-                    сейчас
-                </div>
-            `;
-            messagesContainer.appendChild(messageDiv);
+            const chatId = [currentUser, currentChatWith].sort().join('_');
+            const messagesRef = database.ref('messages/' + chatId);
+
+            const messageData = {
+                sender: currentUser,
+                text: text,
+                timestamp: Date.now(),
+                type: 'text'
+            };
+
+            messagesRef.push(messageData);
             input.value = '';
-            
-            // Прокрутка вниз
-            messagesContainer.scrollTop = messagesContainer.scrollHeight;
         }
 
         function handleKeyPress(event) {
             if (event.key === 'Enter') {
                 sendMessage();
             }
+        }
+
+        // Утилиты
+        function formatTime(timestamp) {
+            const date = new Date(timestamp);
+            const now = new Date();
+            const diff = now - date;
+            
+            if (diff < 60000) return 'только что';
+            if (diff < 3600000) return Math.floor(diff / 60000) + ' мин назад';
+            if (diff < 86400000) return date.toLocaleTimeString('ru-RU', {hour: '2-digit', minute: '2-digit'});
+            return date.toLocaleDateString('ru-RU');
         }
 
         // Настройки
@@ -880,12 +960,12 @@
             
             currentUser = null;
             currentChatWith = null;
-            showScreen('welcome');
+            showScreen('welcomeScreen');
         }
 
         // Демо функции
         function toggleVoiceRecording() {
-            alert('Запись голоса (демо)');
+            alert('Запись голоса (в разработке)');
         }
 
         function openMediaPicker() {
@@ -895,8 +975,27 @@
         document.getElementById('mediaInput').addEventListener('change', function(e) {
             if (e.target.files[0]) {
                 alert('Медиа файл выбран: ' + e.target.files[0].name);
+                // Здесь можно добавить загрузку в Firebase
             }
         });
+
+        // Слушатель для новых сообщений в реальном времени
+        function startMessagesListener() {
+            if (!currentUser || !currentChatWith) return;
+
+            const chatId = [currentUser, currentChatWith].sort().join('_');
+            const messagesRef = database.ref('messages/' + chatId);
+
+            messagesRef.orderByChild('timestamp').on('child_added', (snapshot) => {
+                const message = snapshot.val();
+                if (!message.deleted && message.sender !== currentUser) {
+                    // Обновляем интерфейс при новом сообщении
+                    if (document.getElementById('chatMessages').classList.contains('active')) {
+                        loadRealMessages();
+                    }
+                }
+            });
+        }
 
         // Автозагрузка сохраненного пользователя
         window.addEventListener('load', function() {
