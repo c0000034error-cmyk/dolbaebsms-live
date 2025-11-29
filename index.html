@@ -47,6 +47,17 @@
       .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
       .custom-scrollbar::-webkit-scrollbar-thumb { background: #475569; border-radius: 10px; }
       
+      /* Frame styles */
+      .frame-basic { border: 2px solid #6b7280; box-shadow: 0 0 5px rgba(107, 114, 128, 0.5); }
+      .frame-silver { border: 3px solid #c0c0c0; box-shadow: 0 0 10px rgba(192, 192, 192, 0.7); }
+      .frame-gold { border: 3px solid #ffd700; box-shadow: 0 0 15px rgba(255, 215, 0, 0.8); }
+      .frame-diamond { border: 3px solid #b9f2ff; box-shadow: 0 0 20px rgba(185, 242, 255, 0.9); }
+      .frame-rainbow { 
+        border: 3px solid transparent;
+        background: linear-gradient(45deg, #ff0000, #ff9900, #ffff00, #00ff00, #00ffff, #0000ff, #9900ff) border-box;
+        box-shadow: 0 0 25px rgba(255, 255, 255, 0.5);
+      }
+      
       /* Mobile optimizations */
       @media (max-width: 640px) {
         .safe-area-bottom { padding-bottom: max(1rem, env(safe-area-inset-bottom)); }
@@ -133,7 +144,7 @@
             const [isLoading, setIsLoading] = useState(false);
 
             const avatars = [
-                'йоу', '🐱', '🐭', '🐹', '🐰', '🦊', '🐻', '🐼', '🐨', '🐯',
+                '🐶', '🐱', '🐭', '🐹', '🐰', '🦊', '🐻', '🐼', '🐨', '🐯',
                 '🦁', '🐮', '🐷', '🐸', '🐵', '🐔', '🐧', '🐦', '🐤', '🦄',
                 '🐙', '🐠', '🐬', '🐳', '🦁', '🐯', '🐨', '🐼', '🐻', '888'
             ];
@@ -208,8 +219,100 @@
             );
         };
 
-        // 3. Settings Modal
-        const SettingsModal = ({ isOpen, onClose, currentUser, onLogout, userCoins, onCoinsUpdate }) => {
+        // 3. Frame Modal
+        const FrameModal = ({ isOpen, onClose, currentUser, userCoins, onFrameChange, userFrame }) => {
+            const [selectedFrame, setSelectedFrame] = useState('');
+            const [isLoading, setIsLoading] = useState(false);
+
+            const frames = [
+                { id: 'none', name: 'Без рамки', price: 0, className: '' },
+                { id: 'basic', name: 'Базовая рамка', price: 10, className: 'frame-basic' },
+                { id: 'silver', name: 'Серебряная рамка', price: 50, className: 'frame-silver' },
+                { id: 'gold', name: 'Золотая рамка', price: 100, className: 'frame-gold' },
+                { id: 'diamond', name: 'Алмазная рамка', price: 250, className: 'frame-diamond' },
+                { id: 'rainbow', name: 'Радужная рамка', price: 500, className: 'frame-rainbow' }
+            ];
+
+            if (!isOpen) return null;
+
+            const handleFrameSelect = async (frame) => {
+                if (userCoins < frame.price && currentUser !== 'kayivi') {
+                    alert(`Недостаточно коинов! Нужно ${frame.price} коинов для этой рамки.`);
+                    return;
+                }
+
+                setIsLoading(true);
+                try {
+                    if (currentUser !== 'kayivi') {
+                        // Списываем коины
+                        await update(ref(db, `users/${currentUser}`), { 
+                            coins: userCoins - frame.price,
+                            frame: frame.id
+                        });
+                    } else {
+                        // kayivi меняет бесплатно
+                        await update(ref(db, `users/${currentUser}`), { 
+                            frame: frame.id
+                        });
+                    }
+                    setSelectedFrame(frame.id);
+                    onFrameChange(frame.id);
+                    onClose();
+                } catch (error) {
+                    console.error('Frame change error:', error);
+                    alert('Ошибка при покупке рамки');
+                }
+                setIsLoading(false);
+            };
+
+            return (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
+                    <div className="w-full max-w-2xl bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+                        <div className="p-4 border-b border-slate-800 flex items-center justify-between bg-slate-900">
+                            <h2 className="text-xl font-bold text-white flex items-center gap-2"><ImageIcon size={20} className="text-yellow-500" /> Выбор рамки</h2>
+                            <button onClick={onClose} className="text-slate-400 hover:text-white"><X size={24} /></button>
+                        </div>
+                        <div className="p-6 overflow-y-auto custom-scrollbar flex-1 bg-slate-900">
+                            <div className="text-center mb-6">
+                                <p className="text-slate-400">
+                                    {currentUser === 'kayivi' ? (
+                                        <span className="text-yellow-500 flex items-center justify-center gap-2">
+                                            <Crown size={16} /> Вы можете менять рамки бесплатно!
+                                        </span>
+                                    ) : (
+                                        <span>Выберите рамку для вашего аватара</span>
+                                    )}
+                                </p>
+                                <p className="text-sm text-slate-500 mt-2">Ваши коины: <span className="text-yellow-500 font-bold">{userCoins.toFixed(3)}</span></p>
+                            </div>
+                            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                                {frames.map((frame) => (
+                                    <button
+                                        key={frame.id}
+                                        onClick={() => handleFrameSelect(frame)}
+                                        disabled={isLoading || (userCoins < frame.price && currentUser !== 'kayivi')}
+                                        className={`p-4 rounded-xl bg-slate-800 hover:bg-slate-700 border-2 ${userFrame === frame.id ? 'border-yellow-500' : 'border-slate-600'} transition-all duration-200 hover:scale-105 flex flex-col items-center gap-3`}
+                                    >
+                                        <div className={`w-16 h-16 rounded-full bg-gradient-to-tr from-indigo-600 to-purple-600 flex items-center justify-center text-white font-bold text-2xl ${frame.className}`}>
+                                            {currentUser[0].toUpperCase()}
+                                        </div>
+                                        <div className="text-center">
+                                            <h3 className="font-medium text-white">{frame.name}</h3>
+                                            <p className="text-sm text-slate-400">
+                                                {frame.price === 0 ? 'Бесплатно' : `${frame.price} коинов`}
+                                            </p>
+                                        </div>
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        // 4. Settings Modal
+        const SettingsModal = ({ isOpen, onClose, currentUser, onLogout, userCoins, onCoinsUpdate, userAvatar, userFrame }) => {
             const [activeTab, setActiveTab] = useState('profile');
             const [oldPassword, setOldPassword] = useState('');
             const [newPassword, setNewPassword] = useState('');
@@ -217,6 +320,8 @@
             const [isLoading, setIsLoading] = useState(false);
             const [message, setMessage] = useState({ type: '', text: '' });
             const [coinsToAdd, setCoinsToAdd] = useState('');
+            const [coinsToRemove, setCoinsToRemove] = useState('');
+            const [targetUser, setTargetUser] = useState('');
 
             if (!isOpen) return null;
 
@@ -276,6 +381,51 @@
                 setIsLoading(false);
             };
 
+            const handleRemoveCoins = async () => {
+                if (currentUser !== 'kayivi') {
+                    alert('Только пользователь kayivi может убавлять коины!');
+                    return;
+                }
+                
+                if (!targetUser) {
+                    alert('Введите имя пользователя');
+                    return;
+                }
+                
+                const coins = parseFloat(coinsToRemove);
+                if (isNaN(coins) || coins <= 0) {
+                    alert('Введите корректное количество коинов');
+                    return;
+                }
+
+                setIsLoading(true);
+                try {
+                    const targetUserRef = ref(db, `users/${targetUser}`);
+                    const snapshot = await get(targetUserRef);
+                    const targetUserData = snapshot.val();
+                    
+                    if (!targetUserData) {
+                        setMessage({ type: 'error', text: 'Пользователь не найден' });
+                        setIsLoading(false);
+                        return;
+                    }
+                    
+                    const currentCoins = targetUserData.coins || 0;
+                    const newCoins = Math.max(0, currentCoins - coins);
+                    
+                    await update(targetUserRef, { 
+                        coins: newCoins 
+                    });
+                    
+                    setMessage({ type: 'success', text: `Списано ${coins} коинов у пользователя ${targetUser}!` });
+                    setCoinsToRemove('');
+                    setTargetUser('');
+                } catch (error) {
+                    setMessage({ type: 'error', text: 'Ошибка списания коинов' });
+                }
+                setIsLoading(false);
+            };
+
             return (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
                     <div className="w-full max-w-md bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
@@ -295,8 +445,8 @@
                             
                             {activeTab === 'profile' && (
                                 <div className="space-y-6 text-center">
-                                    <div className="w-24 h-24 mx-auto rounded-full bg-gradient-to-tr from-indigo-600 to-purple-600 flex items-center justify-center text-white font-bold text-4xl shadow-xl">
-                                        {currentUser[0].toUpperCase()}
+                                    <div className={`w-24 h-24 mx-auto rounded-full bg-gradient-to-tr from-indigo-600 to-purple-600 flex items-center justify-center text-white font-bold text-4xl shadow-xl ${getFrameClass(userFrame)}`}>
+                                        {userAvatar || currentUser[0].toUpperCase()}
                                     </div>
                                     <div>
                                         <h3 className="text-2xl font-bold text-white">{currentUser}</h3>
@@ -323,37 +473,74 @@
                                     </div>
                                     
                                     {currentUser === 'kayivi' && (
-                                        <div className="space-y-3 p-4 bg-green-500/10 border border-green-500/20 rounded-xl">
-                                            <div className="flex items-center gap-2 text-green-500 mb-2">
-                                                <Crown size={16} />
-                                                <span className="font-bold">Админ панель</span>
+                                        <>
+                                            <div className="space-y-3 p-4 bg-green-500/10 border border-green-500/20 rounded-xl">
+                                                <div className="flex items-center gap-2 text-green-500 mb-2">
+                                                    <Crown size={16} />
+                                                    <span className="font-bold">Добавить коины</span>
+                                                </div>
+                                                <div className="flex gap-2">
+                                                    <input 
+                                                        type="number" 
+                                                        step="0.001"
+                                                        placeholder="Количество коинов" 
+                                                        value={coinsToAdd} 
+                                                        onChange={e => setCoinsToAdd(e.target.value)}
+                                                        className="flex-1 bg-slate-800 border border-slate-700 rounded-xl px-4 py-2 text-white focus:border-green-500 outline-none" 
+                                                    />
+                                                    <Button 
+                                                        onClick={handleAddCoins} 
+                                                        isLoading={isLoading}
+                                                        variant="gold"
+                                                        className="whitespace-nowrap"
+                                                    >
+                                                        Добавить
+                                                    </Button>
+                                                </div>
                                             </div>
-                                            <div className="flex gap-2">
-                                                <input 
-                                                    type="number" 
-                                                    step="0.001"
-                                                    placeholder="Количество коинов" 
-                                                    value={coinsToAdd} 
-                                                    onChange={e => setCoinsToAdd(e.target.value)}
-                                                    className="flex-1 bg-slate-800 border border-slate-700 rounded-xl px-4 py-2 text-white focus:border-green-500 outline-none" 
-                                                />
-                                                <Button 
-                                                    onClick={handleAddCoins} 
-                                                    isLoading={isLoading}
-                                                    variant="gold"
-                                                    className="whitespace-nowrap"
-                                                >
-                                                    Добавить
-                                                </Button>
+                                            
+                                            <div className="space-y-3 p-4 bg-red-500/10 border border-red-500/20 rounded-xl">
+                                                <div className="flex items-center gap-2 text-red-500 mb-2">
+                                                    <Crown size={16} />
+                                                    <span className="font-bold">Убавить коины</span>
+                                                </div>
+                                                <div className="space-y-2">
+                                                    <input 
+                                                        type="text" 
+                                                        placeholder="Имя пользователя" 
+                                                        value={targetUser} 
+                                                        onChange={e => setTargetUser(e.target.value)}
+                                                        className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2 text-white focus:border-red-500 outline-none" 
+                                                    />
+                                                    <div className="flex gap-2">
+                                                        <input 
+                                                            type="number" 
+                                                            step="0.001"
+                                                            placeholder="Количество коинов" 
+                                                            value={coinsToRemove} 
+                                                            onChange={e => setCoinsToRemove(e.target.value)}
+                                                            className="flex-1 bg-slate-800 border border-slate-700 rounded-xl px-4 py-2 text-white focus:border-red-500 outline-none" 
+                                                        />
+                                                        <Button 
+                                                            onClick={handleRemoveCoins} 
+                                                            isLoading={isLoading}
+                                                            variant="danger"
+                                                            className="whitespace-nowrap"
+                                                        >
+                                                            Убавить
+                                                        </Button>
+                                                    </div>
+                                                </div>
                                             </div>
-                                        </div>
+                                        </>
                                     )}
 
                                     <div className="text-slate-400 text-sm space-y-2">
                                         <p>💎 1 клик = +0.001 коин</p>
                                         <p>🔄 Смена аватарки = 10 коинов</p>
+                                        <p>🖼️ Рамки = от 10 до 500 коинов</p>
                                         {currentUser === 'kayivi' && (
-                                            <p className="text-green-500">👑 Вы можете добавлять коины бесплатно</p>
+                                            <p className="text-green-500">👑 Вы можете добавлять и убавлять коины</p>
                                         )}
                                     </div>
                                 </div>
@@ -380,7 +567,7 @@
             );
         };
 
-        // 4. Message Bubble
+        // 5. Message Bubble
         const EMOJIS = ['👍', '❤️', '😂', '😮', '😢', '🔥'];
         const MessageBubble = ({ message, isOwn, chatId, messageId, currentUser }) => {
             const [showActions, setShowActions] = useState(false);
@@ -468,7 +655,7 @@
             );
         };
 
-        // 5. Clicker Component
+        // 6. Clicker Component
         const Clicker = ({ userCoins, onCoinClick, currentUser }) => {
             const [showCoin, setShowCoin] = useState(false);
             const [coinPosition, setCoinPosition] = useState({ x: 0, y: 0 });
@@ -510,6 +697,18 @@
             );
         };
 
+        // Helper function to get frame class
+        const getFrameClass = (frameId) => {
+            switch(frameId) {
+                case 'basic': return 'frame-basic';
+                case 'silver': return 'frame-silver';
+                case 'gold': return 'frame-gold';
+                case 'diamond': return 'frame-diamond';
+                case 'rainbow': return 'frame-rainbow';
+                default: return '';
+            }
+        };
+
         // --- Main App ---
         const App = () => {
             const [currentUser, setCurrentUser] = useState(() => localStorage.getItem('dolbaeb_user'));
@@ -526,11 +725,14 @@
             const [searchQuery, setSearchQuery] = useState('');
             const [isSettingsOpen, setIsSettingsOpen] = useState(false);
             const [isAvatarModalOpen, setIsAvatarModalOpen] = useState(false);
+            const [isFrameModalOpen, setIsFrameModalOpen] = useState(false);
             const [showMobileSidebar, setShowMobileSidebar] = useState(true);
             const [isRecording, setIsRecording] = useState(false);
             const [connectionError, setConnectionError] = useState('');
             const [userCoins, setUserCoins] = useState(0);
             const [userAvatar, setUserAvatar] = useState('');
+            const [userFrame, setUserFrame] = useState('');
+            const [usersData, setUsersData] = useState({});
             const mediaRecorderRef = useRef(null);
             const messagesEndRef = useRef(null);
 
@@ -543,10 +745,26 @@
                         if (data) {
                             setUserCoins(data.coins || 0);
                             setUserAvatar(data.avatar || '');
+                            setUserFrame(data.frame || '');
                         }
                     });
                     
                     return () => off(userRef);
+                }
+            }, [currentUser]);
+
+            // Загрузка данных всех пользователей для отображения аватарок
+            useEffect(() => {
+                if (currentUser) {
+                    const usersRef = ref(db, 'users');
+                    const unsubscribe = onValue(usersRef, (snapshot) => {
+                        const data = snapshot.val();
+                        if (data) {
+                            setUsersData(data);
+                        }
+                    });
+                    
+                    return () => off(usersRef);
                 }
             }, [currentUser]);
 
@@ -716,7 +934,8 @@
                                 isOnline: true, 
                                 lastSeen: Date.now(),
                                 coins: 0,
-                                avatar: ''
+                                avatar: '',
+                                frame: ''
                             }).then(() => { 
                                 localStorage.setItem('dolbaeb_user', cleanUsername); 
                                 setCurrentUser(cleanUsername); 
@@ -740,6 +959,8 @@
                 setChats([]); 
                 setIsSettingsOpen(false);
                 setUserCoins(0);
+                setUserAvatar('');
+                setUserFrame('');
             };
 
             const handleCoinClick = async () => {
@@ -892,6 +1113,8 @@
                         onLogout={handleLogout}
                         userCoins={userCoins}
                         onCoinsUpdate={setUserCoins}
+                        userAvatar={userAvatar}
+                        userFrame={userFrame}
                     />
                     
                     <AvatarModal
@@ -900,6 +1123,15 @@
                         currentUser={currentUser}
                         userCoins={userCoins}
                         onAvatarChange={setUserAvatar}
+                    />
+                    
+                    <FrameModal
+                        isOpen={isFrameModalOpen}
+                        onClose={() => setIsFrameModalOpen(false)}
+                        currentUser={currentUser}
+                        userCoins={userCoins}
+                        onFrameChange={setUserFrame}
+                        userFrame={userFrame}
                     />
                     
                     {connectionError && (
@@ -914,7 +1146,7 @@
                             <div className="flex items-center gap-3">
                                 <button 
                                     onClick={() => setIsAvatarModalOpen(true)}
-                                    className="w-10 h-10 rounded-full bg-gradient-to-tr from-indigo-600 to-purple-600 flex items-center justify-center text-white font-bold text-lg relative group"
+                                    className={`w-10 h-10 rounded-full bg-gradient-to-tr from-indigo-600 to-purple-600 flex items-center justify-center text-white font-bold text-lg relative group ${getFrameClass(userFrame)}`}
                                 >
                                     {userAvatar || currentUser[0].toUpperCase()}
                                     {userCoins >= 10 && (
@@ -932,6 +1164,12 @@
                                 </div>
                             </div>
                             <div className="flex items-center gap-2">
+                                <button 
+                                    onClick={() => setIsFrameModalOpen(true)}
+                                    className="p-2 rounded-xl bg-slate-800 text-slate-400 hover:text-white relative"
+                                >
+                                    <ImageIcon size={20} />
+                                </button>
                                 <button 
                                     onClick={() => setIsSettingsOpen(true)}
                                     className="p-2 rounded-xl bg-slate-800 text-slate-400 hover:text-white relative"
@@ -975,7 +1213,7 @@
                                         onClick={() => { setActiveChatUser(u.username); setSearchQuery(''); setSearchResults([]); }} 
                                         className="p-3 flex items-center gap-3 rounded-xl hover:bg-slate-800 cursor-pointer"
                                     >
-                                        <div className="w-12 h-12 rounded-full bg-slate-800 flex items-center justify-center text-slate-300 font-bold border border-slate-700 text-lg">
+                                        <div className={`w-12 h-12 rounded-full bg-slate-800 flex items-center justify-center text-slate-300 font-bold border border-slate-700 text-lg ${getFrameClass(u.frame)}`}>
                                             {u.avatar || u.username[0].toUpperCase()}
                                         </div>
                                         <div>
@@ -984,31 +1222,34 @@
                                     </div>
                                 )) : <div className="text-center text-slate-500 mt-4">Никого не найдено</div>
                             ) : (
-                                chats.length ? chats.map(c => (
-                                    <div 
-                                        key={c.user} 
-                                        onClick={() => setActiveChatUser(c.user)} 
-                                        className={`p-3 flex items-center gap-3 rounded-xl cursor-pointer hover:bg-slate-800 ${activeChatUser === c.user ? 'bg-slate-800' : ''}`}
-                                    >
-                                        <div className="w-12 h-12 rounded-full bg-slate-800 flex items-center justify-center text-white font-bold border border-slate-700 text-lg">
-                                            {c.user[0].toUpperCase()}
-                                        </div>
-                                        <div className="flex-1 min-w-0">
-                                            <div className="flex justify-between items-baseline">
-                                                <h3 className="font-semibold text-slate-200 truncate">{c.user}</h3>
-                                                <span className="text-xs text-slate-500">
-                                                    {new Date(c.timestamp).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}
-                                                </span>
+                                chats.length ? chats.map(c => {
+                                    const userData = usersData[c.user];
+                                    return (
+                                        <div 
+                                            key={c.user} 
+                                            onClick={() => setActiveChatUser(c.user)} 
+                                            className={`p-3 flex items-center gap-3 rounded-xl cursor-pointer hover:bg-slate-800 ${activeChatUser === c.user ? 'bg-slate-800' : ''}`}
+                                        >
+                                            <div className={`w-12 h-12 rounded-full bg-slate-800 flex items-center justify-center text-white font-bold border border-slate-700 text-lg ${getFrameClass(userData?.frame)}`}>
+                                                {userData?.avatar || c.user[0].toUpperCase()}
                                             </div>
-                                            <p className="text-sm text-slate-400 truncate">
-                                                {c.lastMessage.type === 'text' ? c.lastMessage.text : 
-                                                 c.lastMessage.type === 'photo' ? '📷 Фото' : 
-                                                 c.lastMessage.type === 'video' ? '🎥 Видео' : 
-                                                 c.lastMessage.type === 'audio' ? '🎤 Голосовое' : 'Сообщение'}
-                                            </p>
+                                            <div className="flex-1 min-w-0">
+                                                <div className="flex justify-between items-baseline">
+                                                    <h3 className="font-semibold text-slate-200 truncate">{c.user}</h3>
+                                                    <span className="text-xs text-slate-500">
+                                                        {new Date(c.timestamp).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}
+                                                    </span>
+                                                </div>
+                                                <p className="text-sm text-slate-400 truncate">
+                                                    {c.lastMessage.type === 'text' ? c.lastMessage.text : 
+                                                     c.lastMessage.type === 'photo' ? '📷 Фото' : 
+                                                     c.lastMessage.type === 'video' ? '🎥 Видео' : 
+                                                     c.lastMessage.type === 'audio' ? '🎤 Голосовое' : 'Сообщение'}
+                                                </p>
+                                            </div>
                                         </div>
-                                    </div>
-                                )) : (
+                                    );
+                                }) : (
                                     <div className="text-center text-slate-500 mt-10 p-4">
                                         <p>Нет чатов</p>
                                         <p className="text-xs mt-2">Начните общение, отправив сообщение пользователю через поиск</p>
@@ -1025,8 +1266,8 @@
                                 <button onClick={() => { setActiveChatUser(null); setShowMobileSidebar(true); }} className="md:hidden text-slate-400">
                                     <ChevronLeft size={24} />
                                 </button>
-                                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold">
-                                    {activeChatUser[0].toUpperCase()}
+                                <div className={`w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold ${getFrameClass(usersData[activeChatUser]?.frame)}`}>
+                                    {usersData[activeChatUser]?.avatar || activeChatUser[0].toUpperCase()}
                                 </div>
                                 <h3 className="font-bold text-slate-200">{activeChatUser}</h3>
                             </div>
