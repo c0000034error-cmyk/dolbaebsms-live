@@ -36,7 +36,7 @@
 
     <!-- Styles -->
     <style>
-      body { background-color: #0f172a; color: #e2e8f0; }
+      body { background-color: #0f172a; color: #e2e8f0; overscroll-behavior-y: none; }
       ::-webkit-scrollbar { width: 6px; height: 6px; }
       ::-webkit-scrollbar-track { background: transparent; }
       ::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
@@ -44,9 +44,17 @@
       .custom-scrollbar::-webkit-scrollbar { width: 5px; }
       .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
       .custom-scrollbar::-webkit-scrollbar-thumb { background: #475569; border-radius: 10px; }
+      
+      /* Mobile optimizations */
+      @media (max-width: 640px) {
+        .safe-area-bottom { padding-bottom: max(1rem, env(safe-area-inset-bottom)); }
+        /* Hide scrollbar on mobile for cleaner look */
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+      }
     </style>
 
-    <!-- Import Map (FIXED: Removed conflicting React 19 imports) -->
+    <!-- Import Map - FIXED: Removed conflicting React versions -->
     <script type="importmap">
 {
   "imports": {
@@ -55,14 +63,10 @@
     "lucide-react": "https://esm.sh/lucide-react@0.263.1?deps=react@18.2.0",
     "date-fns": "https://esm.sh/date-fns@2.30.0",
     "firebase/app": "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js",
-    "firebase/database": "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js",
-    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
-    "react/": "https://aistudiocdn.com/react@^19.2.0/",
-    "firebase/": "https://aistudiocdn.com/firebase@^12.6.0/"
+    "firebase/database": "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js"
   }
 }
 </script>
-<link rel="stylesheet" href="/index.css">
 </head>
 <body>
     <div id="root"></div>
@@ -70,7 +74,7 @@
     <script type="text/babel" data-type="module">
         import React, { useState, useEffect, useRef } from 'react';
         import { createRoot } from 'react-dom/client';
-        import { Search, Send, Image as ImageIcon, Mic, X, ChevronLeft, Video, Settings as SettingsIcon, Menu, Trash2, Smile, MoreVertical, Lock, LogOut, User as UserIcon } from 'lucide-react';
+        import { Search, Send, Image as ImageIcon, Mic, X, ChevronLeft, Video, Settings as SettingsIcon, Menu, Trash2, Smile, MoreVertical, Lock, LogOut, User as UserIcon, Loader2 } from 'lucide-react';
         import { format } from 'date-fns';
         import { initializeApp } from 'firebase/app';
         import { getDatabase, ref, onValue, set, update, push, off, query, orderByChild, startAt, endAt, remove, get } from 'firebase/database';
@@ -104,10 +108,7 @@
             return (
                 <button className={`${baseStyles} ${variants[variant]} ${className}`} disabled={isLoading || props.disabled} {...props}>
                     {isLoading ? (
-                        <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
-                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                        </svg>
+                        <Loader2 className="animate-spin h-5 w-5" />
                     ) : (<>{icon && <span className="text-lg">{icon}</span>}{children}</>)}
                 </button>
             );
@@ -287,6 +288,7 @@
             const [passwordInput, setPasswordInput] = useState('');
             const [authError, setAuthError] = useState('');
             const [chats, setChats] = useState([]);
+            const [areChatsLoading, setAreChatsLoading] = useState(false);
             const [activeChatUser, setActiveChatUser] = useState(null);
             const [messages, setMessages] = useState([]);
             const [messageInput, setMessageInput] = useState('');
@@ -300,27 +302,53 @@
 
             useEffect(() => {
                 if (currentUser) {
+                    setAreChatsLoading(true);
                     const userRef = ref(db, `users/${currentUser}`);
                     update(userRef, { isOnline: true, lastSeen: Date.now() });
+                    
                     const messagesRef = ref(db, 'messages');
                     const unsubscribe = onValue(messagesRef, (snapshot) => {
+                        setAreChatsLoading(false);
                         const data = snapshot.val();
-                        if (!data) { setChats([]); return; }
+                        if (!data) { 
+                            setChats([]); 
+                            return; 
+                        }
+                        
                         const newChats = new Map();
-                        Object.entries(data).forEach(([chatId, msgs]) => {
-                            let otherUser = null;
-                            if (chatId === `${currentUser}_${currentUser}`) otherUser = currentUser;
-                            else if (chatId.startsWith(`${currentUser}_`)) otherUser = chatId.substring(currentUser.length + 1);
-                            else if (chatId.endsWith(`_${currentUser}`)) otherUser = chatId.substring(0, chatId.length - currentUser.length - 1);
-                            
-                            if (otherUser) {
-                                const msgList = Object.values(msgs).filter(m => !m.deleted).sort((a, b) => b.timestamp - a.timestamp);
-                                if (msgList.length > 0) newChats.set(otherUser, { user: otherUser, lastMessage: msgList[0], timestamp: msgList[0].timestamp });
+                        
+                        // Перебираем все чаты
+                        Object.entries(data).forEach(([chatId, chatMessages]) => {
+                            // Проверяем, относится ли чат к текущему пользователю
+                            const usersInChat = chatId.split('_');
+                            if (usersInChat.includes(currentUser)) {
+                                // Находим собеседника
+                                const otherUser = usersInChat.find(user => user !== currentUser) || currentUser;
+                                
+                                if (chatMessages) {
+                                    // Получаем все сообщения и фильтруем удаленные
+                                    const msgList = Object.values(chatMessages)
+                                        .filter(m => m && !m.deleted)
+                                        .sort((a, b) => b.timestamp - a.timestamp);
+                                    
+                                    if (msgList.length > 0) {
+                                        newChats.set(otherUser, { 
+                                            user: otherUser, 
+                                            lastMessage: msgList[0], 
+                                            timestamp: msgList[0].timestamp 
+                                        });
+                                    }
+                                }
                             }
                         });
+                        
                         setChats(Array.from(newChats.values()).sort((a, b) => b.timestamp - a.timestamp));
                     });
-                    return () => { off(messagesRef); update(userRef, { isOnline: false }).catch(()=>{}); };
+                    
+                    return () => { 
+                        off(messagesRef); 
+                        update(userRef, { isOnline: false }).catch(()=>{}); 
+                    };
                 }
             }, [currentUser]);
 
@@ -366,14 +394,30 @@
 
             const handleSendMessage = async (type = 'text', content = messageInput) => {
                 if ((!content.trim() && type === 'text') || !currentUser || !activeChatUser) return;
+                
                 const chatId = [currentUser, activeChatUser].sort().join('_');
+                console.log('Sending to chat:', chatId);
+                
                 try {
-                    await push(ref(db, `messages/${chatId}`), {
-                        sender: currentUser, text: type === 'text' ? content : '', timestamp: Date.now(),
-                        type, mediaUrl: type !== 'text' ? content : undefined, deleted: false
+                    const messageRef = push(ref(db, `messages/${chatId}`));
+                    await set(messageRef, {
+                        sender: currentUser, 
+                        text: type === 'text' ? content : '', 
+                        timestamp: Date.now(),
+                        type, 
+                        mediaUrl: type !== 'text' ? content : undefined, 
+                        deleted: false
                     });
+                    
                     if (type === 'text') setMessageInput('');
-                } catch (e) { alert("Ошибка отправки. Возможно файл слишком большой."); }
+                } catch (e) { 
+                    console.error("Send error:", e);
+                    if (type === 'text') {
+                        alert("Ошибка отправки текста. Проверьте соединение.");
+                    } else {
+                        alert("Ошибка отправки файла. Возможно файл слишком большой (лимит 8MB).");
+                    }
+                }
             };
 
             const handleSearch = (term) => {
@@ -388,7 +432,8 @@
 
             const handleFileUpload = (e, type) => {
                 const file = e.target.files?.[0];
-                if (!file || file.size > 4 * 1024 * 1024) { alert('Максимум 4MB'); return; }
+                // Limit set to 8MB
+                if (!file || file.size > 8 * 1024 * 1024) { alert('Файл слишком большой. Максимум 8MB'); return; }
                 const reader = new FileReader();
                 reader.onload = (ev) => handleSendMessage(type, ev.target.result);
                 reader.readAsDataURL(file); e.target.value = '';
@@ -453,7 +498,12 @@
                         </div>
                         <div className="p-4"><div className="relative"><Search className="absolute left-3 top-3 text-slate-500" size={18} /><input type="text" placeholder="Поиск..." className="w-full bg-slate-800 border border-slate-700 rounded-xl py-2.5 pl-10 text-slate-200 outline-none focus:border-indigo-500" value={searchQuery} onChange={e => handleSearch(e.target.value)} /></div></div>
                         <div className="flex-1 overflow-y-auto px-2">
-                            {searchQuery ? (
+                            {areChatsLoading ? (
+                                <div className="flex flex-col items-center justify-center mt-10 text-slate-500 gap-2">
+                                    <Loader2 className="animate-spin text-indigo-500" size={24} />
+                                    <p className="text-sm">Загрузка чатов...</p>
+                                </div>
+                            ) : searchQuery ? (
                                 searchResults.length ? searchResults.map(u => (
                                     <div key={u.username} onClick={() => { setActiveChatUser(u.username); setSearchQuery(''); setSearchResults([]); }} className="p-3 flex items-center gap-3 rounded-xl hover:bg-slate-800 cursor-pointer">
                                         <div className="w-12 h-12 rounded-full bg-slate-800 flex items-center justify-center text-slate-300 font-bold border border-slate-700">{u.username[0].toUpperCase()}</div>
@@ -465,11 +515,24 @@
                                     <div key={c.user} onClick={() => setActiveChatUser(c.user)} className={`p-3 flex items-center gap-3 rounded-xl cursor-pointer hover:bg-slate-800 ${activeChatUser === c.user ? 'bg-slate-800' : ''}`}>
                                         <div className="w-12 h-12 rounded-full bg-slate-800 flex items-center justify-center text-white font-bold border border-slate-700">{c.user[0].toUpperCase()}</div>
                                         <div className="flex-1 min-w-0">
-                                            <div className="flex justify-between items-baseline"><h3 className="font-semibold text-slate-200 truncate">{c.user}</h3><span className="text-xs text-slate-500">{new Date(c.timestamp).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</span></div>
-                                            <p className="text-sm text-slate-400 truncate">{c.lastMessage.type === 'text' ? c.lastMessage.text : <span className="text-indigo-400">{c.lastMessage.type === 'photo' ? 'Фото' : c.lastMessage.type === 'video' ? 'Видео' : 'Голосовое'}</span>}</p>
+                                            <div className="flex justify-between items-baseline">
+                                                <h3 className="font-semibold text-slate-200 truncate">{c.user}</h3>
+                                                <span className="text-xs text-slate-500">{new Date(c.timestamp).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</span>
+                                            </div>
+                                            <p className="text-sm text-slate-400 truncate">
+                                                {c.lastMessage.type === 'text' ? c.lastMessage.text : 
+                                                 c.lastMessage.type === 'photo' ? '📷 Фото' : 
+                                                 c.lastMessage.type === 'video' ? '🎥 Видео' : 
+                                                 c.lastMessage.type === 'audio' ? '🎤 Голосовое' : 'Сообщение'}
+                                            </p>
                                         </div>
                                     </div>
-                                )) : <div className="text-center text-slate-500 mt-10">Нет чатов</div>
+                                )) : (
+                                    <div className="text-center text-slate-500 mt-10 p-4">
+                                        <p>Нет чатов</p>
+                                        <p className="text-xs mt-2">Начните общение, отправив сообщение пользователю через поиск</p>
+                                    </div>
+                                )
                             )}
                         </div>
                     </div>
@@ -486,15 +549,17 @@
                                 {messages.filter(m => !m.deleted).map(msg => <MessageBubble key={msg.id} message={msg} isOwn={msg.sender === currentUser} chatId={[currentUser, activeChatUser].sort().join('_')} messageId={msg.id} currentUser={currentUser} />)}
                                 <div ref={messagesEndRef} />
                             </div>
-                            <div className="p-3 bg-slate-900 border-t border-slate-800">
+                            <div className="p-3 bg-slate-900 border-t border-slate-800 safe-area-bottom">
                                 <div className="flex items-end gap-2 max-w-4xl mx-auto">
-                                    <div className="flex gap-1 bg-slate-800 p-1 rounded-xl">
+                                    <div className="flex gap-1 bg-slate-800 p-1 rounded-xl shrink-0">
                                         <label className="p-2 text-slate-400 hover:text-indigo-400 cursor-pointer"><ImageIcon size={20} /><input type="file" className="hidden" accept="image/*" onChange={e => handleFileUpload(e, 'photo')} /></label>
                                         <label className="p-2 text-slate-400 hover:text-indigo-400 cursor-pointer"><Video size={20} /><input type="file" className="hidden" accept="video/*" onChange={e => handleFileUpload(e, 'video')} /></label>
                                         <button onClick={toggleRecording} className={`p-2 rounded-lg ${isRecording ? 'text-red-500 animate-pulse' : 'text-slate-400 hover:text-indigo-400'}`}>{isRecording ? <div className="w-5 h-5 bg-red-500 rounded-sm" /> : <Mic size={20} />}</button>
                                     </div>
-                                    <textarea value={messageInput} onChange={e => setMessageInput(e.target.value)} onKeyPress={e => { if(e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSendMessage('text'); }}} placeholder={isRecording ? "Запись..." : "Сообщение..."} className="flex-1 bg-slate-800 text-white px-4 py-3 rounded-2xl border border-slate-700 outline-none resize-none h-[50px] custom-scrollbar" />
-                                    <button onClick={() => handleSendMessage('text')} disabled={!messageInput.trim() && !isRecording} className="p-3 bg-indigo-600 text-white rounded-xl hover:bg-indigo-500 shadow-lg shadow-indigo-600/20"><Send size={20} /></button>
+                                    <div className="flex-1 min-w-0 bg-slate-800 rounded-2xl border border-slate-700">
+                                        <textarea value={messageInput} onChange={e => setMessageInput(e.target.value)} onKeyPress={e => { if(e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSendMessage('text'); }}} placeholder={isRecording ? "Запись..." : "Сообщение..."} className="w-full bg-transparent text-white px-4 py-3 outline-none resize-none h-[50px] custom-scrollbar" />
+                                    </div>
+                                    <button onClick={() => handleSendMessage('text')} disabled={!messageInput.trim() && !isRecording} className="p-3 bg-indigo-600 text-white rounded-xl hover:bg-indigo-500 shadow-lg shadow-indigo-600/20 shrink-0"><Send size={20} /></button>
                                 </div>
                             </div>
                         </div>
@@ -511,6 +576,5 @@
         const root = createRoot(document.getElementById('root'));
         root.render(<App />);
     </script>
-<script type="module" src="/index.tsx"></script>
 </body>
 </html>
