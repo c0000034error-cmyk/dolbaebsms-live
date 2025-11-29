@@ -34,12 +34,22 @@
             to { opacity: 1; transform: translateY(0); }
         }
 
-        @keyframes slideIn {
+        @keyframes slideInRight {
             from { transform: translateX(100%); opacity: 0; }
             to { transform: translateX(0); opacity: 1; }
         }
 
-        @keyframes slideOut {
+        @keyframes slideInLeft {
+            from { transform: translateX(-100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        @keyframes slideOutRight {
+            from { transform: translateX(0); opacity: 1; }
+            to { transform: translateX(100%); opacity: 0; }
+        }
+
+        @keyframes slideOutLeft {
             from { transform: translateX(0); opacity: 1; }
             to { transform: translateX(-100%); opacity: 0; }
         }
@@ -109,11 +119,6 @@
 
         .screen.active {
             display: flex;
-            animation: slideIn 0.3s ease-out;
-        }
-
-        .screen.exiting {
-            animation: slideOut 0.3s ease-out;
         }
 
         /* Welcome Screen */
@@ -495,10 +500,10 @@
             </div>
             <div class="title">dolbaebsms</div>
             <div class="auth-buttons">
-                <button class="btn btn-primary" onclick="navigateTo('register')">
+                <button class="btn btn-primary" onclick="showScreen('register')">
                     Создать аккаунт
                 </button>
-                <button class="btn btn-secondary" onclick="navigateTo('login')">
+                <button class="btn btn-secondary" onclick="showScreen('login')">
                     Войти
                 </button>
             </div>
@@ -507,7 +512,7 @@
         <!-- Register Screen -->
         <div class="screen" id="register">
             <div class="chat-header">
-                <button class="btn btn-secondary" onclick="navigateTo('welcome')" style="width: auto;">
+                <button class="btn btn-secondary" onclick="showScreen('welcome')" style="width: auto;">
                     ← Назад
                 </button>
             </div>
@@ -528,7 +533,7 @@
         <!-- Login Screen -->
         <div class="screen" id="login">
             <div class="chat-header">
-                <button class="btn btn-secondary" onclick="navigateTo('welcome')" style="width: auto;">
+                <button class="btn btn-secondary" onclick="showScreen('welcome')" style="width: auto;">
                     ← Назад
                 </button>
             </div>
@@ -579,7 +584,7 @@
         <!-- Chat Messages Screen -->
         <div class="screen" id="chatMessages">
             <div class="chat-header">
-                <button class="btn btn-secondary" onclick="navigateTo('chatList')" style="width: auto;">
+                <button class="btn btn-secondary" onclick="showScreen('chatList')" style="width: auto;">
                     ← Назад
                 </button>
                 <div style="flex: 1; text-align: center;">
@@ -648,30 +653,23 @@
         let currentAudio = null;
         let currentlyPlayingMessageId = null;
 
-        // Улучшенная навигация
-        function navigateTo(screenId) {
-            const currentScreen = document.querySelector('.screen.active');
-            if (currentScreen) {
-                currentScreen.classList.remove('active');
-                currentScreen.classList.add('exiting');
-                
-                setTimeout(() => {
-                    currentScreen.classList.remove('exiting');
-                    showScreen(screenId);
-                }, 300);
-            } else {
-                showScreen(screenId);
-            }
-        }
-
+        // Простая навигация без сложных анимаций
         function showScreen(screenId) {
+            console.log("Переход на экран:", screenId);
+            
+            // Сначала скрываем все экраны
             document.querySelectorAll('.screen').forEach(screen => {
                 screen.classList.remove('active');
             });
             
+            // Показываем целевой экран
             const targetScreen = document.getElementById(screenId);
             if (targetScreen) {
                 targetScreen.classList.add('active');
+            } else {
+                console.error("Экран не найден:", screenId);
+                // Если экран не найден, показываем welcome
+                document.getElementById('welcomeScreen').classList.add('active');
             }
         }
 
@@ -764,7 +762,7 @@
                 lastSeen: Date.now()
             });
 
-            navigateTo('chatList');
+            showScreen('chatList');
             document.getElementById('userName').textContent = username;
             document.getElementById('userAvatar').textContent = username.charAt(0).toUpperCase();
             loadChatsList();
@@ -792,7 +790,7 @@
             lastMessages.clear();
             currentMessages = {};
             
-            navigateTo('welcome');
+            showScreen('welcome');
         }
 
         // Загрузка чатов и сообщений
@@ -925,7 +923,7 @@
             document.getElementById('searchResults').innerHTML = '';
             document.getElementById('chatWithUser').textContent = username;
             
-            navigateTo('chatMessages');
+            showScreen('chatMessages');
             loadChatMessages();
         }
 
