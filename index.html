@@ -26,6 +26,8 @@
             --success: #10b981;
             --error: #ef4444;
             --voice: #8b5cf6;
+            --warning: #f59e0b;
+            --new-chat: #8b5cf6;
         }
 
         /* Анимации */
@@ -87,6 +89,28 @@
             50% { transform: scaleY(1.5); }
         }
 
+        @keyframes newChatGlow {
+            0%, 100% { 
+                box-shadow: 0 0 5px var(--new-chat);
+                border-left: 4px solid var(--new-chat);
+            }
+            50% { 
+                box-shadow: 0 0 20px var(--new-chat);
+                border-left: 4px solid var(--success);
+            }
+        }
+
+        @keyframes notificationPulse {
+            0%, 100% { 
+                transform: scale(1);
+                background: var(--error);
+            }
+            50% { 
+                transform: scale(1.2);
+                background: var(--warning);
+            }
+        }
+
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
             background: var(--background);
@@ -119,6 +143,11 @@
 
         .screen.active {
             display: flex;
+            animation: slideInRight 0.3s ease-out;
+        }
+
+        .screen.exiting {
+            animation: slideOutLeft 0.3s ease-out;
         }
 
         /* Welcome Screen */
@@ -235,6 +264,23 @@
             color: white;
             font-weight: bold;
             font-size: 1.2rem;
+            position: relative;
+        }
+
+        .notification-badge {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background: var(--error);
+            color: white;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            font-size: 0.7rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            animation: notificationPulse 2s infinite;
         }
 
         .chats-container {
@@ -252,11 +298,34 @@
             cursor: pointer;
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             animation: fadeIn 0.5s ease-out;
+            border-left: 4px solid transparent;
+            position: relative;
+        }
+
+        .chat-item.new-chat {
+            animation: newChatGlow 2s ease-in-out;
+            background: linear-gradient(135deg, var(--surface-light), #2d3748);
         }
 
         .chat-item:active {
             background: var(--primary);
             transform: scale(0.98);
+        }
+
+        .chat-item-unread {
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            background: var(--error);
+            color: white;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            font-size: 0.7rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            animation: notificationPulse 1.5s infinite;
         }
 
         .messages-area {
@@ -554,7 +623,10 @@
         <!-- Chat List Screen -->
         <div class="screen" id="chatList">
             <div class="chat-header">
-                <div class="avatar" id="userAvatar">U</div>
+                <div class="avatar" id="userAvatar">
+                    U
+                    <div class="notification-badge" id="globalNotification" style="display: none;">!</div>
+                </div>
                 <div style="flex: 1;">
                     <div id="userName">Пользователь</div>
                     <div style="font-size: 0.8rem; color: var(--text-secondary);">🟢 В сети</div>
@@ -645,6 +717,7 @@
         let currentUser = null;
         let currentChatWith = null;
         let messageListener = null;
+        let chatListListener = null;
         let lastMessages = new Set();
         let currentMessages = {};
         let isRecording = false;
@@ -652,24 +725,28 @@
         let audioChunks = [];
         let currentAudio = null;
         let currentlyPlayingMessageId = null;
+        let userChats = new Map();
+        let unreadMessages = new Map();
 
-        // Простая навигация без сложных анимаций
+        // Навигация
         function showScreen(screenId) {
-            console.log("Переход на экран:", screenId);
-            
-            // Сначала скрываем все экраны
-            document.querySelectorAll('.screen').forEach(screen => {
-                screen.classList.remove('active');
-            });
-            
-            // Показываем целевой экран
-            const targetScreen = document.getElementById(screenId);
-            if (targetScreen) {
-                targetScreen.classList.add('active');
+            const currentScreen = document.querySelector('.screen.active');
+            if (currentScreen) {
+                currentScreen.classList.remove('active');
+                currentScreen.classList.add('exiting');
+                
+                setTimeout(() => {
+                    currentScreen.classList.remove('exiting');
+                    const targetScreen = document.getElementById(screenId);
+                    if (targetScreen) {
+                        targetScreen.classList.add('active');
+                    }
+                }, 300);
             } else {
-                console.error("Экран не найден:", screenId);
-                // Если экран не найден, показываем welcome
-                document.getElementById('welcomeScreen').classList.add('active');
+                const targetScreen = document.getElementById(screenId);
+                if (targetScreen) {
+                    targetScreen.classList.add('active');
+                }
             }
         }
 
@@ -765,7 +842,7 @@
             showScreen('chatList');
             document.getElementById('userName').textContent = username;
             document.getElementById('userAvatar').textContent = username.charAt(0).toUpperCase();
-            loadChatsList();
+            startChatListListener();
         }
 
         function logout() {
@@ -785,46 +862,136 @@
                 messagesRef.off('child_added', messageListener);
             }
             
+            if (chatListListener) {
+                const messagesRef = database.ref('messages');
+                messagesRef.off('child_added', chatListListener);
+                messagesRef.off('child_changed', chatListListener);
+            }
+            
             currentUser = null;
             currentChatWith = null;
             lastMessages.clear();
             currentMessages = {};
+            userChats.clear();
+            unreadMessages.clear();
             
             showScreen('welcome');
         }
 
-        // Загрузка чатов и сообщений
-        function loadChatsList() {
-            const chatsList = document.getElementById('chatsList');
-            chatsList.innerHTML = '<div class="chat-item">Загрузка чатов...</div>';
-
+        // Слушатель для автоматического обновления списка чатов при новых сообщениях
+        function startChatListListener() {
             if (!currentUser) return;
 
             const messagesRef = database.ref('messages');
-            messagesRef.once('value').then((snapshot) => {
-                const chats = new Map();
+            
+            // Слушаем все новые сообщения
+            chatListListener = messagesRef.on('child_added', (snapshot) => {
+                const chatId = snapshot.key;
+                const users = chatId.split('_');
                 
+                if (users.includes(currentUser)) {
+                    const otherUser = users.find(user => user !== currentUser);
+                    const messages = snapshot.val();
+                    const lastMessage = getLastMessage(messages);
+                    
+                    // Добавляем/обновляем чат в списке
+                    userChats.set(otherUser, {
+                        user: otherUser,
+                        lastMessage: lastMessage,
+                        timestamp: lastMessage ? lastMessage.timestamp : 0,
+                        unread: isMessageUnread(lastMessage)
+                    });
+
+                    // Если есть непрочитанные сообщения, показываем уведомление
+                    if (isMessageUnread(lastMessage)) {
+                        updateUnreadCount(otherUser);
+                    }
+                    
+                    displayChatsList(Array.from(userChats.values()));
+                }
+            });
+
+            // Также слушаем изменения в существующих сообщениях
+            messagesRef.on('child_changed', (snapshot) => {
+                const chatId = snapshot.key;
+                const users = chatId.split('_');
+                
+                if (users.includes(currentUser)) {
+                    const otherUser = users.find(user => user !== currentUser);
+                    const messages = snapshot.val();
+                    const lastMessage = getLastMessage(messages);
+                    
+                    userChats.set(otherUser, {
+                        user: otherUser,
+                        lastMessage: lastMessage,
+                        timestamp: lastMessage ? lastMessage.timestamp : 0,
+                        unread: isMessageUnread(lastMessage)
+                    });
+
+                    if (isMessageUnread(lastMessage)) {
+                        updateUnreadCount(otherUser);
+                    }
+                    
+                    displayChatsList(Array.from(userChats.values()));
+                }
+            });
+        }
+
+        function isMessageUnread(message) {
+            return message && 
+                   message.sender !== currentUser && 
+                   (!message.read || !message.read[currentUser]);
+        }
+
+        function updateUnreadCount(user) {
+            if (!unreadMessages.has(user)) {
+                unreadMessages.set(user, 0);
+            }
+            unreadMessages.set(user, unreadMessages.get(user) + 1);
+            
+            // Показываем глобальное уведомление
+            const globalNotification = document.getElementById('globalNotification');
+            if (globalNotification) {
+                globalNotification.style.display = 'flex';
+                globalNotification.textContent = unreadMessages.size;
+            }
+        }
+
+        function markMessagesAsRead(chatWithUser) {
+            if (!currentUser || !chatWithUser) return;
+
+            const chatId = generateChatId(currentUser, chatWithUser);
+            const messagesRef = database.ref('messages/' + chatId);
+            
+            messagesRef.once('value').then((snapshot) => {
                 if (snapshot.exists()) {
-                    snapshot.forEach((chatSnapshot) => {
-                        const chatId = chatSnapshot.key;
-                        const users = chatId.split('_');
-                        
-                        if (users.includes(currentUser)) {
-                            const otherUser = users.find(user => user !== currentUser);
-                            const messages = chatSnapshot.val();
-                            const lastMessage = getLastMessage(messages);
-                            
-                            chats.set(otherUser, {
-                                user: otherUser,
-                                lastMessage: lastMessage,
-                                timestamp: lastMessage ? lastMessage.timestamp : 0
-                            });
+                    const updates = {};
+                    snapshot.forEach((childSnapshot) => {
+                        const message = childSnapshot.val();
+                        if (message.sender === chatWithUser && (!message.read || !message.read[currentUser])) {
+                            updates[childSnapshot.key + '/read/' + currentUser] = true;
                         }
                     });
+                    
+                    if (Object.keys(updates).length > 0) {
+                        messagesRef.update(updates);
+                    }
                 }
-
-                displayChatsList(Array.from(chats.values()));
             });
+
+            // Убираем из непрочитанных
+            unreadMessages.delete(chatWithUser);
+            userChats.delete(chatWithUser); // Принудительно обновим чат
+            
+            // Обновляем глобальное уведомление
+            const globalNotification = document.getElementById('globalNotification');
+            if (globalNotification) {
+                if (unreadMessages.size === 0) {
+                    globalNotification.style.display = 'none';
+                } else {
+                    globalNotification.textContent = unreadMessages.size;
+                }
+            }
         }
 
         function getLastMessage(messages) {
@@ -845,7 +1012,7 @@
             const chatsList = document.getElementById('chatsList');
             
             if (chats.length === 0) {
-                chatsList.innerHTML = '<div class="chat-item">Нет чатов</div>';
+                chatsList.innerHTML = '<div class="chat-item">Нет чатов. Начните общение!</div>';
                 return;
             }
 
@@ -854,7 +1021,10 @@
             chatsList.innerHTML = '';
             chats.forEach(chat => {
                 const chatItem = document.createElement('div');
-                chatItem.className = 'chat-item';
+                const hasUnread = unreadMessages.has(chat.user);
+                const isNewChat = chat.timestamp > Date.now() - 60000; // Новый чат (последняя минута)
+                
+                chatItem.className = `chat-item ${isNewChat ? 'new-chat' : ''} ${hasUnread ? 'has-unread' : ''}`;
                 chatItem.onclick = () => startChat(chat.user);
                 
                 const lastMsg = chat.lastMessage ? 
@@ -862,9 +1032,17 @@
                     (chat.lastMessage.type === 'voice' ? '🎤 Голосовое сообщение' : chat.lastMessage.text) :
                     'Нет сообщений';
                 
+                const unreadCount = unreadMessages.get(chat.user) || 0;
+                
                 chatItem.innerHTML = `
-                    <div style="font-weight: bold;">${chat.user}</div>
-                    <div style="font-size: 0.8rem; color: var(--text-secondary);">${lastMsg}</div>
+                    <div style="font-weight: bold; display: flex; justify-content: space-between; align-items: center;">
+                        <span>${chat.user}</span>
+                        ${isNewChat ? '<span style="font-size: 0.7rem; color: var(--new-chat);">NEW</span>' : ''}
+                    </div>
+                    <div style="font-size: 0.8rem; color: var(--text-secondary); display: flex; justify-content: space-between; align-items: center;">
+                        <span>${lastMsg}</span>
+                        ${unreadCount > 0 ? `<div class="chat-item-unread">${unreadCount}</div>` : ''}
+                    </div>
                 `;
                 
                 chatsList.appendChild(chatItem);
@@ -878,7 +1056,7 @@
             resultsContainer.innerHTML = '';
             
             if (!searchTerm) {
-                loadChatsList();
+                displayChatsList(Array.from(userChats.values()));
                 return;
             }
 
@@ -923,6 +1101,9 @@
             document.getElementById('searchResults').innerHTML = '';
             document.getElementById('chatWithUser').textContent = username;
             
+            // Помечаем сообщения как прочитанные
+            markMessagesAsRead(username);
+            
             showScreen('chatMessages');
             loadChatMessages();
         }
@@ -956,6 +1137,9 @@
                         }
                     });
                 }
+                
+                // Помечаем сообщения как прочитанные после загрузки
+                markMessagesAsRead(currentChatWith);
             });
 
             // Слушаем новые сообщения
@@ -964,6 +1148,12 @@
                 const messageId = snapshot.key;
                 if (message.deleted !== true) {
                     displayMessage(message, messageId);
+                    
+                    // Автоматически помечаем как прочитанное, если это сообщение от собеседника
+                    if (message.sender === currentChatWith && (!message.read || !message.read[currentUser])) {
+                        const messageRef = database.ref('messages/' + chatId + '/' + messageId + '/read/' + currentUser);
+                        messageRef.set(true);
+                    }
                 }
             });
         }
@@ -984,7 +1174,7 @@
             const isOwnMessage = message.sender === currentUser;
             const isVoiceMessage = message.type === 'voice';
             
-            messageDiv.className = `message ${isOwnMessage ? 'sent' : ''} ${isVoiceMessage ? 'voice-message' : ''}`;
+            messageDiv.className = `message ${isOwnMessage ? 'sent' : 'received'} ${isVoiceMessage ? 'voice-message' : ''}`;
             
             if (isVoiceMessage) {
                 const isCurrentlyPlaying = currentlyPlayingMessageId === messageId;
