@@ -36,92 +36,6 @@
             to { opacity: 1; transform: translateY(0); }
         }
 
-        @keyframes slideInRight {
-            from { transform: translateX(100%); opacity: 0; }
-            to { transform: translateX(0); opacity: 1; }
-        }
-
-        @keyframes slideInLeft {
-            from { transform: translateX(-100%); opacity: 0; }
-            to { transform: translateX(0); opacity: 1; }
-        }
-
-        @keyframes slideOutRight {
-            from { transform: translateX(0); opacity: 1; }
-            to { transform: translateX(100%); opacity: 0; }
-        }
-
-        @keyframes slideOutLeft {
-            from { transform: translateX(0); opacity: 1; }
-            to { transform: translateX(-100%); opacity: 0; }
-        }
-
-        @keyframes pulse {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.05); }
-        }
-
-        @keyframes bounce {
-            0%, 20%, 53%, 80%, 100% { transform: translate3d(0,0,0); }
-            40%, 43% { transform: translate3d(0,-8px,0); }
-            70% { transform: translate3d(0,-4px,0); }
-            90% { transform: translate3d(0,-2px,0); }
-        }
-
-        @keyframes messageSlide {
-            from { 
-                opacity: 0; 
-                transform: translateY(10px) scale(0.9); 
-            }
-            to { 
-                opacity: 1; 
-                transform: translateY(0) scale(1); 
-            }
-        }
-
-        @keyframes messageDelete {
-            from { 
-                opacity: 1; 
-                transform: scale(1); 
-            }
-            to { 
-                opacity: 0; 
-                transform: scale(0.8) rotate(-10deg); 
-            }
-        }
-
-        @keyframes recording {
-            0%, 100% { transform: scale(1); opacity: 1; }
-            50% { transform: scale(1.2); opacity: 0.7; }
-        }
-
-        @keyframes voicePlay {
-            0%, 100% { transform: scaleY(1); }
-            50% { transform: scaleY(1.5); }
-        }
-
-        @keyframes newChatGlow {
-            0%, 100% { 
-                box-shadow: 0 0 5px var(--new-chat);
-                border-left: 4px solid var(--new-chat);
-            }
-            50% { 
-                box-shadow: 0 0 20px var(--new-chat);
-                border-left: 4px solid var(--success);
-            }
-        }
-
-        @keyframes notificationPulse {
-            0%, 100% { 
-                transform: scale(1);
-                background: var(--error);
-            }
-            50% { 
-                transform: scale(1.2);
-                background: var(--warning);
-            }
-        }
-
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
             background: var(--background);
@@ -154,11 +68,6 @@
 
         .screen.active {
             display: flex;
-            animation: slideInRight 0.3s ease-out;
-        }
-
-        .screen.exiting {
-            animation: slideOutLeft 0.3s ease-out;
         }
 
         /* Welcome Screen */
@@ -167,13 +76,13 @@
             align-items: center;
             text-align: center;
             gap: 2rem;
-            padding: 1rem;
+            padding: 2rem;
+            width: 100%;
         }
 
         .logo {
             font-size: 4rem;
             color: var(--primary);
-            animation: bounce 2s infinite;
         }
 
         .title {
@@ -191,6 +100,7 @@
             gap: 1rem;
             width: 100%;
             max-width: 300px;
+            margin: 0 auto;
         }
 
         .btn {
@@ -200,11 +110,12 @@
             font-size: 1.1rem;
             font-weight: 600;
             cursor: pointer;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            transition: all 0.3s ease;
             min-height: 54px;
             display: flex;
             align-items: center;
             justify-content: center;
+            width: 100%;
         }
 
         .btn:active {
@@ -239,6 +150,7 @@
             display: flex;
             flex-direction: column;
             gap: 1.5rem;
+            width: 100%;
         }
 
         .safe-input {
@@ -262,6 +174,7 @@
             gap: 1rem;
             border-bottom: 1px solid var(--surface);
             min-height: 70px;
+            width: 100%;
         }
 
         .avatar {
@@ -291,7 +204,6 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            animation: notificationPulse 2s infinite;
         }
 
         .chats-container {
@@ -299,6 +211,7 @@
             overflow-y: auto;
             padding: 1rem;
             -webkit-overflow-scrolling: touch;
+            width: 100%;
         }
 
         .chat-item {
@@ -307,15 +220,11 @@
             background: var(--surface-light);
             border-radius: 16px;
             cursor: pointer;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            transition: all 0.3s ease;
             animation: fadeIn 0.5s ease-out;
             border-left: 4px solid transparent;
             position: relative;
-        }
-
-        .chat-item.new-chat {
-            animation: newChatGlow 2s ease-in-out;
-            background: linear-gradient(135deg, var(--surface-light), #2d3748);
+            width: 100%;
         }
 
         .chat-item:active {
@@ -336,7 +245,6 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            animation: notificationPulse 1.5s infinite;
         }
 
         .messages-area {
@@ -347,6 +255,7 @@
             flex-direction: column;
             gap: 0.8rem;
             -webkit-overflow-scrolling: touch;
+            width: 100%;
         }
 
         .message {
@@ -356,14 +265,13 @@
             background: var(--surface-light);
             word-wrap: break-word;
             position: relative;
-            animation: messageSlide 0.3s ease-out;
+            animation: fadeIn 0.3s ease-out;
         }
 
         .message.deleted {
             background: var(--surface);
             color: var(--text-secondary);
             font-style: italic;
-            animation: messageDelete 0.3s ease-out;
         }
 
         .message.sent {
@@ -402,18 +310,6 @@
             border-radius: 2px;
         }
 
-        .voice-bar.active {
-            animation: voicePlay 0.6s ease-in-out infinite;
-        }
-
-        .voice-bar:nth-child(1).active { height: 8px; animation-delay: 0s; }
-        .voice-bar:nth-child(2).active { height: 12px; animation-delay: 0.1s; }
-        .voice-bar:nth-child(3).active { height: 16px; animation-delay: 0.2s; }
-        .voice-bar:nth-child(4).active { height: 20px; animation-delay: 0.3s; }
-        .voice-bar:nth-child(5).active { height: 16px; animation-delay: 0.4s; }
-        .voice-bar:nth-child(6).active { height: 12px; animation-delay: 0.5s; }
-        .voice-bar:nth-child(7).active { height: 8px; animation-delay: 0.6s; }
-
         .voice-duration {
             font-size: 0.9rem;
             color: rgba(255,255,255,0.8);
@@ -451,6 +347,7 @@
             padding: 1.2rem;
             background: var(--surface-light);
             border-top: 1px solid var(--surface);
+            width: 100%;
         }
 
         .message-input-area.hidden {
@@ -461,6 +358,7 @@
             display: flex;
             gap: 0.8rem;
             align-items: center;
+            width: 100%;
         }
 
         .message-input {
@@ -495,21 +393,18 @@
             background: var(--voice);
         }
 
-        .voice-btn.recording {
-            animation: recording 1s infinite;
-            background: var(--error);
-        }
-
         .search-container {
             padding: 1.2rem;
             background: var(--surface-light);
             border-bottom: 1px solid var(--surface);
+            width: 100%;
         }
 
         .search-box {
             display: flex;
             gap: 0.8rem;
             align-items: center;
+            width: 100%;
         }
 
         .search-input {
@@ -530,6 +425,7 @@
             font-size: 1rem;
             color: var(--text-secondary);
             padding: 0.5rem 0;
+            width: 100%;
         }
 
         /* Адаптация для телефонов */
@@ -566,6 +462,14 @@
                 width: 45px;
                 height: 45px;
             }
+            
+            .welcome-screen {
+                padding: 1.5rem;
+            }
+            
+            .auth-buttons {
+                max-width: 280px;
+            }
         }
 
         /* Улучшенная прокрутка для iOS */
@@ -586,18 +490,20 @@
 <body>
     <div class="app-container">
         <!-- Welcome Screen -->
-        <div class="screen welcome-screen active" id="welcomeScreen">
-            <div class="logo">
-                <i class="fas fa-comment-dots"></i>
-            </div>
-            <div class="title">dolbaebsms</div>
-            <div class="auth-buttons">
-                <button class="btn btn-primary" onclick="showScreen('register')">
-                    Создать аккаунт
-                </button>
-                <button class="btn btn-secondary" onclick="showScreen('login')">
-                    Войти
-                </button>
+        <div class="screen active" id="welcomeScreen">
+            <div class="welcome-screen">
+                <div class="logo">
+                    <i class="fas fa-comment-dots"></i>
+                </div>
+                <div class="title">dolbaebsms</div>
+                <div class="auth-buttons">
+                    <button class="btn btn-primary" onclick="showScreen('register')">
+                        Создать аккаунт
+                    </button>
+                    <button class="btn btn-secondary" onclick="showScreen('login')">
+                        Войти
+                    </button>
+                </div>
             </div>
         </div>
 
@@ -607,6 +513,10 @@
                 <button class="btn btn-secondary" onclick="showScreen('welcome')" style="width: auto;">
                     ← Назад
                 </button>
+                <div style="flex: 1; text-align: center;">
+                    <div>Регистрация</div>
+                </div>
+                <div style="width: 60px;"></div>
             </div>
             <div class="form-container">
                 <h2 style="text-align: center;">Создать аккаунт</h2>
@@ -628,6 +538,10 @@
                 <button class="btn btn-secondary" onclick="showScreen('welcome')" style="width: auto;">
                     ← Назад
                 </button>
+                <div style="flex: 1; text-align: center;">
+                    <div>Вход</div>
+                </div>
+                <div style="width: 60px;"></div>
             </div>
             <div class="form-container">
                 <h2 style="text-align: center;">Вход в аккаунт</h2>
@@ -694,17 +608,10 @@
 
             <div class="message-input-area hidden" id="messageInputArea">
                 <div class="input-with-btn">
-                    <button class="voice-btn" id="voiceBtn" onclick="toggleVoiceRecording()">
-                        <i class="fas fa-microphone"></i>
-                    </button>
                     <input type="text" class="message-input" id="messageInput" placeholder="Сообщение...">
                     <button class="send-btn" onclick="sendMessage()">
                         <i class="fas fa-paper-plane"></i>
                     </button>
-                </div>
-                <div id="recordingInfo" style="display: none; text-align: center; color: var(--error); margin-top: 0.5rem;">
-                    <i class="fas fa-circle" style="animation: recording 1s infinite"></i>
-                    Запись... Нажмите еще раз чтобы отправить
                 </div>
             </div>
         </div>
@@ -713,9 +620,10 @@
     <!-- Firebase -->
     <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-analytics-compat.js"></script>
     
     <script>
-        // Конфигурация Firebase
+        // Конфигурация Firebase с measurementId
         const firebaseConfig = {
             apiKey: "AIzaSyA35T6z2FYS6m9IEJ9x7evxCphgpLhgMX4",
             authDomain: "dolbaebsms-live.firebaseapp.com",
@@ -723,12 +631,14 @@
             projectId: "dolbaebsms-live",
             storageBucket: "dolbaebsms-live.firebasestorage.app",
             messagingSenderId: "912825721862",
-            appId: "1:912825721862:web:b92d7f7f553ca4536c0f87"
+            appId: "1:912825721862:web:b92d7f7f553ca4536c0f87",
+            measurementId: "G-SCD5JVFM5E"
         };
 
         // Инициализация Firebase
         try {
             firebase.initializeApp(firebaseConfig);
+            firebase.analytics();
             console.log("Firebase подключен!");
         } catch (error) {
             console.error("Ошибка Firebase:", error);
@@ -743,47 +653,27 @@
         let chatListListener = null;
         let lastMessages = new Set();
         let currentMessages = {};
-        let isRecording = false;
-        let mediaRecorder = null;
-        let audioChunks = [];
-        let currentAudio = null;
-        let currentlyPlayingMessageId = null;
         let userChats = new Map();
         let unreadMessages = new Map();
 
         // Навигация
         function showScreen(screenId) {
-            const currentScreen = document.querySelector('.screen.active');
-            if (currentScreen) {
-                currentScreen.classList.remove('active');
-                currentScreen.classList.add('exiting');
-                
-                setTimeout(() => {
-                    currentScreen.classList.remove('exiting');
-                    const targetScreen = document.getElementById(screenId);
-                    if (targetScreen) {
-                        targetScreen.classList.add('active');
-                    }
-                }, 300);
+            console.log('Переход на экран:', screenId);
+            
+            // Скрываем все экраны
+            document.querySelectorAll('.screen').forEach(screen => {
+                screen.classList.remove('active');
+            });
+            
+            // Показываем нужный экран
+            const targetScreen = document.getElementById(screenId);
+            if (targetScreen) {
+                targetScreen.classList.add('active');
             } else {
-                const targetScreen = document.getElementById(screenId);
-                if (targetScreen) {
-                    targetScreen.classList.add('active');
-                }
+                console.error('Экран не найден:', screenId);
+                document.getElementById('welcomeScreen').classList.add('active');
             }
         }
-
-        // Автоматический вход при загрузке
-        window.addEventListener('load', function() {
-            const savedUser = localStorage.getItem('savedUser');
-            const savedPassword = localStorage.getItem('savedPassword');
-            
-            if (savedUser && savedPassword) {
-                document.getElementById('loginUsername').value = savedUser;
-                document.getElementById('loginPassword').value = savedPassword;
-                document.getElementById('rememberLogin').checked = true;
-            }
-        });
 
         // Регистрация и вход
         function register() {
@@ -793,6 +683,11 @@
 
             if (!username || !password) {
                 alert('Заполните все поля');
+                return;
+            }
+
+            if (username.length < 3) {
+                alert('Логин должен быть не менее 3 символов');
                 return;
             }
 
@@ -807,13 +702,17 @@
                         username: username,
                         password: password,
                         createdAt: Date.now(),
-                        isOnline: true
+                        isOnline: true,
+                        lastSeen: Date.now()
                     }).then(() => {
                         if (remember) {
                             localStorage.setItem('savedUser', username);
                             localStorage.setItem('savedPassword', password);
                         }
                         loginUser(username);
+                    }).catch((error) => {
+                        console.error("Ошибка регистрации:", error);
+                        alert('Ошибка регистрации');
                     });
                 }
             });
@@ -851,6 +750,9 @@
                 } else {
                     alert('Неверный пароль');
                 }
+            }).catch((error) => {
+                console.error("Ошибка входа:", error);
+                alert('Ошибка входа');
             });
         }
 
@@ -869,8 +771,6 @@
         }
 
         function logout() {
-            stopCurrentAudio();
-            
             if (currentUser) {
                 const userRef = database.ref('users/' + currentUser);
                 userRef.update({
@@ -883,13 +783,11 @@
                 const chatId = generateChatId(currentUser, currentChatWith);
                 const messagesRef = database.ref('messages/' + chatId);
                 messagesRef.off('child_added', messageListener);
-                messagesRef.off('child_changed', messageListener);
             }
             
             if (chatListListener) {
                 const messagesRef = database.ref('messages');
                 messagesRef.off('child_added', chatListListener);
-                messagesRef.off('child_changed', chatListListener);
             }
             
             currentUser = null;
@@ -902,41 +800,13 @@
             showScreen('welcome');
         }
 
-        // Слушатель для автоматического обновления списка чатов при новых сообщениях
+        // Слушатель для автоматического обновления списка чатов
         function startChatListListener() {
             if (!currentUser) return;
 
             const messagesRef = database.ref('messages');
             
-            // Слушаем все новые сообщения
             chatListListener = messagesRef.on('child_added', (snapshot) => {
-                const chatId = snapshot.key;
-                const users = chatId.split('_');
-                
-                if (users.includes(currentUser)) {
-                    const otherUser = users.find(user => user !== currentUser);
-                    const messages = snapshot.val();
-                    const lastMessage = getLastMessage(messages);
-                    
-                    // Добавляем/обновляем чат в списке
-                    userChats.set(otherUser, {
-                        user: otherUser,
-                        lastMessage: lastMessage,
-                        timestamp: lastMessage ? lastMessage.timestamp : 0,
-                        unread: isMessageUnread(lastMessage)
-                    });
-
-                    // Если есть непрочитанные сообщения, показываем уведомление
-                    if (isMessageUnread(lastMessage)) {
-                        updateUnreadCount(otherUser);
-                    }
-                    
-                    displayChatsList(Array.from(userChats.values()));
-                }
-            });
-
-            // Также слушаем изменения в существующих сообщениях (включая удаления)
-            messagesRef.on('child_changed', (snapshot) => {
                 const chatId = snapshot.key;
                 const users = chatId.split('_');
                 
@@ -974,7 +844,6 @@
             }
             unreadMessages.set(user, unreadMessages.get(user) + 1);
             
-            // Показываем глобальное уведомление
             const globalNotification = document.getElementById('globalNotification');
             if (globalNotification) {
                 globalNotification.style.display = 'flex';
@@ -1004,11 +873,9 @@
                 }
             });
 
-            // Убираем из непрочитанных
             unreadMessages.delete(chatWithUser);
-            userChats.delete(chatWithUser); // Принудительно обновим чат
+            userChats.delete(chatWithUser);
             
-            // Обновляем глобальное уведомление
             const globalNotification = document.getElementById('globalNotification');
             if (globalNotification) {
                 if (unreadMessages.size === 0) {
@@ -1047,9 +914,8 @@
             chats.forEach(chat => {
                 const chatItem = document.createElement('div');
                 const hasUnread = unreadMessages.has(chat.user);
-                const isNewChat = chat.timestamp > Date.now() - 60000; // Новый чат (последняя минута)
                 
-                chatItem.className = `chat-item ${isNewChat ? 'new-chat' : ''} ${hasUnread ? 'has-unread' : ''}`;
+                chatItem.className = `chat-item ${hasUnread ? 'has-unread' : ''}`;
                 chatItem.onclick = () => startChat(chat.user);
                 
                 let lastMsg = 'Нет сообщений';
@@ -1066,10 +932,7 @@
                 const unreadCount = unreadMessages.get(chat.user) || 0;
                 
                 chatItem.innerHTML = `
-                    <div style="font-weight: bold; display: flex; justify-content: space-between; align-items: center;">
-                        <span>${chat.user}</span>
-                        ${isNewChat ? '<span style="font-size: 0.7rem; color: var(--new-chat);">NEW</span>' : ''}
-                    </div>
+                    <div style="font-weight: bold;">${chat.user}</div>
                     <div style="font-size: 0.8rem; color: var(--text-secondary); display: flex; justify-content: space-between; align-items: center;">
                         <span>${lastMsg}</span>
                         ${unreadCount > 0 ? `<div class="chat-item-unread">${unreadCount}</div>` : ''}
@@ -1126,13 +989,11 @@
         }
 
         function startChat(username) {
-            stopCurrentAudio();
             currentChatWith = username;
             document.getElementById('searchInput').value = '';
             document.getElementById('searchResults').innerHTML = '';
             document.getElementById('chatWithUser').textContent = username;
             
-            // Помечаем сообщения как прочитанные
             markMessagesAsRead(username);
             
             showScreen('chatMessages');
@@ -1155,7 +1016,6 @@
 
             if (messageListener) {
                 messagesRef.off('child_added', messageListener);
-                messagesRef.off('child_changed', messageListener);
             }
 
             // Загружаем существующие сообщения
@@ -1170,7 +1030,6 @@
                     });
                 }
                 
-                // Помечаем сообщения как прочитанные после загрузки
                 markMessagesAsRead(currentChatWith);
             });
 
@@ -1181,42 +1040,9 @@
                 if (!message.deleted) {
                     displayMessage(message, messageId);
                     
-                    // Автоматически помечаем как прочитанное, если это сообщение от собеседника
                     if (message.sender === currentChatWith && (!message.read || !message.read[currentUser])) {
                         const messageRef = database.ref('messages/' + chatId + '/' + messageId + '/read/' + currentUser);
                         messageRef.set(true);
-                    }
-                }
-            });
-
-            // Слушаем изменения сообщений (для удалений)
-            messagesRef.on('child_changed', (snapshot) => {
-                const message = snapshot.val();
-                const messageId = snapshot.key;
-                
-                if (message.deleted) {
-                    // Находим и удаляем сообщение из интерфейса
-                    const messageElement = document.querySelector(`[data-message-id="${messageId}"]`);
-                    if (messageElement) {
-                        messageElement.classList.add('deleted');
-                        if (messageElement.querySelector('.message-actions')) {
-                            messageElement.querySelector('.message-actions').style.display = 'none';
-                        }
-                        
-                        // Заменяем содержимое на "Сообщение удалено"
-                        if (message.type === 'voice') {
-                            messageElement.innerHTML = `
-                                <div style="opacity: 0.7; font-style: italic;">
-                                    <i class="fas fa-trash"></i> Голосовое сообщение удалено
-                                </div>
-                            `;
-                        } else {
-                            messageElement.innerHTML = `
-                                <div style="opacity: 0.7; font-style: italic;">
-                                    <i class="fas fa-trash"></i> Сообщение удалено
-                                </div>
-                            `;
-                        }
                     }
                 }
             });
@@ -1242,20 +1068,19 @@
             messageDiv.setAttribute('data-message-id', messageId);
             
             if (isVoiceMessage) {
-                const isCurrentlyPlaying = currentlyPlayingMessageId === messageId;
                 messageDiv.innerHTML = `
                     <div class="voice-player">
-                        <button onclick="toggleVoicePlayback('${messageId}', '${message.audioData}')" style="background: none; border: none; color: white; font-size: 1.2rem;">
-                            <i class="fas fa-${isCurrentlyPlaying ? 'pause' : 'play'}"></i>
+                        <button style="background: none; border: none; color: white; font-size: 1.2rem;">
+                            <i class="fas fa-play"></i>
                         </button>
                         <div class="voice-visualizer">
-                            <div class="voice-bar ${isCurrentlyPlaying ? 'active' : ''}"></div>
-                            <div class="voice-bar ${isCurrentlyPlaying ? 'active' : ''}"></div>
-                            <div class="voice-bar ${isCurrentlyPlaying ? 'active' : ''}"></div>
-                            <div class="voice-bar ${isCurrentlyPlaying ? 'active' : ''}"></div>
-                            <div class="voice-bar ${isCurrentlyPlaying ? 'active' : ''}"></div>
-                            <div class="voice-bar ${isCurrentlyPlaying ? 'active' : ''}"></div>
-                            <div class="voice-bar ${isCurrentlyPlaying ? 'active' : ''}"></div>
+                            <div class="voice-bar"></div>
+                            <div class="voice-bar"></div>
+                            <div class="voice-bar"></div>
+                            <div class="voice-bar"></div>
+                            <div class="voice-bar"></div>
+                            <div class="voice-bar"></div>
+                            <div class="voice-bar"></div>
                         </div>
                         <div class="voice-duration">${message.duration || '0:05'}</div>
                     </div>
@@ -1290,63 +1115,7 @@
             }
         }
 
-        // Управление воспроизведением голосовых сообщений
-        function stopCurrentAudio() {
-            if (currentAudio) {
-                currentAudio.pause();
-                currentAudio = null;
-            }
-            if (currentlyPlayingMessageId) {
-                const previousMessageElement = document.querySelector(`[onclick*="${currentlyPlayingMessageId}"]`);
-                if (previousMessageElement) {
-                    const icon = previousMessageElement.querySelector('i');
-                    if (icon) icon.className = 'fas fa-play';
-                    
-                    const voiceBars = previousMessageElement.closest('.voice-player').querySelectorAll('.voice-bar');
-                    voiceBars.forEach(bar => bar.classList.remove('active'));
-                }
-                currentlyPlayingMessageId = null;
-            }
-        }
-
-        function toggleVoicePlayback(messageId, audioData) {
-            if (currentlyPlayingMessageId === messageId) {
-                // Пауза текущего сообщения
-                stopCurrentAudio();
-            } else {
-                // Останавливаем предыдущее и начинаем новое
-                stopCurrentAudio();
-                
-                currentAudio = new Audio(audioData);
-                currentlyPlayingMessageId = messageId;
-                
-                // Обновляем иконку и анимацию
-                const messageElement = document.querySelector(`[onclick*="${messageId}"]`);
-                if (messageElement) {
-                    const icon = messageElement.querySelector('i');
-                    if (icon) icon.className = 'fas fa-pause';
-                    
-                    const voiceBars = messageElement.closest('.voice-player').querySelectorAll('.voice-bar');
-                    voiceBars.forEach(bar => bar.classList.add('active'));
-                }
-                
-                currentAudio.play().catch(error => {
-                    console.error('Ошибка воспроизведения:', error);
-                    alert('Не удалось воспроизвести голосовое сообщение');
-                    stopCurrentAudio();
-                });
-                
-                currentAudio.onended = () => {
-                    stopCurrentAudio();
-                };
-                
-                currentAudio.onpause = () => {
-                    stopCurrentAudio();
-                };
-            }
-        }
-
-        // УДАЛЕНИЕ СООБЩЕНИЙ - СИНХРОННОЕ ДЛЯ ВСЕХ УЧАСТНИКОВ
+        // УДАЛЕНИЕ СООБЩЕНИЙ
         function deleteMessage(messageId) {
             if (!currentUser || !currentChatWith || !messageId) return;
             
@@ -1354,7 +1123,6 @@
                 const chatId = generateChatId(currentUser, currentChatWith);
                 const messageRef = database.ref('messages/' + chatId + '/' + messageId);
                 
-                // Помечаем сообщение как удаленное - это автоматически синхронизируется со всеми участниками
                 messageRef.update({
                     deleted: true,
                     deletedAt: Date.now(),
@@ -1362,7 +1130,6 @@
                 }).then(() => {
                     console.log("Сообщение удалено для всех участников");
                     
-                    // Локально обновляем интерфейс
                     const messageElement = document.querySelector(`[data-message-id="${messageId}"]`);
                     if (messageElement) {
                         messageElement.classList.add('deleted');
@@ -1394,88 +1161,6 @@
             }
         }
 
-        // ГОЛОСОВЫЕ СООБЩЕНИЯ
-        function toggleVoiceRecording() {
-            if (!isRecording) {
-                startVoiceRecording();
-            } else {
-                stopVoiceRecording();
-            }
-        }
-
-        function startVoiceRecording() {
-            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-                alert('Ваш браузер не поддерживает запись аудио');
-                return;
-            }
-
-            navigator.mediaDevices.getUserMedia({ audio: true })
-                .then(stream => {
-                    isRecording = true;
-                    mediaRecorder = new MediaRecorder(stream);
-                    audioChunks = [];
-
-                    mediaRecorder.ondataavailable = event => {
-                        audioChunks.push(event.data);
-                    };
-
-                    mediaRecorder.onstop = () => {
-                        const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
-                        sendVoiceMessage(audioBlob);
-                    };
-
-                    mediaRecorder.start();
-                    
-                    // Обновляем UI
-                    document.getElementById('voiceBtn').classList.add('recording');
-                    document.getElementById('recordingInfo').style.display = 'block';
-                    document.getElementById('voiceBtn').innerHTML = '<i class="fas fa-stop"></i>';
-                })
-                .catch(error => {
-                    console.error('Ошибка доступа к микрофону:', error);
-                    alert('Не удалось получить доступ к микрофону');
-                });
-        }
-
-        function stopVoiceRecording() {
-            if (mediaRecorder && isRecording) {
-                mediaRecorder.stop();
-                isRecording = false;
-                
-                // Останавливаем все треки
-                mediaRecorder.stream.getTracks().forEach(track => track.stop());
-                
-                // Восстанавливаем UI
-                document.getElementById('voiceBtn').classList.remove('recording');
-                document.getElementById('recordingInfo').style.display = 'none';
-                document.getElementById('voiceBtn').innerHTML = '<i class="fas fa-microphone"></i>';
-            }
-        }
-
-        function sendVoiceMessage(audioBlob) {
-            if (!currentUser || !currentChatWith) return;
-
-            // Конвертируем blob в base64 для хранения в Firebase
-            const reader = new FileReader();
-            reader.readAsDataURL(audioBlob);
-            reader.onloadend = function() {
-                const base64Audio = reader.result;
-                
-                const chatId = generateChatId(currentUser, currentChatWith);
-                const messagesRef = database.ref('messages/' + chatId);
-
-                const messageData = {
-                    sender: currentUser,
-                    type: 'voice',
-                    audioData: base64Audio,
-                    duration: '0:05',
-                    timestamp: Date.now()
-                };
-
-                messagesRef.push(messageData);
-            };
-        }
-
         function sendMessage() {
             const input = document.getElementById('messageInput');
             const text = input.value.trim();
@@ -1498,6 +1183,20 @@
         function generateChatId(user1, user2) {
             return [user1, user2].sort().join('_');
         }
+
+        // Автозагрузка пользователя
+        window.addEventListener('load', function() {
+            const savedUser = localStorage.getItem('savedUser');
+            const savedPassword = localStorage.getItem('savedPassword');
+            
+            if (savedUser && savedPassword) {
+                document.getElementById('loginUsername').value = savedUser;
+                document.getElementById('loginPassword').value = savedPassword;
+                document.getElementById('rememberLogin').checked = true;
+            }
+            
+            showScreen('welcomeScreen');
+        });
 
         // Обработчики клавиш
         document.getElementById('messageInput')?.addEventListener('keypress', function(e) {
