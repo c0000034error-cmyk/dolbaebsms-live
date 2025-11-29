@@ -187,9 +187,9 @@
             flex-shrink: 0;
         }
 
-        /* Search - ИСПРАВЛЕННЫЙ СТИЛЬ */
+        /* Search - КОМПАКТНЫЙ СТИЛЬ */
         .search-container {
-            padding: 0.8rem;
+            padding: 0.6rem;
             background: var(--surface-light);
             border-bottom: 1px solid var(--surface);
             width: 100%;
@@ -198,39 +198,41 @@
 
         .search-box {
             display: flex;
-            gap: 0.5rem;
+            gap: 0.4rem;
             align-items: center;
             width: 100%;
-            min-height: 44px;
+            min-height: 40px;
         }
 
         .search-input {
             flex: 1;
-            padding: 0.8rem 1rem;
+            padding: 0.6rem 0.8rem;
             border: 1px solid var(--surface);
-            border-radius: 20px;
+            border-radius: 18px;
             background: var(--background);
             color: var(--text);
-            font-size: 1rem;
-            min-height: 44px;
-            max-height: 44px;
+            font-size: 0.9rem;
+            min-height: 38px;
+            max-height: 38px;
+            max-width: calc(100% - 90px);
         }
 
         .search-btn {
             background: var(--primary);
             color: white;
             border: none;
-            border-radius: 20px;
-            padding: 0 1rem;
-            font-size: 0.9rem;
+            border-radius: 18px;
+            padding: 0 0.8rem;
+            font-size: 0.85rem;
             font-weight: 600;
             cursor: pointer;
-            min-height: 44px;
-            min-width: 70px;
+            min-height: 38px;
+            min-width: 65px;
             display: flex;
             align-items: center;
             justify-content: center;
             flex-shrink: 0;
+            white-space: nowrap;
         }
 
         /* Chats List */
@@ -285,9 +287,9 @@
             align-self: flex-end;
         }
 
-        /* Ввод сообщений - ИСПРАВЛЕННЫЙ СТИЛЬ */
+        /* Ввод сообщений - КОМПАКТНЫЙ СТИЛЬ */
         .message-input-area {
-            padding: 0.6rem;
+            padding: 0.5rem;
             background: var(--surface-light);
             border-top: 1px solid var(--surface);
             width: 100%;
@@ -296,28 +298,29 @@
 
         .input-with-buttons {
             display: flex;
-            gap: 0.4rem;
+            gap: 0.3rem;
             align-items: center;
             width: 100%;
-            min-height: 44px;
+            min-height: 42px;
         }
 
         .message-input {
             flex: 1;
-            padding: 0.6rem 0.8rem;
+            padding: 0.5rem 0.7rem;
             border: 1px solid var(--surface);
-            border-radius: 20px;
+            border-radius: 18px;
             background: var(--background);
             color: var(--text);
-            font-size: 0.9rem;
-            min-height: 40px;
-            max-height: 40px;
+            font-size: 0.85rem;
+            min-height: 38px;
+            max-height: 38px;
+            max-width: calc(100% - 130px);
         }
 
-        /* Кнопки - ИСПРАВЛЕННЫЕ СТИЛИ */
+        /* Кнопки - КОМПАКТНЫЕ */
         .send-btn, .media-btn, .voice-btn {
-            width: 40px;
-            height: 40px;
+            width: 38px;
+            height: 38px;
             color: white;
             border: none;
             border-radius: 50%;
@@ -325,9 +328,9 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 0.9rem;
+            font-size: 0.85rem;
             flex-shrink: 0;
-            min-width: 40px;
+            min-width: 38px;
         }
 
         .send-btn {
@@ -343,34 +346,37 @@
         }
 
         /* Адаптация для очень маленьких экранов */
-        @media (max-width: 320px) {
+        @media (max-width: 360px) {
             .search-box {
                 gap: 0.3rem;
             }
             
             .search-input {
-                padding: 0.6rem 0.8rem;
-                min-height: 40px;
-                max-height: 40px;
-                font-size: 0.9rem;
+                padding: 0.5rem 0.7rem;
+                min-height: 36px;
+                max-height: 36px;
+                font-size: 0.85rem;
+                max-width: calc(100% - 80px);
             }
             
             .search-btn {
-                padding: 0 0.8rem;
-                min-height: 40px;
+                padding: 0 0.7rem;
+                min-height: 36px;
                 min-width: 60px;
                 font-size: 0.8rem;
             }
 
             .input-with-buttons {
-                gap: 0.3rem;
+                gap: 0.25rem;
+                min-height: 40px;
             }
             
             .message-input {
-                padding: 0.5rem 0.7rem;
+                padding: 0.5rem 0.6rem;
                 min-height: 36px;
                 max-height: 36px;
-                font-size: 0.85rem;
+                font-size: 0.8rem;
+                max-width: calc(100% - 120px);
             }
             
             .send-btn, .media-btn, .voice-btn {
@@ -385,15 +391,43 @@
             }
         }
 
-        @media (max-width: 280px) {
+        @media (max-width: 320px) {
+            .search-input {
+                max-width: calc(100% - 70px);
+                font-size: 0.8rem;
+            }
+            
             .search-btn {
-                min-width: 50px;
+                min-width: 55px;
                 font-size: 0.75rem;
                 padding: 0 0.6rem;
             }
             
             .message-input {
-                font-size: 0.8rem;
+                max-width: calc(100% - 110px);
+                font-size: 0.75rem;
+            }
+            
+            .send-btn, .media-btn, .voice-btn {
+                width: 34px;
+                height: 34px;
+                min-width: 34px;
+            }
+        }
+
+        @media (max-width: 280px) {
+            .search-input {
+                max-width: calc(100% - 65px);
+            }
+            
+            .search-btn {
+                min-width: 50px;
+                font-size: 0.7rem;
+            }
+            
+            .message-input {
+                max-width: calc(100% - 100px);
+                font-size: 0.7rem;
             }
         }
     </style>
@@ -477,7 +511,7 @@
 
             <div class="search-container">
                 <div class="search-box">
-                    <input type="text" class="search-input" id="searchInput" placeholder="Поиск пользователей..." onkeypress="handleSearchKeyPress(event)">
+                    <input type="text" class="search-input" id="searchInput" placeholder="Поиск..." onkeypress="handleSearchKeyPress(event)">
                     <button class="search-btn" onclick="searchRealUsers()">
                         Найти
                     </button>
@@ -736,7 +770,7 @@
                 return;
             }
 
-            resultsContainer.innerHTML = '<div style="padding: 0.8rem; color: var(--text-secondary);">Результаты поиска:</div>';
+            resultsContainer.innerHTML = '<div style="padding: 0.8rem; color: var(--text-secondary); font-size: 0.9rem;">Результаты:</div>';
             
             const usersRef = database.ref('users');
             usersRef.orderByChild('username')
@@ -765,7 +799,7 @@
                 }
                 
                 if (!found) {
-                    resultsContainer.innerHTML += '<div class="chat-item" style="text-align: center; opacity: 0.7;">Пользователи не найдены</div>';
+                    resultsContainer.innerHTML += '<div class="chat-item" style="text-align: center; opacity: 0.7;">Не найдено</div>';
                 }
             });
         }
@@ -790,7 +824,7 @@
         // Загрузка сообщений
         function loadRealMessages() {
             const messagesContainer = document.getElementById('messages');
-            messagesContainer.innerHTML = '<div class="chat-item" style="text-align: center; opacity: 0.7;">Загрузка сообщений...</div>';
+            messagesContainer.innerHTML = '<div class="chat-item" style="text-align: center; opacity: 0.7;">Загрузка...</div>';
 
             if (!currentUser || !currentChatWith) return;
 
@@ -801,7 +835,7 @@
                 messagesContainer.innerHTML = '';
                 
                 if (!snapshot.exists()) {
-                    messagesContainer.innerHTML = '<div class="message" style="text-align: center; opacity: 0.7; align-self: center;">Нет сообщений. Начните общение!</div>';
+                    messagesContainer.innerHTML = '<div class="message" style="text-align: center; opacity: 0.7; align-self: center;">Нет сообщений</div>';
                     return;
                 }
 
