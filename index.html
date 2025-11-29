@@ -18,10 +18,12 @@
             animation: {
               'fade-in': 'fadeIn 0.3s ease-out',
               'slide-up': 'slideUp 0.3s ease-out',
+              'pulse-gold': 'pulseGold 2s infinite',
             },
             keyframes: {
               fadeIn: { '0%': { opacity: '0' }, '100%': { opacity: '1' } },
-              slideUp: { '0%': { transform: 'translateY(10px)', opacity: '0' }, '100%': { transform: 'translateY(0)', opacity: '1' } }
+              slideUp: { '0%': { transform: 'translateY(10px)', opacity: '0' }, '100%': { transform: 'translateY(0)', opacity: '1' } },
+              pulseGold: { '0%, 100%': { transform: 'scale(1)', opacity: '1' }, '50%': { transform: 'scale(1.05)', opacity: '0.8' } }
             }
           }
         }
@@ -52,6 +54,16 @@
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
       }
+
+      .coin-animation {
+        animation: coinPop 0.5s ease-out;
+      }
+
+      @keyframes coinPop {
+        0% { transform: scale(0.5); opacity: 0; }
+        50% { transform: scale(1.2); }
+        100% { transform: scale(1); opacity: 1; }
+      }
     </style>
 
     <!-- Import Map -->
@@ -74,7 +86,7 @@
     <script type="text/babel" data-type="module">
         import React, { useState, useEffect, useRef } from 'react';
         import { createRoot } from 'react-dom/client';
-        import { Search, Send, Image as ImageIcon, Mic, X, ChevronLeft, Video, Settings as SettingsIcon, Menu, Trash2, Smile, MoreVertical, Lock, LogOut, User as UserIcon, Loader2 } from 'lucide-react';
+        import { Search, Send, Image as ImageIcon, Mic, X, ChevronLeft, Video, Settings as SettingsIcon, Menu, Trash2, Smile, MoreVertical, Lock, LogOut, User as UserIcon, Loader2, Coins, Zap, Crown } from 'lucide-react';
         import { format } from 'date-fns';
         import { initializeApp } from 'firebase/app';
         import { getDatabase, ref, onValue, set, update, push, off, query, orderByChild, startAt, endAt, remove, get } from 'firebase/database';
@@ -103,7 +115,8 @@
                 primary: "bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-500/20",
                 secondary: "bg-slate-700 hover:bg-slate-600 text-slate-100 border border-slate-600",
                 danger: "bg-red-500/10 hover:bg-red-500/20 text-red-500 border border-red-500/20",
-                ghost: "bg-transparent hover:bg-white/5 text-slate-300"
+                ghost: "bg-transparent hover:bg-white/5 text-slate-300",
+                gold: "bg-yellow-500 hover:bg-yellow-400 text-white shadow-lg shadow-yellow-500/20"
             };
             return (
                 <button className={`${baseStyles} ${variants[variant]} ${className}`} disabled={isLoading || props.disabled} {...props}>
@@ -114,14 +127,96 @@
             );
         };
 
-        // 2. Settings Modal
-        const SettingsModal = ({ isOpen, onClose, currentUser, onLogout }) => {
+        // 2. Avatar Modal
+        const AvatarModal = ({ isOpen, onClose, currentUser, userCoins, onAvatarChange }) => {
+            const [selectedAvatar, setSelectedAvatar] = useState('');
+            const [isLoading, setIsLoading] = useState(false);
+
+            const avatars = [
+                '🐶', '🐱', '🐭', '🐹', '🐰', '🦊', '🐻', '🐼', '🐨', '🐯',
+                '🦁', '🐮', '🐷', '🐸', '🐵', '🐔', '🐧', '🐦', '🐤', '🦄',
+                '🐙', '🐠', '🐬', '🐳', '🦁', '🐯', '🐨', '🐼', '🐻', '🐰'
+            ];
+
+            if (!isOpen) return null;
+
+            const handleAvatarSelect = async (avatar) => {
+                if (userCoins < 10 && currentUser !== 'kayivi') {
+                    alert('Недостаточно коинов! Нужно 10 коинов для смены аватарки.');
+                    return;
+                }
+
+                setIsLoading(true);
+                try {
+                    if (currentUser !== 'kayivi') {
+                        // Списываем 10 коинов
+                        await update(ref(db, `users/${currentUser}`), { 
+                            coins: userCoins - 10,
+                            avatar: avatar
+                        });
+                    } else {
+                        // kayivi меняет бесплатно
+                        await update(ref(db, `users/${currentUser}`), { 
+                            avatar: avatar
+                        });
+                    }
+                    setSelectedAvatar(avatar);
+                    onAvatarChange(avatar);
+                    onClose();
+                } catch (error) {
+                    console.error('Avatar change error:', error);
+                    alert('Ошибка при смене аватарки');
+                }
+                setIsLoading(false);
+            };
+
+            return (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
+                    <div className="w-full max-w-2xl bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+                        <div className="p-4 border-b border-slate-800 flex items-center justify-between bg-slate-900">
+                            <h2 className="text-xl font-bold text-white flex items-center gap-2"><UserIcon size={20} className="text-yellow-500" /> Выбор аватарки</h2>
+                            <button onClick={onClose} className="text-slate-400 hover:text-white"><X size={24} /></button>
+                        </div>
+                        <div className="p-6 overflow-y-auto custom-scrollbar flex-1 bg-slate-900">
+                            <div className="text-center mb-6">
+                                <p className="text-slate-400">
+                                    {currentUser === 'kayivi' ? (
+                                        <span className="text-yellow-500 flex items-center justify-center gap-2">
+                                            <Crown size={16} /> Вы можете менять аватарку бесплатно!
+                                        </span>
+                                    ) : (
+                                        <span>Стоимость смены аватарки: <span className="text-yellow-500 font-bold">10 коинов</span></span>
+                                    )}
+                                </p>
+                                <p className="text-sm text-slate-500 mt-2">Ваши коины: <span className="text-yellow-500 font-bold">{userCoins.toFixed(3)}</span></p>
+                            </div>
+                            <div className="grid grid-cols-6 gap-4">
+                                {avatars.map((avatar, index) => (
+                                    <button
+                                        key={index}
+                                        onClick={() => handleAvatarSelect(avatar)}
+                                        disabled={isLoading}
+                                        className="text-4xl p-4 rounded-xl bg-slate-800 hover:bg-slate-700 border-2 border-slate-600 hover:border-yellow-500 transition-all duration-200 hover:scale-105"
+                                    >
+                                        {avatar}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        // 3. Settings Modal
+        const SettingsModal = ({ isOpen, onClose, currentUser, onLogout, userCoins, onCoinsUpdate }) => {
             const [activeTab, setActiveTab] = useState('profile');
             const [oldPassword, setOldPassword] = useState('');
             const [newPassword, setNewPassword] = useState('');
             const [confirmDelete, setConfirmDelete] = useState('');
             const [isLoading, setIsLoading] = useState(false);
             const [message, setMessage] = useState({ type: '', text: '' });
+            const [coinsToAdd, setCoinsToAdd] = useState('');
 
             if (!isOpen) return null;
 
@@ -155,6 +250,32 @@
                 } catch (error) { setMessage({ type: 'error', text: 'Ошибка удаления' }); setIsLoading(false); }
             };
 
+            const handleAddCoins = async () => {
+                if (currentUser !== 'kayivi') {
+                    alert('Только пользователь kayivi может добавлять коины!');
+                    return;
+                }
+                
+                const coins = parseFloat(coinsToAdd);
+                if (isNaN(coins) || coins <= 0) {
+                    alert('Введите корректное количество коинов');
+                    return;
+                }
+
+                setIsLoading(true);
+                try {
+                    await update(ref(db, `users/${currentUser}`), { 
+                        coins: userCoins + coins 
+                    });
+                    onCoinsUpdate(userCoins + coins);
+                    setMessage({ type: 'success', text: `Добавлено ${coins} коинов!` });
+                    setCoinsToAdd('');
+                } catch (error) {
+                    setMessage({ type: 'error', text: 'Ошибка добавления коинов' });
+                }
+                setIsLoading(false);
+            };
+
             return (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
                     <div className="w-full max-w-md bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
@@ -163,9 +284,9 @@
                             <button onClick={onClose} className="text-slate-400 hover:text-white"><X size={24} /></button>
                         </div>
                         <div className="flex border-b border-slate-800 bg-slate-900/50">
-                            {['profile', 'security', 'danger'].map(tab => (
+                            {['profile', 'coins', 'security', 'danger'].map(tab => (
                                 <button key={tab} onClick={() => setActiveTab(tab)} className={`flex-1 py-3 text-sm font-medium transition-colors capitalize ${activeTab === tab ? 'text-indigo-400 border-b-2 border-indigo-400' : 'text-slate-400'}`}>
-                                    {tab === 'profile' ? 'Профиль' : tab === 'security' ? 'Пароль' : 'Удалить'}
+                                    {tab === 'profile' ? 'Профиль' : tab === 'coins' ? 'Коинсы' : tab === 'security' ? 'Пароль' : 'Удалить'}
                                 </button>
                             ))}
                         </div>
@@ -174,9 +295,67 @@
                             
                             {activeTab === 'profile' && (
                                 <div className="space-y-6 text-center">
-                                    <div className="w-24 h-24 mx-auto rounded-full bg-gradient-to-tr from-indigo-600 to-purple-600 flex items-center justify-center text-white font-bold text-4xl shadow-xl">{currentUser ? currentUser[0].toUpperCase() : '?'}</div>
-                                    <div><h3 className="text-2xl font-bold text-white">{currentUser}</h3><p className="text-slate-400">Пользователь</p></div>
+                                    <div className="w-24 h-24 mx-auto rounded-full bg-gradient-to-tr from-indigo-600 to-purple-600 flex items-center justify-center text-white font-bold text-4xl shadow-xl">
+                                        {currentUser[0].toUpperCase()}
+                                    </div>
+                                    <div>
+                                        <h3 className="text-2xl font-bold text-white">{currentUser}</h3>
+                                        <p className="text-slate-400">Пользователь</p>
+                                    </div>
+                                    <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-xl p-4">
+                                        <div className="flex items-center justify-center gap-2 text-yellow-500">
+                                            <Coins size={20} />
+                                            <span className="font-bold text-lg">{userCoins.toFixed(3)} коинов</span>
+                                        </div>
+                                    </div>
                                     <Button variant="secondary" onClick={onLogout} className="w-full" icon={<LogOut size={18} />}>Выйти</Button>
+                                </div>
+                            )}
+
+                            {activeTab === 'coins' && (
+                                <div className="space-y-4">
+                                    <div className="text-center p-4 bg-yellow-500/10 border border-yellow-500/20 rounded-xl">
+                                        <div className="flex items-center justify-center gap-2 text-yellow-500 mb-2">
+                                            <Coins size={24} />
+                                            <span className="font-bold text-xl">{userCoins.toFixed(3)}</span>
+                                        </div>
+                                        <p className="text-slate-400 text-sm">Ваш баланс коинов</p>
+                                    </div>
+                                    
+                                    {currentUser === 'kayivi' && (
+                                        <div className="space-y-3 p-4 bg-green-500/10 border border-green-500/20 rounded-xl">
+                                            <div className="flex items-center gap-2 text-green-500 mb-2">
+                                                <Crown size={16} />
+                                                <span className="font-bold">Админ панель</span>
+                                            </div>
+                                            <div className="flex gap-2">
+                                                <input 
+                                                    type="number" 
+                                                    step="0.001"
+                                                    placeholder="Количество коинов" 
+                                                    value={coinsToAdd} 
+                                                    onChange={e => setCoinsToAdd(e.target.value)}
+                                                    className="flex-1 bg-slate-800 border border-slate-700 rounded-xl px-4 py-2 text-white focus:border-green-500 outline-none" 
+                                                />
+                                                <Button 
+                                                    onClick={handleAddCoins} 
+                                                    isLoading={isLoading}
+                                                    variant="gold"
+                                                    className="whitespace-nowrap"
+                                                >
+                                                    Добавить
+                                                </Button>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    <div className="text-slate-400 text-sm space-y-2">
+                                        <p>💎 1 клик = +0.001 коин</p>
+                                        <p>🔄 Смена аватарки = 10 коинов</p>
+                                        {currentUser === 'kayivi' && (
+                                            <p className="text-green-500">👑 Вы можете добавлять коины бесплатно</p>
+                                        )}
+                                    </div>
                                 </div>
                             )}
 
@@ -201,7 +380,7 @@
             );
         };
 
-        // 3. Message Bubble
+        // 4. Message Bubble
         const EMOJIS = ['👍', '❤️', '😂', '😮', '😢', '🔥'];
         const MessageBubble = ({ message, isOwn, chatId, messageId, currentUser }) => {
             const [showActions, setShowActions] = useState(false);
@@ -289,6 +468,48 @@
             );
         };
 
+        // 5. Clicker Component
+        const Clicker = ({ userCoins, onCoinClick, currentUser }) => {
+            const [showCoin, setShowCoin] = useState(false);
+            const [coinPosition, setCoinPosition] = useState({ x: 0, y: 0 });
+
+            const handleClick = (e) => {
+                const rect = e.currentTarget.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                
+                setCoinPosition({ x, y });
+                setShowCoin(true);
+                onCoinClick();
+                
+                setTimeout(() => setShowCoin(false), 500);
+            };
+
+            return (
+                <div className="relative">
+                    {showCoin && (
+                        <div 
+                            className="absolute text-yellow-500 text-2xl font-bold coin-animation z-50"
+                            style={{ left: coinPosition.x, top: coinPosition.y }}
+                        >
+                            +0.001
+                        </div>
+                    )}
+                    <button
+                        onClick={handleClick}
+                        className="w-full bg-gradient-to-br from-yellow-500 to-orange-500 hover:from-yellow-400 hover:to-orange-400 text-white p-6 rounded-2xl shadow-2xl shadow-yellow-500/25 transition-all duration-200 active:scale-95 border-2 border-yellow-400/50 animate-pulse-gold"
+                    >
+                        <div className="text-center">
+                            <Coins size={48} className="mx-auto mb-2" />
+                            <div className="text-2xl font-bold mb-1">{userCoins.toFixed(3)}</div>
+                            <div className="text-yellow-200 text-sm">Кликни для заработка!</div>
+                            <div className="text-yellow-300/80 text-xs mt-1">+0.001 за клик</div>
+                        </div>
+                    </button>
+                </div>
+            );
+        };
+
         // --- Main App ---
         const App = () => {
             const [currentUser, setCurrentUser] = useState(() => localStorage.getItem('dolbaeb_user'));
@@ -304,11 +525,30 @@
             const [searchResults, setSearchResults] = useState([]);
             const [searchQuery, setSearchQuery] = useState('');
             const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+            const [isAvatarModalOpen, setIsAvatarModalOpen] = useState(false);
             const [showMobileSidebar, setShowMobileSidebar] = useState(true);
             const [isRecording, setIsRecording] = useState(false);
             const [connectionError, setConnectionError] = useState('');
+            const [userCoins, setUserCoins] = useState(0);
+            const [userAvatar, setUserAvatar] = useState('');
             const mediaRecorderRef = useRef(null);
             const messagesEndRef = useRef(null);
+
+            // Загрузка данных пользователя
+            useEffect(() => {
+                if (currentUser) {
+                    const userRef = ref(db, `users/${currentUser}`);
+                    const unsubscribe = onValue(userRef, (snapshot) => {
+                        const data = snapshot.val();
+                        if (data) {
+                            setUserCoins(data.coins || 0);
+                            setUserAvatar(data.avatar || '');
+                        }
+                    });
+                    
+                    return () => off(userRef);
+                }
+            }, [currentUser]);
 
             // Проверка соединения с Firebase
             useEffect(() => {
@@ -390,7 +630,7 @@
                 }
             }, [currentUser]);
 
-            // Загрузка сообщений активного чата - ПОЛНОСТЬЮ ПЕРЕПИСАНА
+            // Загрузка сообщений активного чата
             useEffect(() => {
                 if (currentUser && activeChatUser) {
                     const chatId = [currentUser, activeChatUser].sort().join('_');
@@ -474,7 +714,9 @@
                                 password: passwordInput, 
                                 createdAt: Date.now(), 
                                 isOnline: true, 
-                                lastSeen: Date.now() 
+                                lastSeen: Date.now(),
+                                coins: 0,
+                                avatar: ''
                             }).then(() => { 
                                 localStorage.setItem('dolbaeb_user', cleanUsername); 
                                 setCurrentUser(cleanUsername); 
@@ -497,6 +739,19 @@
                 setActiveChatUser(null); 
                 setChats([]); 
                 setIsSettingsOpen(false);
+                setUserCoins(0);
+            };
+
+            const handleCoinClick = async () => {
+                try {
+                    const newCoins = userCoins + 0.001;
+                    await update(ref(db, `users/${currentUser}`), { 
+                        coins: newCoins 
+                    });
+                    setUserCoins(newCoins);
+                } catch (error) {
+                    console.error('Coin update error:', error);
+                }
             };
 
             const handleSendMessage = async (type = 'text', content = messageInput) => {
@@ -630,7 +885,22 @@
 
             return (
                 <div className="flex h-screen overflow-hidden bg-slate-950">
-                    <SettingsModal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} currentUser={currentUser} onLogout={handleLogout} />
+                    <SettingsModal 
+                        isOpen={isSettingsOpen} 
+                        onClose={() => setIsSettingsOpen(false)} 
+                        currentUser={currentUser} 
+                        onLogout={handleLogout}
+                        userCoins={userCoins}
+                        onCoinsUpdate={setUserCoins}
+                    />
+                    
+                    <AvatarModal
+                        isOpen={isAvatarModalOpen}
+                        onClose={() => setIsAvatarModalOpen(false)}
+                        currentUser={currentUser}
+                        userCoins={userCoins}
+                        onAvatarChange={setUserAvatar}
+                    />
                     
                     {connectionError && (
                         <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 bg-red-500/90 text-white px-4 py-2 rounded-lg text-sm backdrop-blur-sm">
@@ -642,16 +912,44 @@
                     <div className={`${showMobileSidebar ? 'flex' : 'hidden'} md:flex w-full md:w-[420px] flex-col border-r border-slate-800 bg-slate-900 z-10`}>
                         <div className="p-4 border-b border-slate-800 flex items-center justify-between h-[72px]">
                             <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-indigo-600 to-purple-600 flex items-center justify-center text-white font-bold">{currentUser[0].toUpperCase()}</div>
+                                <button 
+                                    onClick={() => setIsAvatarModalOpen(true)}
+                                    className="w-10 h-10 rounded-full bg-gradient-to-tr from-indigo-600 to-purple-600 flex items-center justify-center text-white font-bold text-lg relative group"
+                                >
+                                    {userAvatar || currentUser[0].toUpperCase()}
+                                    {userCoins >= 10 && (
+                                        <div className="absolute -top-1 -right-1 bg-yellow-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                                            !
+                                        </div>
+                                    )}
+                                </button>
                                 <div>
-                                    <h2 className="font-bold text-white">{currentUser}</h2>
+                                    <h2 className="font-bold text-white flex items-center gap-1">
+                                        {currentUser}
+                                        {currentUser === 'kayivi' && <Crown size={14} className="text-yellow-500" />}
+                                    </h2>
                                     <span className="text-[11px] text-green-500 flex items-center gap-1">● В сети</span>
                                 </div>
                             </div>
-                            <button onClick={() => setIsSettingsOpen(true)} className="p-2.5 rounded-xl bg-slate-800 text-slate-400 hover:text-white">
-                                <SettingsIcon size={20} />
-                            </button>
+                            <div className="flex items-center gap-2">
+                                <button 
+                                    onClick={() => setIsSettingsOpen(true)}
+                                    className="p-2 rounded-xl bg-slate-800 text-slate-400 hover:text-white relative"
+                                >
+                                    <SettingsIcon size={20} />
+                                </button>
+                            </div>
                         </div>
+
+                        {/* Clicker Section */}
+                        <div className="p-4 border-b border-slate-800">
+                            <Clicker 
+                                userCoins={userCoins} 
+                                onCoinClick={handleCoinClick}
+                                currentUser={currentUser}
+                            />
+                        </div>
+
                         <div className="p-4">
                             <div className="relative">
                                 <Search className="absolute left-3 top-3 text-slate-500" size={18} />
@@ -677,8 +975,8 @@
                                         onClick={() => { setActiveChatUser(u.username); setSearchQuery(''); setSearchResults([]); }} 
                                         className="p-3 flex items-center gap-3 rounded-xl hover:bg-slate-800 cursor-pointer"
                                     >
-                                        <div className="w-12 h-12 rounded-full bg-slate-800 flex items-center justify-center text-slate-300 font-bold border border-slate-700">
-                                            {u.username[0].toUpperCase()}
+                                        <div className="w-12 h-12 rounded-full bg-slate-800 flex items-center justify-center text-slate-300 font-bold border border-slate-700 text-lg">
+                                            {u.avatar || u.username[0].toUpperCase()}
                                         </div>
                                         <div>
                                             <h3 className="font-medium text-slate-200">{u.username}</h3>
@@ -692,7 +990,7 @@
                                         onClick={() => setActiveChatUser(c.user)} 
                                         className={`p-3 flex items-center gap-3 rounded-xl cursor-pointer hover:bg-slate-800 ${activeChatUser === c.user ? 'bg-slate-800' : ''}`}
                                     >
-                                        <div className="w-12 h-12 rounded-full bg-slate-800 flex items-center justify-center text-white font-bold border border-slate-700">
+                                        <div className="w-12 h-12 rounded-full bg-slate-800 flex items-center justify-center text-white font-bold border border-slate-700 text-lg">
                                             {c.user[0].toUpperCase()}
                                         </div>
                                         <div className="flex-1 min-w-0">
