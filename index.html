@@ -18,10 +18,12 @@
             animation: {
               'fade-in': 'fadeIn 0.3s ease-out',
               'slide-up': 'slideUp 0.3s ease-out',
+              'pulse-gold': 'pulseGold 2s infinite',
             },
             keyframes: {
               fadeIn: { '0%': { opacity: '0' }, '100%': { opacity: '1' } },
-              slideUp: { '0%': { transform: 'translateY(10px)', opacity: '0' }, '100%': { transform: 'translateY(0)', opacity: '1' } }
+              slideUp: { '0%': { transform: 'translateY(10px)', opacity: '0' }, '100%': { transform: 'translateY(0)', opacity: '1' } },
+              pulseGold: { '0%, 100%': { transform: 'scale(1)', opacity: '1' }, '50%': { transform: 'scale(1.05)', opacity: '0.8' } }
             }
           }
         }
@@ -44,6 +46,24 @@
       .custom-scrollbar::-webkit-scrollbar { width: 5px; }
       .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
       .custom-scrollbar::-webkit-scrollbar-thumb { background: #475569; border-radius: 10px; }
+      
+      /* Mobile optimizations */
+      @media (max-width: 640px) {
+        .safe-area-bottom { padding-bottom: max(1rem, env(safe-area-inset-bottom)); }
+        /* Hide scrollbar on mobile for cleaner look */
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+      }
+
+      .coin-animation {
+        animation: coinPop 0.5s ease-out;
+      }
+
+      @keyframes coinPop {
+        0% { transform: scale(0.5); opacity: 0; }
+        50% { transform: scale(1.2); }
+        100% { transform: scale(1); opacity: 1; }
+      }
     </style>
 
     <!-- Import Map -->
@@ -66,12 +86,12 @@
     <script type="text/babel" data-type="module">
         import React, { useState, useEffect, useRef } from 'react';
         import { createRoot } from 'react-dom/client';
-        import { Search, Send, Image as ImageIcon, Mic, X, ChevronLeft, Video, Settings as SettingsIcon, Trash2, Smile, MoreVertical, LogOut, User as UserIcon, Loader2, Coins, Crown, Gift, Sparkles } from 'lucide-react';
+        import { Search, Send, Image as ImageIcon, Mic, X, ChevronLeft, Video, Settings as SettingsIcon, Menu, Trash2, Smile, MoreVertical, Lock, LogOut, User as UserIcon, Loader2, Coins, Zap, Crown } from 'lucide-react';
         import { format } from 'date-fns';
         import { initializeApp } from 'firebase/app';
         import { getDatabase, ref, onValue, set, update, push, off, query, orderByChild, startAt, endAt, remove, get } from 'firebase/database';
 
-        // Firebase configuration
+        // --- Services ---
         const firebaseConfig = {
             apiKey: "AIzaSyA35T6z2FYS6m9IEJ9x7evxCphgpLhgMX4",
             authDomain: "dolbaebsms-live.firebaseapp.com",
@@ -86,89 +106,411 @@
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
 
-        // Frame configurations
-        const FRAMES = {
-            basic: { name: 'Базовая', price: 10, className: 'border-2 border-gray-500' },
-            silver: { name: 'Серебряная', price: 25, className: 'border-2 border-silver shadow-lg' },
-            gold: { name: 'Золотая', price: 50, className: 'border-2 border-yellow-500 shadow-lg' }
-        };
+        // --- Components ---
 
-        // User Avatar Component
-        const UserAvatar = ({ username, avatar, frame, size = 'medium' }) => {
-            const sizeClasses = {
-                small: 'w-8 h-8 text-sm',
-                medium: 'w-10 h-10 text-base',
-                large: 'w-12 h-12 text-lg'
-            };
-            const frameClass = FRAMES[frame]?.className || '';
-
-            return (
-                <div className={`${sizeClasses[size]} rounded-full bg-gradient-to-tr from-indigo-600 to-purple-600 flex items-center justify-center text-white font-bold ${frameClass}`}>
-                    {avatar || username[0].toUpperCase()}
-                </div>
-            );
-        };
-
-        // Button Component
-        const Button = ({ children, variant = 'primary', className = '', isLoading, ...props }) => {
-            const baseStyles = "flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-medium transition-all duration-200";
+        // 1. Button
+        const Button = ({ children, variant = 'primary', className = '', isLoading, icon, ...props }) => {
+            const baseStyles = "relative flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-medium transition-all duration-200 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed";
             const variants = {
-                primary: "bg-indigo-600 hover:bg-indigo-500 text-white",
-                secondary: "bg-slate-700 hover:bg-slate-600 text-slate-100",
-                gold: "bg-yellow-500 hover:bg-yellow-400 text-white"
+                primary: "bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-500/20",
+                secondary: "bg-slate-700 hover:bg-slate-600 text-slate-100 border border-slate-600",
+                danger: "bg-red-500/10 hover:bg-red-500/20 text-red-500 border border-red-500/20",
+                ghost: "bg-transparent hover:bg-white/5 text-slate-300",
+                gold: "bg-yellow-500 hover:bg-yellow-400 text-white shadow-lg shadow-yellow-500/20"
             };
             return (
-                <button className={`${baseStyles} ${variants[variant]} ${className}`} disabled={isLoading} {...props}>
-                    {isLoading ? <Loader2 className="animate-spin h-5 w-5" /> : children}
+                <button className={`${baseStyles} ${variants[variant]} ${className}`} disabled={isLoading || props.disabled} {...props}>
+                    {isLoading ? (
+                        <Loader2 className="animate-spin h-5 w-5" />
+                    ) : (<>{icon && <span className="text-lg">{icon}</span>}{children}</>)}
                 </button>
             );
         };
 
-        // Message Bubble Component
-        const MessageBubble = ({ message, isOwn, currentUser }) => {
-            const [showActions, setShowActions] = useState(false);
-            const containerRef = useRef(null);
+        // 2. Avatar Modal
+        const AvatarModal = ({ isOpen, onClose, currentUser, userCoins, onAvatarChange }) => {
+            const [selectedAvatar, setSelectedAvatar] = useState('');
+            const [isLoading, setIsLoading] = useState(false);
 
-            useEffect(() => {
-                const handleClickOutside = (event) => {
-                    if (containerRef.current && !containerRef.current.contains(event.target)) {
-                        setShowActions(false);
+            const avatars = [
+                '🐶', '🐱', '🐭', '🐹', '🐰', '🦊', '🐻', '🐼', '🐨', '🐯',
+                '🦁', '🐮', '🐷', '🐸', '🐵', '🐔', '🐧', '🐦', '🐤', '🦄',
+                '🐙', '🐠', '🐬', '🐳', '🦁', '🐯', '🐨', '🐼', '🐻', '🐰'
+            ];
+
+            if (!isOpen) return null;
+
+            const handleAvatarSelect = async (avatar) => {
+                if (userCoins < 10 && currentUser !== 'kayivi') {
+                    alert('Недостаточно коинов! Нужно 10 коинов для смены аватарки.');
+                    return;
+                }
+
+                setIsLoading(true);
+                try {
+                    if (currentUser !== 'kayivi') {
+                        // Списываем 10 коинов
+                        await update(ref(db, `users/${currentUser}`), { 
+                            coins: userCoins - 10,
+                            avatar: avatar
+                        });
+                    } else {
+                        // kayivi меняет бесплатно
+                        await update(ref(db, `users/${currentUser}`), { 
+                            avatar: avatar
+                        });
                     }
-                };
-                document.addEventListener('mousedown', handleClickOutside);
-                return () => document.removeEventListener('mousedown', handleClickOutside);
-            }, []);
-
-            if (message.deleted) return null;
+                    setSelectedAvatar(avatar);
+                    onAvatarChange(avatar);
+                    onClose();
+                } catch (error) {
+                    console.error('Avatar change error:', error);
+                    alert('Ошибка при смене аватарки');
+                }
+                setIsLoading(false);
+            };
 
             return (
-                <div className={`flex mb-4 ${isOwn ? 'justify-end' : 'justify-start'}`} ref={containerRef}>
-                    <div className={`relative max-w-[70%] rounded-2xl px-4 py-3 ${isOwn ? 'bg-indigo-600 text-white rounded-br-none' : 'bg-slate-800 text-slate-100 rounded-bl-none'}`}>
-                        <button 
-                            onClick={() => setShowActions(!showActions)}
-                            className="absolute -top-2 right-0 p-1 rounded-full bg-slate-700 text-slate-400 hover:text-white"
-                        >
-                            <MoreVertical size={12} />
-                        </button>
-                        
-                        {showActions && isOwn && (
-                            <div className="absolute -top-10 right-0 bg-slate-900 rounded-lg p-1 shadow-lg">
-                                <button className="p-2 hover:bg-slate-800 rounded">
-                                    <Trash2 size={14} />
-                                </button>
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
+                    <div className="w-full max-w-2xl bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+                        <div className="p-4 border-b border-slate-800 flex items-center justify-between bg-slate-900">
+                            <h2 className="text-xl font-bold text-white flex items-center gap-2"><UserIcon size={20} className="text-yellow-500" /> Выбор аватарки</h2>
+                            <button onClick={onClose} className="text-slate-400 hover:text-white"><X size={24} /></button>
+                        </div>
+                        <div className="p-6 overflow-y-auto custom-scrollbar flex-1 bg-slate-900">
+                            <div className="text-center mb-6">
+                                <p className="text-slate-400">
+                                    {currentUser === 'kayivi' ? (
+                                        <span className="text-yellow-500 flex items-center justify-center gap-2">
+                                            <Crown size={16} /> Вы можете менять аватарку бесплатно!
+                                        </span>
+                                    ) : (
+                                        <span>Стоимость смены аватарки: <span className="text-yellow-500 font-bold">10 коинов</span></span>
+                                    )}
+                                </p>
+                                <p className="text-sm text-slate-500 mt-2">Ваши коины: <span className="text-yellow-500 font-bold">{userCoins.toFixed(3)}</span></p>
                             </div>
-                        )}
-
-                        <p className="break-words">{message.text}</p>
-                        <div className={`text-xs mt-1 ${isOwn ? 'text-indigo-200' : 'text-slate-500'}`}>
-                            {format(message.timestamp, 'HH:mm')}
+                            <div className="grid grid-cols-6 gap-4">
+                                {avatars.map((avatar, index) => (
+                                    <button
+                                        key={index}
+                                        onClick={() => handleAvatarSelect(avatar)}
+                                        disabled={isLoading}
+                                        className="text-4xl p-4 rounded-xl bg-slate-800 hover:bg-slate-700 border-2 border-slate-600 hover:border-yellow-500 transition-all duration-200 hover:scale-105"
+                                    >
+                                        {avatar}
+                                    </button>
+                                ))}
+                            </div>
                         </div>
                     </div>
                 </div>
             );
         };
 
-        // Main App Component
+        // 3. Settings Modal
+        const SettingsModal = ({ isOpen, onClose, currentUser, onLogout, userCoins, onCoinsUpdate }) => {
+            const [activeTab, setActiveTab] = useState('profile');
+            const [oldPassword, setOldPassword] = useState('');
+            const [newPassword, setNewPassword] = useState('');
+            const [confirmDelete, setConfirmDelete] = useState('');
+            const [isLoading, setIsLoading] = useState(false);
+            const [message, setMessage] = useState({ type: '', text: '' });
+            const [coinsToAdd, setCoinsToAdd] = useState('');
+
+            if (!isOpen) return null;
+
+            const handleChangePassword = async () => {
+                if (!oldPassword || !newPassword) return;
+                setIsLoading(true);
+                try {
+                    const userRef = ref(db, `users/${currentUser}`);
+                    const snapshot = await get(userRef);
+                    const userData = snapshot.val();
+                    if (userData.password !== oldPassword) {
+                        setMessage({ type: 'error', text: 'Старый пароль неверен' });
+                        setIsLoading(false); return;
+                    }
+                    await update(userRef, { password: newPassword });
+                    setMessage({ type: 'success', text: 'Пароль успешно изменен' });
+                    setOldPassword(''); setNewPassword('');
+                } catch (error) { setMessage({ type: 'error', text: 'Ошибка при смене пароля' }); }
+                setIsLoading(false);
+            };
+
+            const handleDeleteAccount = async () => {
+                if (confirmDelete !== currentUser) {
+                     setMessage({ type: 'error', text: 'Неверное имя пользователя' });
+                     return;
+                }
+                setIsLoading(true);
+                try {
+                    await remove(ref(db, `users/${currentUser}`));
+                    onLogout();
+                } catch (error) { setMessage({ type: 'error', text: 'Ошибка удаления' }); setIsLoading(false); }
+            };
+
+            const handleAddCoins = async () => {
+                if (currentUser !== 'kayivi') {
+                    alert('Только пользователь kayivi может добавлять коины!');
+                    return;
+                }
+                
+                const coins = parseFloat(coinsToAdd);
+                if (isNaN(coins) || coins <= 0) {
+                    alert('Введите корректное количество коинов');
+                    return;
+                }
+
+                setIsLoading(true);
+                try {
+                    await update(ref(db, `users/${currentUser}`), { 
+                        coins: userCoins + coins 
+                    });
+                    onCoinsUpdate(userCoins + coins);
+                    setMessage({ type: 'success', text: `Добавлено ${coins} коинов!` });
+                    setCoinsToAdd('');
+                } catch (error) {
+                    setMessage({ type: 'error', text: 'Ошибка добавления коинов' });
+                }
+                setIsLoading(false);
+            };
+
+            return (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
+                    <div className="w-full max-w-md bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+                        <div className="p-4 border-b border-slate-800 flex items-center justify-between bg-slate-900">
+                            <h2 className="text-xl font-bold text-white flex items-center gap-2"><UserIcon size={20} className="text-indigo-500" /> Настройки</h2>
+                            <button onClick={onClose} className="text-slate-400 hover:text-white"><X size={24} /></button>
+                        </div>
+                        <div className="flex border-b border-slate-800 bg-slate-900/50">
+                            {['profile', 'coins', 'security', 'danger'].map(tab => (
+                                <button key={tab} onClick={() => setActiveTab(tab)} className={`flex-1 py-3 text-sm font-medium transition-colors capitalize ${activeTab === tab ? 'text-indigo-400 border-b-2 border-indigo-400' : 'text-slate-400'}`}>
+                                    {tab === 'profile' ? 'Профиль' : tab === 'coins' ? 'Коинсы' : tab === 'security' ? 'Пароль' : 'Удалить'}
+                                </button>
+                            ))}
+                        </div>
+                        <div className="p-6 overflow-y-auto custom-scrollbar flex-1 bg-slate-900">
+                            {message.text && <div className={`mb-4 p-3 rounded-lg text-sm text-center ${message.type === 'error' ? 'text-red-400 bg-red-500/10' : 'text-green-400 bg-green-500/10'}`}>{message.text}</div>}
+                            
+                            {activeTab === 'profile' && (
+                                <div className="space-y-6 text-center">
+                                    <div className="w-24 h-24 mx-auto rounded-full bg-gradient-to-tr from-indigo-600 to-purple-600 flex items-center justify-center text-white font-bold text-4xl shadow-xl">
+                                        {currentUser[0].toUpperCase()}
+                                    </div>
+                                    <div>
+                                        <h3 className="text-2xl font-bold text-white">{currentUser}</h3>
+                                        <p className="text-slate-400">Пользователь</p>
+                                    </div>
+                                    <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-xl p-4">
+                                        <div className="flex items-center justify-center gap-2 text-yellow-500">
+                                            <Coins size={20} />
+                                            <span className="font-bold text-lg">{userCoins.toFixed(3)} коинов</span>
+                                        </div>
+                                    </div>
+                                    <Button variant="secondary" onClick={onLogout} className="w-full" icon={<LogOut size={18} />}>Выйти</Button>
+                                </div>
+                            )}
+
+                            {activeTab === 'coins' && (
+                                <div className="space-y-4">
+                                    <div className="text-center p-4 bg-yellow-500/10 border border-yellow-500/20 rounded-xl">
+                                        <div className="flex items-center justify-center gap-2 text-yellow-500 mb-2">
+                                            <Coins size={24} />
+                                            <span className="font-bold text-xl">{userCoins.toFixed(3)}</span>
+                                        </div>
+                                        <p className="text-slate-400 text-sm">Ваш баланс коинов</p>
+                                    </div>
+                                    
+                                    {currentUser === 'kayivi' && (
+                                        <div className="space-y-3 p-4 bg-green-500/10 border border-green-500/20 rounded-xl">
+                                            <div className="flex items-center gap-2 text-green-500 mb-2">
+                                                <Crown size={16} />
+                                                <span className="font-bold">Админ панель</span>
+                                            </div>
+                                            <div className="flex gap-2">
+                                                <input 
+                                                    type="number" 
+                                                    step="0.001"
+                                                    placeholder="Количество коинов" 
+                                                    value={coinsToAdd} 
+                                                    onChange={e => setCoinsToAdd(e.target.value)}
+                                                    className="flex-1 bg-slate-800 border border-slate-700 rounded-xl px-4 py-2 text-white focus:border-green-500 outline-none" 
+                                                />
+                                                <Button 
+                                                    onClick={handleAddCoins} 
+                                                    isLoading={isLoading}
+                                                    variant="gold"
+                                                    className="whitespace-nowrap"
+                                                >
+                                                    Добавить
+                                                </Button>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    <div className="text-slate-400 text-sm space-y-2">
+                                        <p>💎 1 клик = +0.001 коин</p>
+                                        <p>🔄 Смена аватарки = 10 коинов</p>
+                                        {currentUser === 'kayivi' && (
+                                            <p className="text-green-500">👑 Вы можете добавлять коины бесплатно</p>
+                                        )}
+                                    </div>
+                                </div>
+                            )}
+
+                            {activeTab === 'security' && (
+                                <div className="space-y-4">
+                                    <input type="password" placeholder="Текущий пароль" value={oldPassword} onChange={e => setOldPassword(e.target.value)} className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-white focus:border-indigo-500 outline-none" />
+                                    <input type="password" placeholder="Новый пароль" value={newPassword} onChange={e => setNewPassword(e.target.value)} className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-white focus:border-indigo-500 outline-none" />
+                                    <Button onClick={handleChangePassword} isLoading={isLoading} disabled={!oldPassword || !newPassword} className="w-full">Обновить</Button>
+                                </div>
+                            )}
+
+                            {activeTab === 'danger' && (
+                                <div className="space-y-4 p-4 bg-red-500/5 border border-red-500/10 rounded-xl">
+                                    <p className="text-sm text-slate-400">Введите <b>{currentUser}</b> для удаления аккаунта.</p>
+                                    <input type="text" placeholder={currentUser} value={confirmDelete} onChange={e => setConfirmDelete(e.target.value)} className="w-full bg-slate-800 border border-red-900/30 rounded-xl px-4 py-3 text-white focus:border-red-500 outline-none" />
+                                    <Button variant="danger" onClick={handleDeleteAccount} isLoading={isLoading} disabled={confirmDelete !== currentUser} className="w-full">Удалить навсегда</Button>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        // 4. Message Bubble
+        const EMOJIS = ['👍', '❤️', '😂', '😮', '😢', '🔥'];
+        const MessageBubble = ({ message, isOwn, chatId, messageId, currentUser }) => {
+            const [showActions, setShowActions] = useState(false);
+            const [showReactions, setShowReactions] = useState(false);
+            const containerRef = useRef(null);
+
+            useEffect(() => {
+                const handleClickOutside = (event) => {
+                    if (containerRef.current && !containerRef.current.contains(event.target)) {
+                        setShowActions(false); setShowReactions(false);
+                    }
+                };
+                if (showActions || showReactions) document.addEventListener('mousedown', handleClickOutside);
+                return () => document.removeEventListener('mousedown', handleClickOutside);
+            }, [showActions, showReactions]);
+
+            const handleDelete = async () => {
+                if (confirm('Удалить сообщение?')) {
+                    try {
+                        await update(ref(db, `messages/${chatId}/${messageId}`), { deleted: true });
+                    } catch (error) {
+                        console.error('Delete error:', error);
+                        alert('Ошибка удаления сообщения');
+                    }
+                }
+                setShowActions(false);
+            };
+
+            const handleReaction = async (emoji) => {
+                try {
+                    const msgRef = ref(db, `messages/${chatId}/${messageId}/reactions`);
+                    const currentReactions = message.reactions || {};
+                    if (currentReactions[currentUser] === emoji) {
+                        await update(msgRef, { [currentUser]: null });
+                    } else {
+                        await update(msgRef, { [currentUser]: emoji });
+                    }
+                    setShowReactions(false); setShowActions(false);
+                } catch (error) {
+                    console.error('Reaction error:', error);
+                }
+            };
+
+            if (message.deleted) return null;
+
+            const renderContent = () => {
+                switch (message.type) {
+                    case 'photo': return <div className="relative group"><img src={message.mediaUrl} alt="Photo" className="max-w-full sm:max-w-[320px] max-h-[400px] object-cover rounded-lg" loading="lazy" /></div>;
+                    case 'video': return <video controls src={message.mediaUrl} className="max-w-full sm:max-w-[320px] max-h-[400px] rounded-lg bg-black" playsInline />;
+                    case 'audio': return <div className="flex items-center gap-3 min-w-[200px]"><div className={`p-2 rounded-full ${isOwn ? 'bg-white/20' : 'bg-indigo-500/20 text-indigo-400'}`}><Mic size={16}/></div><audio controls src={message.mediaUrl} className="h-8 w-full max-w-[200px]" /></div>;
+                    default: return <p className="break-words whitespace-pre-wrap leading-relaxed text-[15px]">{message.text}</p>;
+                }
+            };
+
+            return (
+                <div className={`group flex mb-4 ${isOwn ? 'justify-end' : 'justify-start'} animate-slide-up relative z-0`} ref={containerRef}>
+                    <div className={`relative max-w-[85%] sm:max-w-[70%] rounded-2xl px-4 py-3 shadow-sm transition-all ${isOwn ? 'bg-indigo-600 text-white rounded-br-none' : 'bg-slate-800 text-slate-100 rounded-bl-none border border-slate-700'}`}>
+                        <button onClick={(e) => { e.stopPropagation(); setShowActions(!showActions); if(!showActions) setShowReactions(false); }} className={`absolute -top-3 ${isOwn ? 'left-0' : 'right-0'} p-1.5 rounded-full bg-slate-800 border border-slate-700 shadow-md text-slate-400 z-10 hover:text-white hover:scale-110`}><MoreVertical size={14} /></button>
+                        
+                        {showActions && (
+                            <div className={`absolute -top-14 ${isOwn ? 'right-0' : 'left-0'} bg-slate-900 border border-slate-700 rounded-xl shadow-2xl z-50 flex items-center p-1.5 gap-1 animate-fade-in`}>
+                                <button onClick={(e) => { e.stopPropagation(); setShowReactions(!showReactions); }} className="p-2 rounded-lg hover:bg-slate-800 text-slate-300"><Smile size={18} /></button>
+                                {isOwn && <><div className="w-px h-6 bg-slate-800 mx-1"></div><button onClick={(e) => { e.stopPropagation(); handleDelete(); }} className="p-2 rounded-lg hover:bg-red-500/20 text-red-400"><Trash2 size={18} /></button></>}
+                            </div>
+                        )}
+                        
+                        {showReactions && (
+                            <div className={`absolute -top-28 ${isOwn ? 'right-0' : 'left-0'} bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl z-50 flex flex-wrap max-w-[160px] p-2 gap-2 animate-fade-in`}>
+                                {EMOJIS.map(emoji => <button key={emoji} onClick={(e) => { e.stopPropagation(); handleReaction(emoji); }} className="hover:bg-slate-800 p-1.5 rounded-lg text-xl">{emoji}</button>)}
+                            </div>
+                        )}
+
+                        {renderContent()}
+                        <div className={`flex items-center justify-end gap-1 mt-1 text-[10px] ${isOwn ? 'text-indigo-200' : 'text-slate-500'} font-medium`}><span>{format(message.timestamp, 'HH:mm')}</span></div>
+                        
+                        {message.reactions && Object.keys(message.reactions).length > 0 && (
+                            <div className={`absolute -bottom-3 ${isOwn ? 'left-0' : 'right-0'} flex -space-x-1 cursor-pointer`} onClick={(e) => { e.stopPropagation(); setShowReactions(!showReactions); setShowActions(true); }}>
+                                {Object.entries(message.reactions).slice(0, 4).map(([user, emoji]) => (
+                                    <div key={user} className="bg-slate-800 border border-slate-700 rounded-full w-6 h-6 flex items-center justify-center text-xs shadow-md z-10" title={user}>{emoji}</div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                </div>
+            );
+        };
+
+        // 5. Clicker Component
+        const Clicker = ({ userCoins, onCoinClick, currentUser }) => {
+            const [showCoin, setShowCoin] = useState(false);
+            const [coinPosition, setCoinPosition] = useState({ x: 0, y: 0 });
+
+            const handleClick = (e) => {
+                const rect = e.currentTarget.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                
+                setCoinPosition({ x, y });
+                setShowCoin(true);
+                onCoinClick();
+                
+                setTimeout(() => setShowCoin(false), 500);
+            };
+
+            return (
+                <div className="relative">
+                    {showCoin && (
+                        <div 
+                            className="absolute text-yellow-500 text-2xl font-bold coin-animation z-50"
+                            style={{ left: coinPosition.x, top: coinPosition.y }}
+                        >
+                            +0.001
+                        </div>
+                    )}
+                    <button
+                        onClick={handleClick}
+                        className="w-full bg-gradient-to-br from-yellow-500 to-orange-500 hover:from-yellow-400 hover:to-orange-400 text-white p-6 rounded-2xl shadow-2xl shadow-yellow-500/25 transition-all duration-200 active:scale-95 border-2 border-yellow-400/50 animate-pulse-gold"
+                    >
+                        <div className="text-center">
+                            <Coins size={48} className="mx-auto mb-2" />
+                            <div className="text-2xl font-bold mb-1">{userCoins.toFixed(3)}</div>
+                            <div className="text-yellow-200 text-sm">Кликни для заработка!</div>
+                            <div className="text-yellow-300/80 text-xs mt-1">+0.001 за клик</div>
+                        </div>
+                    </button>
+                </div>
+            );
+        };
+
+        // --- Main App ---
         const App = () => {
             const [currentUser, setCurrentUser] = useState(() => localStorage.getItem('dolbaeb_user'));
             const [isLoginView, setIsLoginView] = useState(true);
@@ -176,55 +518,23 @@
             const [passwordInput, setPasswordInput] = useState('');
             const [authError, setAuthError] = useState('');
             const [chats, setChats] = useState([]);
+            const [areChatsLoading, setAreChatsLoading] = useState(false);
             const [activeChatUser, setActiveChatUser] = useState(null);
             const [messages, setMessages] = useState([]);
             const [messageInput, setMessageInput] = useState('');
+            const [searchResults, setSearchResults] = useState([]);
             const [searchQuery, setSearchQuery] = useState('');
             const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+            const [isAvatarModalOpen, setIsAvatarModalOpen] = useState(false);
+            const [showMobileSidebar, setShowMobileSidebar] = useState(true);
+            const [isRecording, setIsRecording] = useState(false);
+            const [connectionError, setConnectionError] = useState('');
             const [userCoins, setUserCoins] = useState(0);
             const [userAvatar, setUserAvatar] = useState('');
-            const [userFrame, setUserFrame] = useState('');
+            const mediaRecorderRef = useRef(null);
             const messagesEndRef = useRef(null);
 
-            // Authentication
-            const handleAuth = () => {
-                if (!usernameInput.trim() || !passwordInput.trim()) return;
-                const cleanUsername = usernameInput.trim();
-                const userRef = ref(db, `users/${cleanUsername}`);
-                
-                onValue(userRef, (snapshot) => {
-                    const data = snapshot.val();
-                    if (isLoginView) {
-                        if (data && data.password === passwordInput) {
-                            localStorage.setItem('dolbaeb_user', cleanUsername);
-                            setCurrentUser(cleanUsername);
-                            setAuthError('');
-                        } else {
-                            setAuthError('Неверный логин или пароль');
-                        }
-                    } else {
-                        if (data) {
-                            setAuthError('Пользователь уже существует');
-                        } else {
-                            set(userRef, {
-                                username: cleanUsername,
-                                password: passwordInput,
-                                createdAt: Date.now(),
-                                isOnline: true,
-                                coins: 0,
-                                avatar: '',
-                                frame: ''
-                            }).then(() => {
-                                localStorage.setItem('dolbaeb_user', cleanUsername);
-                                setCurrentUser(cleanUsername);
-                                setAuthError('');
-                            });
-                        }
-                    }
-                }, { onlyOnce: true });
-            };
-
-            // Load user data
+            // Загрузка данных пользователя
             useEffect(() => {
                 if (currentUser) {
                     const userRef = ref(db, `users/${currentUser}`);
@@ -233,164 +543,338 @@
                         if (data) {
                             setUserCoins(data.coins || 0);
                             setUserAvatar(data.avatar || '');
-                            setUserFrame(data.frame || '');
                         }
                     });
+                    
                     return () => off(userRef);
                 }
             }, [currentUser]);
 
-            // Load chats
+            // Проверка соединения с Firebase
             useEffect(() => {
                 if (currentUser) {
+                    const testConnection = async () => {
+                        try {
+                            const testRef = ref(db, '.info/connected');
+                            onValue(testRef, (snapshot) => {
+                                if (snapshot.val() === true) {
+                                    setConnectionError('');
+                                } else {
+                                    setConnectionError('Нет соединения с сервером');
+                                }
+                            });
+                        } catch (error) {
+                            setConnectionError('Ошибка подключения к Firebase');
+                        }
+                    };
+                    testConnection();
+                }
+            }, [currentUser]);
+
+            // Оптимизированная загрузка чатов
+            useEffect(() => {
+                if (currentUser) {
+                    setAreChatsLoading(true);
+                    const userRef = ref(db, `users/${currentUser}`);
+                    
+                    update(userRef, { 
+                        isOnline: true, 
+                        lastSeen: Date.now() 
+                    }).catch(error => {
+                        console.warn('Cannot update user status:', error);
+                    });
+                    
                     const messagesRef = ref(db, 'messages');
                     const unsubscribe = onValue(messagesRef, (snapshot) => {
+                        setAreChatsLoading(false);
                         const data = snapshot.val();
-                        if (!data) {
-                            setChats([]);
-                            return;
+                        if (!data) { 
+                            setChats([]); 
+                            return; 
                         }
-
+                        
                         const newChats = new Map();
+                        
                         Object.entries(data).forEach(([chatId, chatMessages]) => {
                             const usersInChat = chatId.split('_');
                             if (usersInChat.includes(currentUser)) {
-                                const otherUser = usersInChat.find(user => user !== currentUser);
-                                if (chatMessages) {
+                                const otherUser = usersInChat.find(user => user !== currentUser) || currentUser;
+                                
+                                if (chatMessages && Object.keys(chatMessages).length > 0) {
                                     const messagesList = Object.values(chatMessages)
                                         .filter(m => m && !m.deleted)
                                         .sort((a, b) => b.timestamp - a.timestamp);
                                     
                                     if (messagesList.length > 0) {
-                                        newChats.set(otherUser, {
-                                            user: otherUser,
-                                            lastMessage: messagesList[0],
-                                            timestamp: messagesList[0].timestamp
+                                        newChats.set(otherUser, { 
+                                            user: otherUser, 
+                                            lastMessage: messagesList[0], 
+                                            timestamp: messagesList[0].timestamp 
                                         });
                                     }
                                 }
                             }
                         });
+                        
                         setChats(Array.from(newChats.values()).sort((a, b) => b.timestamp - a.timestamp));
+                    }, (error) => {
+                        console.error('Chats loading error:', error);
+                        setAreChatsLoading(false);
+                        setConnectionError('Ошибка загрузки чатов');
                     });
-                    return () => off(messagesRef);
+                    
+                    return () => { 
+                        off(messagesRef); 
+                        update(userRef, { isOnline: false }).catch(()=>{}); 
+                    };
                 }
             }, [currentUser]);
 
-            // Load messages for active chat
+            // Загрузка сообщений активного чата
             useEffect(() => {
                 if (currentUser && activeChatUser) {
                     const chatId = [currentUser, activeChatUser].sort().join('_');
                     const chatRef = ref(db, `messages/${chatId}`);
                     
+                    console.log('Loading messages for chat:', chatId);
+                    
                     const unsubscribe = onValue(chatRef, (snapshot) => {
                         const data = snapshot.val();
-                        const messagesData = data ? Object.entries(data)
-                            .map(([k, v]) => ({ ...v, id: k }))
-                            .filter(msg => !msg.deleted)
-                            .sort((a, b) => a.timestamp - b.timestamp) : [];
-                        setMessages(messagesData);
+                        console.log('Raw Firebase data:', data);
+                        
+                        if (!data) {
+                            setMessages([]);
+                            return;
+                        }
+                        
+                        // Преобразуем объект в массив и правильно сортируем
+                        const messagesArray = Object.entries(data)
+                            .map(([id, message]) => ({
+                                id,
+                                ...message
+                            }))
+                            .filter(msg => !msg.deleted);
+                        
+                        // Сортируем по timestamp в порядке возрастания (старые сверху, новые снизу)
+                        const sortedMessages = messagesArray.sort((a, b) => a.timestamp - b.timestamp);
+                        
+                        console.log('Sorted messages:', sortedMessages.map(m => ({
+                            id: m.id,
+                            text: m.text?.substring(0, 20),
+                            timestamp: new Date(m.timestamp).toLocaleTimeString(),
+                            sender: m.sender
+                        })));
+                        
+                        setMessages(sortedMessages);
+                    }, (error) => {
+                        console.error('Messages loading error:', error);
+                        setConnectionError('Ошибка загрузки сообщений');
                     });
+                    
+                    setShowMobileSidebar(false);
                     return () => off(chatRef);
+                } else { 
+                    setShowMobileSidebar(true); 
+                    setMessages([]);
                 }
             }, [currentUser, activeChatUser]);
 
-            // Auto-scroll to latest message
-            useEffect(() => {
-                messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+            // Автопрокрутка к последнему сообщению
+            useEffect(() => { 
+                if (messages.length > 0) {
+                    setTimeout(() => {
+                        messagesEndRef.current?.scrollIntoView({ 
+                            behavior: 'smooth',
+                            block: 'end'
+                        });
+                    }, 100);
+                }
             }, [messages]);
 
-            const handleLogout = () => {
-                if (currentUser) {
-                    update(ref(db, `users/${currentUser}`), { isOnline: false }).catch(() => {});
-                }
-                localStorage.removeItem('dolbaeb_user');
-                setCurrentUser(null);
-                setActiveChatUser(null);
+            const handleAuth = () => {
+                if (!usernameInput.trim() || !passwordInput.trim()) return;
+                const cleanUsername = usernameInput.trim();
+                const userRef = ref(db, `users/${cleanUsername}`);
+                onValue(userRef, (snapshot) => {
+                    const data = snapshot.val();
+                    if (isLoginView) {
+                        if (data && data.password === passwordInput) {
+                            localStorage.setItem('dolbaeb_user', cleanUsername); 
+                            setCurrentUser(cleanUsername); 
+                            setAuthError('');
+                        } else { 
+                            setAuthError('Неверный логин или пароль'); 
+                        }
+                    } else {
+                        if (data) { 
+                            setAuthError('Пользователь уже существует'); 
+                        } else {
+                            set(userRef, { 
+                                username: cleanUsername, 
+                                password: passwordInput, 
+                                createdAt: Date.now(), 
+                                isOnline: true, 
+                                lastSeen: Date.now(),
+                                coins: 0,
+                                avatar: ''
+                            }).then(() => { 
+                                localStorage.setItem('dolbaeb_user', cleanUsername); 
+                                setCurrentUser(cleanUsername); 
+                                setAuthError(''); 
+                            }).catch(error => {
+                                console.error('Registration error:', error);
+                                setAuthError('Ошибка регистрации. Проверьте правила Firebase.');
+                            });
+                        }
+                    }
+                }, { onlyOnce: true });
             };
 
-            const handleSendMessage = async () => {
-                if (!messageInput.trim() || !currentUser || !activeChatUser) return;
-                
-                const chatId = [currentUser, activeChatUser].sort().join('_');
-                try {
-                    const messageRef = push(ref(db, `messages/${chatId}`));
-                    await set(messageRef, {
-                        sender: currentUser,
-                        text: messageInput,
-                        timestamp: Date.now(),
-                        type: 'text',
-                        deleted: false
-                    });
-                    setMessageInput('');
-                } catch (error) {
-                    console.error('Send error:', error);
-                    alert('Ошибка отправки сообщения');
+            const handleLogout = () => {
+                if(currentUser) {
+                    update(ref(db, `users/${currentUser}`), { isOnline: false, lastSeen: Date.now() }).catch(() => {});
                 }
+                localStorage.removeItem('dolbaeb_user'); 
+                setCurrentUser(null); 
+                setActiveChatUser(null); 
+                setChats([]); 
+                setIsSettingsOpen(false);
+                setUserCoins(0);
             };
 
             const handleCoinClick = async () => {
                 try {
                     const newCoins = userCoins + 0.001;
-                    await update(ref(db, `users/${currentUser}`), {
-                        coins: newCoins
+                    await update(ref(db, `users/${currentUser}`), { 
+                        coins: newCoins 
                     });
                     setUserCoins(newCoins);
                 } catch (error) {
-                    console.error('Coin error:', error);
+                    console.error('Coin update error:', error);
+                }
+            };
+
+            const handleSendMessage = async (type = 'text', content = messageInput) => {
+                if ((!content.trim() && type === 'text') || !currentUser || !activeChatUser) return;
+                
+                const chatId = [currentUser, activeChatUser].sort().join('_');
+                const timestamp = Date.now();
+                
+                console.log('Sending message with timestamp:', timestamp, 'type:', type);
+                
+                try {
+                    const messageRef = push(ref(db, `messages/${chatId}`));
+                    
+                    const messageData = {
+                        sender: currentUser, 
+                        text: type === 'text' ? content : '', 
+                        timestamp: timestamp,
+                        type, 
+                        deleted: false
+                    };
+                    
+                    if (type !== 'text' && content) {
+                        messageData.mediaUrl = content;
+                    }
+                    
+                    await set(messageRef, messageData);
+                    
+                    console.log('Message sent successfully');
+                    if (type === 'text') setMessageInput('');
+                } catch (e) { 
+                    console.error("Send error details:", e);
+                    if (e.code === 'PERMISSION_DENIED') {
+                        alert("Ошибка доступа. Нужно настроить правила Firebase Database.");
+                    } else {
+                        alert("Ошибка отправки: " + (e.message || 'Проверьте соединение'));
+                    }
                 }
             };
 
             const handleSearch = (term) => {
                 setSearchQuery(term);
-                if (!term.trim()) return;
-                
+                if (!term.trim()) { 
+                    setSearchResults([]); 
+                    return; 
+                }
                 const q = query(ref(db, 'users'), orderByChild('username'), startAt(term), endAt(term + '\uf8ff'));
                 onValue(q, (snapshot) => {
                     const data = snapshot.val();
-                    // Search logic here
+                    setSearchResults(data ? Object.values(data).filter(u => u.username !== currentUser) : []);
                 }, { onlyOnce: true });
             };
 
-            // Login Screen
+            const handleFileUpload = (e, type) => {
+                const file = e.target.files?.[0];
+                if (!file || file.size > 8 * 1024 * 1024) { 
+                    alert('Файл слишком большой. Максимум 8MB'); 
+                    return; 
+                }
+                const reader = new FileReader();
+                reader.onload = (ev) => {
+                    if (ev.target.result) {
+                        handleSendMessage(type, ev.target.result);
+                    }
+                };
+                reader.onerror = () => {
+                    alert('Ошибка чтения файла');
+                };
+                reader.readAsDataURL(file); 
+                e.target.value = '';
+            };
+
+            const toggleRecording = async () => {
+                if (isRecording) { 
+                    mediaRecorderRef.current?.stop(); 
+                    setIsRecording(false); 
+                } else {
+                    try {
+                        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                        const mimeType = MediaRecorder.isTypeSupported('audio/webm') ? 'audio/webm' : 
+                                         MediaRecorder.isTypeSupported('audio/mp4') ? 'audio/mp4' : '';
+                        
+                        const mediaRecorder = mimeType ? new MediaRecorder(stream, { mimeType }) : new MediaRecorder(stream);
+                        const audioChunks = [];
+                        
+                        mediaRecorder.ondataavailable = (e) => { 
+                            if (e.data.size > 0) audioChunks.push(e.data); 
+                        };
+                        mediaRecorder.onstop = () => {
+                            const blob = new Blob(audioChunks, { type: mediaRecorder.mimeType || 'audio/webm' });
+                            const reader = new FileReader();
+                            reader.onload = (e) => {
+                                if (e.target.result) {
+                                    handleSendMessage('audio', e.target.result);
+                                }
+                            };
+                            reader.readAsDataURL(blob);
+                            stream.getTracks().forEach(t => t.stop());
+                        };
+                        mediaRecorder.start(); 
+                        setIsRecording(true); 
+                        mediaRecorderRef.current = mediaRecorder;
+                    } catch (err) { 
+                        alert("Нет доступа к микрофону"); 
+                    }
+                }
+            };
+
             if (!currentUser) {
                 return (
-                    <div className="min-h-screen flex items-center justify-center p-4 bg-slate-950">
-                        <div className="w-full max-w-md bg-slate-900 p-8 rounded-3xl shadow-2xl border border-slate-700">
-                            <div className="text-center mb-8">
+                    <div className="min-h-screen flex items-center justify-center p-4 bg-slate-950 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-indigo-900/40 via-slate-950 to-slate-950">
+                        <div className="w-full max-w-md bg-slate-900/60 backdrop-blur-xl p-8 rounded-3xl shadow-2xl border border-indigo-500/20 animate-fade-in relative overflow-hidden">
+                            <div className="text-center mb-10">
                                 <h1 className="text-4xl font-bold text-white mb-2">DolbaebSMS</h1>
-                                <p className="text-slate-400">Secure Messenger</p>
+                                <p className="text-slate-400 font-light">Secure. Fast. Simple.</p>
                             </div>
-                            {authError && (
-                                <div className="p-3 mb-4 rounded-xl bg-red-500/10 text-red-400 text-center">
-                                    {authError}
-                                </div>
-                            )}
+                            {authError && <div className="p-3 mb-4 rounded-xl bg-red-500/10 text-red-400 text-center">{authError}</div>}
                             <div className="space-y-4">
-                                <input 
-                                    type="text" 
-                                    placeholder="Имя пользователя"
-                                    className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-white focus:border-indigo-500 outline-none"
-                                    value={usernameInput}
-                                    onChange={e => setUsernameInput(e.target.value)}
-                                />
-                                <input 
-                                    type="password" 
-                                    placeholder="Пароль"
-                                    className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-white focus:border-indigo-500 outline-none"
-                                    value={passwordInput}
-                                    onChange={e => setPasswordInput(e.target.value)}
-                                    onKeyPress={e => e.key === 'Enter' && handleAuth()}
-                                />
+                                <input type="text" placeholder="Имя пользователя" className="w-full bg-slate-950/50 border border-slate-700 rounded-xl px-5 py-4 text-white focus:border-indigo-500 outline-none" value={usernameInput} onChange={e => setUsernameInput(e.target.value)} />
+                                <input type="password" placeholder="Пароль" className="w-full bg-slate-950/50 border border-slate-700 rounded-xl px-5 py-4 text-white focus:border-indigo-500 outline-none" value={passwordInput} onChange={e => setPasswordInput(e.target.value)} onKeyPress={e => e.key === 'Enter' && handleAuth()} />
                             </div>
-                            <Button className="w-full mt-6" onClick={handleAuth}>
-                                {isLoginView ? 'Войти' : 'Создать аккаунт'}
-                            </Button>
-                            <div className="text-center mt-4">
-                                <button 
-                                    onClick={() => setIsLoginView(!isLoginView)}
-                                    className="text-slate-400 hover:text-indigo-400"
-                                >
+                            <Button className="w-full mt-6 py-4" onClick={handleAuth}>{isLoginView ? 'Войти' : 'Создать аккаунт'}</Button>
+                            <div className="text-center mt-6">
+                                <button onClick={() => { setIsLoginView(!isLoginView); setAuthError(''); }} className="text-slate-400 hover:text-indigo-400 text-sm">
                                     {isLoginView ? 'Создать аккаунт' : 'Войти'}
                                 </button>
                             </div>
@@ -399,169 +883,227 @@
                 );
             }
 
-            // Main App
             return (
-                <div className="flex h-screen bg-slate-950">
+                <div className="flex h-screen overflow-hidden bg-slate-950">
+                    <SettingsModal 
+                        isOpen={isSettingsOpen} 
+                        onClose={() => setIsSettingsOpen(false)} 
+                        currentUser={currentUser} 
+                        onLogout={handleLogout}
+                        userCoins={userCoins}
+                        onCoinsUpdate={setUserCoins}
+                    />
+                    
+                    <AvatarModal
+                        isOpen={isAvatarModalOpen}
+                        onClose={() => setIsAvatarModalOpen(false)}
+                        currentUser={currentUser}
+                        userCoins={userCoins}
+                        onAvatarChange={setUserAvatar}
+                    />
+                    
+                    {connectionError && (
+                        <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 bg-red-500/90 text-white px-4 py-2 rounded-lg text-sm backdrop-blur-sm">
+                            {connectionError}
+                        </div>
+                    )}
+                    
                     {/* Sidebar */}
-                    <div className="w-80 flex flex-col border-r border-slate-800 bg-slate-900">
-                        <div className="p-4 border-b border-slate-800 flex items-center justify-between">
+                    <div className={`${showMobileSidebar ? 'flex' : 'hidden'} md:flex w-full md:w-[420px] flex-col border-r border-slate-800 bg-slate-900 z-10`}>
+                        <div className="p-4 border-b border-slate-800 flex items-center justify-between h-[72px]">
                             <div className="flex items-center gap-3">
-                                <UserAvatar 
-                                    username={currentUser}
-                                    avatar={userAvatar}
-                                    frame={userFrame}
-                                />
+                                <button 
+                                    onClick={() => setIsAvatarModalOpen(true)}
+                                    className="w-10 h-10 rounded-full bg-gradient-to-tr from-indigo-600 to-purple-600 flex items-center justify-center text-white font-bold text-lg relative group"
+                                >
+                                    {userAvatar || currentUser[0].toUpperCase()}
+                                    {userCoins >= 10 && (
+                                        <div className="absolute -top-1 -right-1 bg-yellow-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                                            !
+                                        </div>
+                                    )}
+                                </button>
                                 <div>
-                                    <h2 className="font-bold text-white">{currentUser}</h2>
-                                    <div className="flex items-center gap-1 text-sm text-green-500">
-                                        <Coins size={12} />
-                                        <span>{userCoins.toFixed(3)}</span>
-                                    </div>
+                                    <h2 className="font-bold text-white flex items-center gap-1">
+                                        {currentUser}
+                                        {currentUser === 'kayivi' && <Crown size={14} className="text-yellow-500" />}
+                                    </h2>
+                                    <span className="text-[11px] text-green-500 flex items-center gap-1">● В сети</span>
                                 </div>
                             </div>
-                            <button 
-                                onClick={() => setIsSettingsOpen(true)}
-                                className="p-2 rounded-lg bg-slate-800 text-slate-400 hover:text-white"
-                            >
-                                <SettingsIcon size={20} />
-                            </button>
+                            <div className="flex items-center gap-2">
+                                <button 
+                                    onClick={() => setIsSettingsOpen(true)}
+                                    className="p-2 rounded-xl bg-slate-800 text-slate-400 hover:text-white relative"
+                                >
+                                    <SettingsIcon size={20} />
+                                </button>
+                            </div>
                         </div>
 
-                        {/* Coin Clicker */}
+                        {/* Clicker Section */}
                         <div className="p-4 border-b border-slate-800">
-                            <button
-                                onClick={handleCoinClick}
-                                className="w-full bg-yellow-500 hover:bg-yellow-400 text-white p-4 rounded-xl transition-colors"
-                            >
-                                <div className="text-center">
-                                    <Coins size={32} className="mx-auto mb-2" />
-                                    <div className="font-bold">Кликни для коинов!</div>
-                                    <div className="text-sm opacity-80">+0.001 за клик</div>
-                                </div>
-                            </button>
+                            <Clicker 
+                                userCoins={userCoins} 
+                                onCoinClick={handleCoinClick}
+                                currentUser={currentUser}
+                            />
                         </div>
 
-                        {/* Search */}
                         <div className="p-4">
                             <div className="relative">
                                 <Search className="absolute left-3 top-3 text-slate-500" size={18} />
                                 <input 
-                                    type="text"
-                                    placeholder="Поиск..."
-                                    className="w-full bg-slate-800 border border-slate-700 rounded-xl py-2 pl-10 pr-4 text-white outline-none focus:border-indigo-500"
-                                    value={searchQuery}
-                                    onChange={e => handleSearch(e.target.value)}
+                                    type="text" 
+                                    placeholder="Поиск..." 
+                                    className="w-full bg-slate-800 border border-slate-700 rounded-xl py-2.5 pl-10 text-slate-200 outline-none focus:border-indigo-500" 
+                                    value={searchQuery} 
+                                    onChange={e => handleSearch(e.target.value)} 
                                 />
                             </div>
                         </div>
-
-                        {/* Chats List */}
-                        <div className="flex-1 overflow-y-auto">
-                            {chats.map(chat => (
-                                <div
-                                    key={chat.user}
-                                    onClick={() => setActiveChatUser(chat.user)}
-                                    className="p-4 border-b border-slate-800 hover:bg-slate-800 cursor-pointer"
-                                >
-                                    <div className="flex items-center gap-3">
-                                        <UserAvatar username={chat.user} />
-                                        <div className="flex-1">
-                                            <h3 className="font-semibold text-white">{chat.user}</h3>
+                        <div className="flex-1 overflow-y-auto px-2">
+                            {areChatsLoading ? (
+                                <div className="flex flex-col items-center justify-center mt-10 text-slate-500 gap-2">
+                                    <Loader2 className="animate-spin text-indigo-500" size={24} />
+                                    <p className="text-sm">Загрузка чатов...</p>
+                                </div>
+                            ) : searchQuery ? (
+                                searchResults.length ? searchResults.map(u => (
+                                    <div 
+                                        key={u.username} 
+                                        onClick={() => { setActiveChatUser(u.username); setSearchQuery(''); setSearchResults([]); }} 
+                                        className="p-3 flex items-center gap-3 rounded-xl hover:bg-slate-800 cursor-pointer"
+                                    >
+                                        <div className="w-12 h-12 rounded-full bg-slate-800 flex items-center justify-center text-slate-300 font-bold border border-slate-700 text-lg">
+                                            {u.avatar || u.username[0].toUpperCase()}
+                                        </div>
+                                        <div>
+                                            <h3 className="font-medium text-slate-200">{u.username}</h3>
+                                        </div>
+                                    </div>
+                                )) : <div className="text-center text-slate-500 mt-4">Никого не найдено</div>
+                            ) : (
+                                chats.length ? chats.map(c => (
+                                    <div 
+                                        key={c.user} 
+                                        onClick={() => setActiveChatUser(c.user)} 
+                                        className={`p-3 flex items-center gap-3 rounded-xl cursor-pointer hover:bg-slate-800 ${activeChatUser === c.user ? 'bg-slate-800' : ''}`}
+                                    >
+                                        <div className="w-12 h-12 rounded-full bg-slate-800 flex items-center justify-center text-white font-bold border border-slate-700 text-lg">
+                                            {c.user[0].toUpperCase()}
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                            <div className="flex justify-between items-baseline">
+                                                <h3 className="font-semibold text-slate-200 truncate">{c.user}</h3>
+                                                <span className="text-xs text-slate-500">
+                                                    {new Date(c.timestamp).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}
+                                                </span>
+                                            </div>
                                             <p className="text-sm text-slate-400 truncate">
-                                                {chat.lastMessage.text}
+                                                {c.lastMessage.type === 'text' ? c.lastMessage.text : 
+                                                 c.lastMessage.type === 'photo' ? '📷 Фото' : 
+                                                 c.lastMessage.type === 'video' ? '🎥 Видео' : 
+                                                 c.lastMessage.type === 'audio' ? '🎤 Голосовое' : 'Сообщение'}
                                             </p>
                                         </div>
                                     </div>
-                                </div>
-                            ))}
+                                )) : (
+                                    <div className="text-center text-slate-500 mt-10 p-4">
+                                        <p>Нет чатов</p>
+                                        <p className="text-xs mt-2">Начните общение, отправив сообщение пользователю через поиск</p>
+                                    </div>
+                                )
+                            )}
                         </div>
                     </div>
 
                     {/* Chat Area */}
-                    <div className="flex-1 flex flex-col">
-                        {activeChatUser ? (
-                            <>
-                                <div className="p-4 border-b border-slate-800 bg-slate-900">
-                                    <div className="flex items-center gap-3">
-                                        <UserAvatar username={activeChatUser} />
-                                        <h3 className="font-bold text-white">{activeChatUser}</h3>
+                    {activeChatUser ? (
+                        <div className={`${!showMobileSidebar ? 'flex' : 'hidden md:flex'} flex-1 flex-col bg-slate-950 relative`}>
+                            <div className="h-[72px] px-4 flex items-center gap-3 border-b border-slate-800 bg-slate-900/80 backdrop-blur-md sticky top-0 z-20">
+                                <button onClick={() => { setActiveChatUser(null); setShowMobileSidebar(true); }} className="md:hidden text-slate-400">
+                                    <ChevronLeft size={24} />
+                                </button>
+                                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold">
+                                    {activeChatUser[0].toUpperCase()}
+                                </div>
+                                <h3 className="font-bold text-slate-200">{activeChatUser}</h3>
+                            </div>
+                            <div className="flex-1 overflow-y-auto p-4 custom-scrollbar">
+                                {messages.length === 0 ? (
+                                    <div className="text-center text-slate-500 mt-10">
+                                        <p>Нет сообщений</p>
+                                        <p className="text-sm mt-2">Начните общение первым!</p>
                                     </div>
-                                </div>
-                                <div className="flex-1 overflow-y-auto p-4">
-                                    {messages.map(message => (
-                                        <MessageBubble
-                                            key={message.id}
-                                            message={message}
-                                            isOwn={message.sender === currentUser}
-                                            currentUser={currentUser}
+                                ) : (
+                                    messages.map(msg => (
+                                        <MessageBubble 
+                                            key={msg.id} 
+                                            message={msg} 
+                                            isOwn={msg.sender === currentUser} 
+                                            chatId={[currentUser, activeChatUser].sort().join('_')} 
+                                            messageId={msg.id} 
+                                            currentUser={currentUser} 
                                         />
-                                    ))}
-                                    <div ref={messagesEndRef} />
-                                </div>
-                                <div className="p-4 border-t border-slate-800">
-                                    <div className="flex gap-2">
-                                        <input
-                                            type="text"
-                                            placeholder="Сообщение..."
-                                            className="flex-1 bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-white outline-none"
-                                            value={messageInput}
-                                            onChange={e => setMessageInput(e.target.value)}
-                                            onKeyPress={e => e.key === 'Enter' && handleSendMessage()}
-                                        />
-                                        <button
-                                            onClick={handleSendMessage}
-                                            disabled={!messageInput.trim()}
-                                            className="bg-indigo-600 text-white p-3 rounded-xl hover:bg-indigo-500 disabled:opacity-50"
+                                    ))
+                                )}
+                                <div ref={messagesEndRef} />
+                            </div>
+                            <div className="p-3 bg-slate-900 border-t border-slate-800 safe-area-bottom">
+                                <div className="flex items-end gap-2 max-w-4xl mx-auto">
+                                    <div className="flex gap-1 bg-slate-800 p-1 rounded-xl shrink-0">
+                                        <label className="p-2 text-slate-400 hover:text-indigo-400 cursor-pointer">
+                                            <ImageIcon size={20} />
+                                            <input type="file" className="hidden" accept="image/*" onChange={e => handleFileUpload(e, 'photo')} />
+                                        </label>
+                                        <label className="p-2 text-slate-400 hover:text-indigo-400 cursor-pointer">
+                                            <Video size={20} />
+                                            <input type="file" className="hidden" accept="video/*" onChange={e => handleFileUpload(e, 'video')} />
+                                        </label>
+                                        <button 
+                                            onClick={toggleRecording} 
+                                            className={`p-2 rounded-lg ${isRecording ? 'text-red-500 animate-pulse' : 'text-slate-400 hover:text-indigo-400'}`}
                                         >
-                                            <Send size={20} />
+                                            {isRecording ? <div className="w-5 h-5 bg-red-500 rounded-sm" /> : <Mic size={20} />}
                                         </button>
                                     </div>
-                                </div>
-                            </>
-                        ) : (
-                            <div className="flex-1 flex items-center justify-center text-slate-500">
-                                <div className="text-center">
-                                    <Send size={48} className="mx-auto mb-4 opacity-50" />
-                                    <p>Выберите чат для общения</p>
-                                </div>
-                            </div>
-                        )}
-                    </div>
-
-                    {/* Settings Modal */}
-                    {isSettingsOpen && (
-                        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4">
-                            <div className="bg-slate-900 rounded-2xl p-6 w-full max-w-md">
-                                <div className="flex justify-between items-center mb-4">
-                                    <h3 className="text-xl font-bold text-white">Настройки</h3>
-                                    <button onClick={() => setIsSettingsOpen(false)}>
-                                        <X size={24} className="text-slate-400" />
+                                    <div className="flex-1 min-w-0 bg-slate-800 rounded-2xl border border-slate-700">
+                                        <textarea 
+                                            value={messageInput} 
+                                            onChange={e => setMessageInput(e.target.value)} 
+                                            onKeyPress={e => { 
+                                                if(e.key === 'Enter' && !e.shiftKey) { 
+                                                    e.preventDefault(); 
+                                                    handleSendMessage('text'); 
+                                                }
+                                            }} 
+                                            placeholder={isRecording ? "Запись..." : "Сообщение..."} 
+                                            className="w-full bg-transparent text-white px-4 py-3 outline-none resize-none h-[50px] custom-scrollbar" 
+                                        />
+                                    </div>
+                                    <button 
+                                        onClick={() => handleSendMessage('text')} 
+                                        disabled={!messageInput.trim() && !isRecording} 
+                                        className="p-3 bg-indigo-600 text-white rounded-xl hover:bg-indigo-500 shadow-lg shadow-indigo-600/20 shrink-0"
+                                    >
+                                        <Send size={20} />
                                     </button>
                                 </div>
-                                <div className="space-y-4">
-                                    <div className="text-center">
-                                        <UserAvatar 
-                                            username={currentUser}
-                                            avatar={userAvatar}
-                                            frame={userFrame}
-                                            size="large"
-                                            className="mx-auto mb-2"
-                                        />
-                                        <p className="text-slate-400">Баланс: {userCoins.toFixed(3)} коинов</p>
-                                    </div>
-                                    <Button variant="secondary" onClick={handleLogout} className="w-full">
-                                        <LogOut size={18} />
-                                        Выйти
-                                    </Button>
-                                </div>
                             </div>
+                        </div>
+                    ) : (
+                        <div className="hidden md:flex flex-1 items-center justify-center bg-slate-950 text-slate-500 flex-col gap-4">
+                            <div className="w-24 h-24 rounded-full bg-slate-900 border border-slate-800 flex items-center justify-center">
+                                <Send size={40} className="text-indigo-500" />
+                            </div>
+                            <p>Выберите чат для общения</p>
                         </div>
                     )}
                 </div>
             );
         };
 
-        // Render the app
         const root = createRoot(document.getElementById('root'));
         root.render(<App />);
     </script>
