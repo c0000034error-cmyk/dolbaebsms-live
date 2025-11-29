@@ -54,7 +54,7 @@
       }
     </style>
 
-    <!-- Import Map - FIXED: Removed conflicting React versions -->
+    <!-- Import Map -->
     <script type="importmap">
 {
   "imports": {
@@ -220,20 +220,29 @@
 
             const handleDelete = async () => {
                 if (confirm('Удалить сообщение?')) {
-                    await update(ref(db, `messages/${chatId}/${messageId}`), { deleted: true });
+                    try {
+                        await update(ref(db, `messages/${chatId}/${messageId}`), { deleted: true });
+                    } catch (error) {
+                        console.error('Delete error:', error);
+                        alert('Ошибка удаления сообщения');
+                    }
                 }
                 setShowActions(false);
             };
 
             const handleReaction = async (emoji) => {
-                const msgRef = ref(db, `messages/${chatId}/${messageId}/reactions`);
-                const currentReactions = message.reactions || {};
-                if (currentReactions[currentUser] === emoji) {
-                    await update(msgRef, { [currentUser]: null });
-                } else {
-                    await update(msgRef, { [currentUser]: emoji });
+                try {
+                    const msgRef = ref(db, `messages/${chatId}/${messageId}/reactions`);
+                    const currentReactions = message.reactions || {};
+                    if (currentReactions[currentUser] === emoji) {
+                        await update(msgRef, { [currentUser]: null });
+                    } else {
+                        await update(msgRef, { [currentUser]: emoji });
+                    }
+                    setShowReactions(false); setShowActions(false);
+                } catch (error) {
+                    console.error('Reaction error:', error);
                 }
-                setShowReactions(false); setShowActions(false);
             };
 
             if (message.deleted) return null;
@@ -297,50 +306,62 @@
             const [isSettingsOpen, setIsSettingsOpen] = useState(false);
             const [showMobileSidebar, setShowMobileSidebar] = useState(true);
             const [isRecording, setIsRecording] = useState(false);
+            const [connectionError, setConnectionError] = useState('');
             const mediaRecorderRef = useRef(null);
             const messagesEndRef = useRef(null);
 
-            // Оптимизированная загрузка чатов - слушаем только чаты текущего пользователя
+            // Проверка соединения с Firebase
+            useEffect(() => {
+                if (currentUser) {
+                    const testConnection = async () => {
+                        try {
+                            const testRef = ref(db, '.info/connected');
+                            onValue(testConnection, (snapshot) => {
+                                if (snapshot.val() === true) {
+                                    setConnectionError('');
+                                } else {
+                                    setConnectionError('Нет соединения с сервером');
+                                }
+                            });
+                        } catch (error) {
+                            setConnectionError('Ошибка подключения к Firebase');
+                        }
+                    };
+                    testConnection();
+                }
+            }, [currentUser]);
+
+            // Оптимизированная загрузка чатов
             useEffect(() => {
                 if (currentUser) {
                     setAreChatsLoading(true);
                     const userRef = ref(db, `users/${currentUser}`);
-                    update(userRef, { isOnline: true, lastSeen: Date.now() });
                     
-                    // Создаем список чатов для прослушивания
-                    const chatListeners = [];
+                    // Пробуем обновить статус пользователя
+                    update(userRef, { 
+                        isOnline: true, 
+                        lastSeen: Date.now() 
+                    }).catch(error => {
+                        console.warn('Cannot update user status:', error);
+                    });
                     
-                    // Слушаем изменения в разделе messages, но только для релевантных чатов
                     const messagesRef = ref(db, 'messages');
                     const unsubscribe = onValue(messagesRef, (snapshot) => {
+                        setAreChatsLoading(false);
                         const data = snapshot.val();
                         if (!data) { 
                             setChats([]); 
-                            setAreChatsLoading(false);
                             return; 
                         }
                         
                         const newChats = new Map();
-                        let loadedChats = 0;
-                        const totalRelevantChats = Object.keys(data).filter(chatId => {
-                            const usersInChat = chatId.split('_');
-                            return usersInChat.includes(currentUser);
-                        }).length;
                         
-                        if (totalRelevantChats === 0) {
-                            setAreChatsLoading(false);
-                            setChats([]);
-                            return;
-                        }
-                        
-                        // Обрабатываем каждый релевантный чат
                         Object.entries(data).forEach(([chatId, chatMessages]) => {
                             const usersInChat = chatId.split('_');
                             if (usersInChat.includes(currentUser)) {
                                 const otherUser = usersInChat.find(user => user !== currentUser) || currentUser;
                                 
                                 if (chatMessages && Object.keys(chatMessages).length > 0) {
-                                    // Находим последнее сообщение
                                     const messagesList = Object.values(chatMessages)
                                         .filter(m => m && !m.deleted)
                                         .sort((a, b) => b.timestamp - a.timestamp);
@@ -353,26 +374,19 @@
                                         });
                                     }
                                 }
-                                loadedChats++;
-                                
-                                // Когда все чаты обработаны, обновляем состояние
-                                if (loadedChats === totalRelevantChats) {
-                                    setChats(Array.from(newChats.values()).sort((a, b) => b.timestamp - a.timestamp));
-                                    setAreChatsLoading(false);
-                                }
                             }
                         });
                         
-                        // Если нет релевантных чатов с сообщениями
-                        if (totalRelevantChats === 0) {
-                            setAreChatsLoading(false);
-                        }
+                        setChats(Array.from(newChats.values()).sort((a, b) => b.timestamp - a.timestamp));
+                    }, (error) => {
+                        console.error('Chats loading error:', error);
+                        setAreChatsLoading(false);
+                        setConnectionError('Ошибка загрузки чатов');
                     });
                     
                     return () => { 
                         off(messagesRef); 
                         update(userRef, { isOnline: false }).catch(()=>{}); 
-                        chatListeners.forEach(unsub => unsub());
                     };
                 }
             }, [currentUser]);
@@ -383,20 +397,20 @@
                     const chatId = [currentUser, activeChatUser].sort().join('_');
                     const chatRef = ref(db, `messages/${chatId}`);
                     
-                    // Ограничиваем количество загружаемых сообщений для производительности
-                    const chatQuery = query(chatRef, orderByChild('timestamp'));
-                    
-                    const unsubscribe = onValue(chatQuery, (snapshot) => {
+                    const unsubscribe = onValue(chatRef, (snapshot) => {
                         const data = snapshot.val();
                         const messagesData = data ? Object.entries(data)
                             .map(([k, v]) => ({ ...v, id: k }))
                             .filter(msg => !msg.deleted)
                             .sort((a, b) => a.timestamp - b.timestamp) : [];
                         setMessages(messagesData);
+                    }, (error) => {
+                        console.error('Messages loading error:', error);
+                        setConnectionError('Ошибка загрузки сообщений');
                     });
                     
                     setShowMobileSidebar(false);
-                    return () => off(chatQuery);
+                    return () => off(chatRef);
                 } else { 
                     setShowMobileSidebar(true); 
                 }
@@ -424,6 +438,7 @@
                         if (data) { 
                             setAuthError('Пользователь уже существует'); 
                         } else {
+                            // Используем set вместо update для создания пользователя
                             set(userRef, { 
                                 username: cleanUsername, 
                                 password: passwordInput, 
@@ -434,6 +449,9 @@
                                 localStorage.setItem('dolbaeb_user', cleanUsername); 
                                 setCurrentUser(cleanUsername); 
                                 setAuthError(''); 
+                            }).catch(error => {
+                                console.error('Registration error:', error);
+                                setAuthError('Ошибка регистрации. Проверьте правила Firebase.');
                             });
                         }
                     }
@@ -442,7 +460,7 @@
 
             const handleLogout = () => {
                 if(currentUser) {
-                    update(ref(db, `users/${currentUser}`), { isOnline: false, lastSeen: Date.now() });
+                    update(ref(db, `users/${currentUser}`), { isOnline: false, lastSeen: Date.now() }).catch(() => {});
                 }
                 localStorage.removeItem('dolbaeb_user'); 
                 setCurrentUser(null); 
@@ -455,6 +473,7 @@
                 if ((!content.trim() && type === 'text') || !currentUser || !activeChatUser) return;
                 
                 const chatId = [currentUser, activeChatUser].sort().join('_');
+                console.log('Sending message to chat:', chatId);
                 
                 try {
                     const messageRef = push(ref(db, `messages/${chatId}`));
@@ -467,13 +486,17 @@
                         deleted: false
                     });
                     
+                    console.log('Message sent successfully');
                     if (type === 'text') setMessageInput('');
                 } catch (e) { 
-                    console.error("Send error:", e);
-                    if (type === 'text') {
-                        alert("Ошибка отправки текста. Проверьте соединение.");
+                    console.error("Send error details:", e);
+                    console.error("Error code:", e.code);
+                    console.error("Error message:", e.message);
+                    
+                    if (e.code === 'PERMISSION_DENIED') {
+                        alert("Ошибка доступа. Нужно настроить правила Firebase Database.\n\nЗайдите в Firebase Console → Realtime Database → Rules и установите:\n\n{\n  \"rules\": {\n    \".read\": true,\n    \".write\": true\n  }\n}");
                     } else {
-                        alert("Ошибка отправки файла. Возможно файл слишком большой (лимит 8MB).");
+                        alert("Ошибка отправки: " + (e.message || 'Проверьте соединение'));
                     }
                 }
             };
@@ -549,7 +572,11 @@
                                 <input type="password" placeholder="Пароль" className="w-full bg-slate-950/50 border border-slate-700 rounded-xl px-5 py-4 text-white focus:border-indigo-500 outline-none" value={passwordInput} onChange={e => setPasswordInput(e.target.value)} onKeyPress={e => e.key === 'Enter' && handleAuth()} />
                             </div>
                             <Button className="w-full mt-6 py-4" onClick={handleAuth}>{isLoginView ? 'Войти' : 'Создать аккаунт'}</Button>
-                            <div className="text-center mt-6"><button onClick={() => { setIsLoginView(!isLoginView); setAuthError(''); }} className="text-slate-400 hover:text-indigo-400 text-sm">{isLoginView ? 'Создать аккаунт' : 'Войти'}</button></div>
+                            <div className="text-center mt-6">
+                                <button onClick={() => { setIsLoginView(!isLoginView); setAuthError(''); }} className="text-slate-400 hover:text-indigo-400 text-sm">
+                                    {isLoginView ? 'Создать аккаунт' : 'Войти'}
+                                </button>
+                            </div>
                         </div>
                     </div>
                 );
@@ -559,16 +586,39 @@
                 <div className="flex h-screen overflow-hidden bg-slate-950">
                     <SettingsModal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} currentUser={currentUser} onLogout={handleLogout} />
                     
+                    {/* Connection Error Banner */}
+                    {connectionError && (
+                        <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 bg-red-500/90 text-white px-4 py-2 rounded-lg text-sm backdrop-blur-sm">
+                            {connectionError}
+                        </div>
+                    )}
+                    
                     {/* Sidebar */}
                     <div className={`${showMobileSidebar ? 'flex' : 'hidden'} md:flex w-full md:w-[420px] flex-col border-r border-slate-800 bg-slate-900 z-10`}>
                         <div className="p-4 border-b border-slate-800 flex items-center justify-between h-[72px]">
                             <div className="flex items-center gap-3">
                                 <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-indigo-600 to-purple-600 flex items-center justify-center text-white font-bold">{currentUser[0].toUpperCase()}</div>
-                                <div><h2 className="font-bold text-white">{currentUser}</h2><span className="text-[11px] text-green-500 flex items-center gap-1">● В сети</span></div>
+                                <div>
+                                    <h2 className="font-bold text-white">{currentUser}</h2>
+                                    <span className="text-[11px] text-green-500 flex items-center gap-1">● В сети</span>
+                                </div>
                             </div>
-                            <button onClick={() => setIsSettingsOpen(true)} className="p-2.5 rounded-xl bg-slate-800 text-slate-400 hover:text-white"><SettingsIcon size={20} /></button>
+                            <button onClick={() => setIsSettingsOpen(true)} className="p-2.5 rounded-xl bg-slate-800 text-slate-400 hover:text-white">
+                                <SettingsIcon size={20} />
+                            </button>
                         </div>
-                        <div className="p-4"><div className="relative"><Search className="absolute left-3 top-3 text-slate-500" size={18} /><input type="text" placeholder="Поиск..." className="w-full bg-slate-800 border border-slate-700 rounded-xl py-2.5 pl-10 text-slate-200 outline-none focus:border-indigo-500" value={searchQuery} onChange={e => handleSearch(e.target.value)} /></div></div>
+                        <div className="p-4">
+                            <div className="relative">
+                                <Search className="absolute left-3 top-3 text-slate-500" size={18} />
+                                <input 
+                                    type="text" 
+                                    placeholder="Поиск..." 
+                                    className="w-full bg-slate-800 border border-slate-700 rounded-xl py-2.5 pl-10 text-slate-200 outline-none focus:border-indigo-500" 
+                                    value={searchQuery} 
+                                    onChange={e => handleSearch(e.target.value)} 
+                                />
+                            </div>
+                        </div>
                         <div className="flex-1 overflow-y-auto px-2">
                             {areChatsLoading ? (
                                 <div className="flex flex-col items-center justify-center mt-10 text-slate-500 gap-2">
@@ -577,19 +627,35 @@
                                 </div>
                             ) : searchQuery ? (
                                 searchResults.length ? searchResults.map(u => (
-                                    <div key={u.username} onClick={() => { setActiveChatUser(u.username); setSearchQuery(''); setSearchResults([]); }} className="p-3 flex items-center gap-3 rounded-xl hover:bg-slate-800 cursor-pointer">
-                                        <div className="w-12 h-12 rounded-full bg-slate-800 flex items-center justify-center text-slate-300 font-bold border border-slate-700">{u.username[0].toUpperCase()}</div>
-                                        <div><h3 className="font-medium text-slate-200">{u.username}</h3></div>
+                                    <div 
+                                        key={u.username} 
+                                        onClick={() => { setActiveChatUser(u.username); setSearchQuery(''); setSearchResults([]); }} 
+                                        className="p-3 flex items-center gap-3 rounded-xl hover:bg-slate-800 cursor-pointer"
+                                    >
+                                        <div className="w-12 h-12 rounded-full bg-slate-800 flex items-center justify-center text-slate-300 font-bold border border-slate-700">
+                                            {u.username[0].toUpperCase()}
+                                        </div>
+                                        <div>
+                                            <h3 className="font-medium text-slate-200">{u.username}</h3>
+                                        </div>
                                     </div>
                                 )) : <div className="text-center text-slate-500 mt-4">Никого не найдено</div>
                             ) : (
                                 chats.length ? chats.map(c => (
-                                    <div key={c.user} onClick={() => setActiveChatUser(c.user)} className={`p-3 flex items-center gap-3 rounded-xl cursor-pointer hover:bg-slate-800 ${activeChatUser === c.user ? 'bg-slate-800' : ''}`}>
-                                        <div className="w-12 h-12 rounded-full bg-slate-800 flex items-center justify-center text-white font-bold border border-slate-700">{c.user[0].toUpperCase()}</div>
+                                    <div 
+                                        key={c.user} 
+                                        onClick={() => setActiveChatUser(c.user)} 
+                                        className={`p-3 flex items-center gap-3 rounded-xl cursor-pointer hover:bg-slate-800 ${activeChatUser === c.user ? 'bg-slate-800' : ''}`}
+                                    >
+                                        <div className="w-12 h-12 rounded-full bg-slate-800 flex items-center justify-center text-white font-bold border border-slate-700">
+                                            {c.user[0].toUpperCase()}
+                                        </div>
                                         <div className="flex-1 min-w-0">
                                             <div className="flex justify-between items-baseline">
                                                 <h3 className="font-semibold text-slate-200 truncate">{c.user}</h3>
-                                                <span className="text-xs text-slate-500">{new Date(c.timestamp).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</span>
+                                                <span className="text-xs text-slate-500">
+                                                    {new Date(c.timestamp).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}
+                                                </span>
                                             </div>
                                             <p className="text-sm text-slate-400 truncate">
                                                 {c.lastMessage.type === 'text' ? c.lastMessage.text : 
@@ -613,8 +679,12 @@
                     {activeChatUser ? (
                         <div className={`${!showMobileSidebar ? 'flex' : 'hidden md:flex'} flex-1 flex-col bg-slate-950 relative`}>
                             <div className="h-[72px] px-4 flex items-center gap-3 border-b border-slate-800 bg-slate-900/80 backdrop-blur-md sticky top-0 z-20">
-                                <button onClick={() => { setActiveChatUser(null); setShowMobileSidebar(true); }} className="md:hidden text-slate-400"><ChevronLeft size={24} /></button>
-                                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold">{activeChatUser[0].toUpperCase()}</div>
+                                <button onClick={() => { setActiveChatUser(null); setShowMobileSidebar(true); }} className="md:hidden text-slate-400">
+                                    <ChevronLeft size={24} />
+                                </button>
+                                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold">
+                                    {activeChatUser[0].toUpperCase()}
+                                </div>
                                 <h3 className="font-bold text-slate-200">{activeChatUser}</h3>
                             </div>
                             <div className="flex-1 overflow-y-auto p-4 custom-scrollbar">
@@ -633,9 +703,20 @@
                             <div className="p-3 bg-slate-900 border-t border-slate-800 safe-area-bottom">
                                 <div className="flex items-end gap-2 max-w-4xl mx-auto">
                                     <div className="flex gap-1 bg-slate-800 p-1 rounded-xl shrink-0">
-                                        <label className="p-2 text-slate-400 hover:text-indigo-400 cursor-pointer"><ImageIcon size={20} /><input type="file" className="hidden" accept="image/*" onChange={e => handleFileUpload(e, 'photo')} /></label>
-                                        <label className="p-2 text-slate-400 hover:text-indigo-400 cursor-pointer"><Video size={20} /><input type="file" className="hidden" accept="video/*" onChange={e => handleFileUpload(e, 'video')} /></label>
-                                        <button onClick={toggleRecording} className={`p-2 rounded-lg ${isRecording ? 'text-red-500 animate-pulse' : 'text-slate-400 hover:text-indigo-400'}`}>{isRecording ? <div className="w-5 h-5 bg-red-500 rounded-sm" /> : <Mic size={20} />}</button>
+                                        <label className="p-2 text-slate-400 hover:text-indigo-400 cursor-pointer">
+                                            <ImageIcon size={20} />
+                                            <input type="file" className="hidden" accept="image/*" onChange={e => handleFileUpload(e, 'photo')} />
+                                        </label>
+                                        <label className="p-2 text-slate-400 hover:text-indigo-400 cursor-pointer">
+                                            <Video size={20} />
+                                            <input type="file" className="hidden" accept="video/*" onChange={e => handleFileUpload(e, 'video')} />
+                                        </label>
+                                        <button 
+                                            onClick={toggleRecording} 
+                                            className={`p-2 rounded-lg ${isRecording ? 'text-red-500 animate-pulse' : 'text-slate-400 hover:text-indigo-400'}`}
+                                        >
+                                            {isRecording ? <div className="w-5 h-5 bg-red-500 rounded-sm" /> : <Mic size={20} />}
+                                        </button>
                                     </div>
                                     <div className="flex-1 min-w-0 bg-slate-800 rounded-2xl border border-slate-700">
                                         <textarea 
@@ -651,13 +732,21 @@
                                             className="w-full bg-transparent text-white px-4 py-3 outline-none resize-none h-[50px] custom-scrollbar" 
                                         />
                                     </div>
-                                    <button onClick={() => handleSendMessage('text')} disabled={!messageInput.trim() && !isRecording} className="p-3 bg-indigo-600 text-white rounded-xl hover:bg-indigo-500 shadow-lg shadow-indigo-600/20 shrink-0"><Send size={20} /></button>
+                                    <button 
+                                        onClick={() => handleSendMessage('text')} 
+                                        disabled={!messageInput.trim() && !isRecording} 
+                                        className="p-3 bg-indigo-600 text-white rounded-xl hover:bg-indigo-500 shadow-lg shadow-indigo-600/20 shrink-0"
+                                    >
+                                        <Send size={20} />
+                                    </button>
                                 </div>
                             </div>
                         </div>
                     ) : (
                         <div className="hidden md:flex flex-1 items-center justify-center bg-slate-950 text-slate-500 flex-col gap-4">
-                            <div className="w-24 h-24 rounded-full bg-slate-900 border border-slate-800 flex items-center justify-center"><Send size={40} className="text-indigo-500" /></div>
+                            <div className="w-24 h-24 rounded-full bg-slate-900 border border-slate-800 flex items-center justify-center">
+                                <Send size={40} className="text-indigo-500" />
+                            </div>
                             <p>Выберите чат для общения</p>
                         </div>
                     )}
