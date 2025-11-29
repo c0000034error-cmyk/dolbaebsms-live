@@ -316,7 +316,7 @@
                     const testConnection = async () => {
                         try {
                             const testRef = ref(db, '.info/connected');
-                            onValue(testConnection, (snapshot) => {
+                            onValue(testRef, (snapshot) => {
                                 if (snapshot.val() === true) {
                                     setConnectionError('');
                                 } else {
@@ -477,14 +477,22 @@
                 
                 try {
                     const messageRef = push(ref(db, `messages/${chatId}`));
-                    await set(messageRef, {
+                    
+                    // Создаем объект сообщения без undefined полей
+                    const messageData = {
                         sender: currentUser, 
                         text: type === 'text' ? content : '', 
                         timestamp: Date.now(),
                         type, 
-                        mediaUrl: type !== 'text' ? content : undefined, 
                         deleted: false
-                    });
+                    };
+                    
+                    // Добавляем mediaUrl только если это не текстовое сообщение
+                    if (type !== 'text' && content) {
+                        messageData.mediaUrl = content;
+                    }
+                    
+                    await set(messageRef, messageData);
                     
                     console.log('Message sent successfully');
                     if (type === 'text') setMessageInput('');
@@ -521,7 +529,14 @@
                     return; 
                 }
                 const reader = new FileReader();
-                reader.onload = (ev) => handleSendMessage(type, ev.target.result);
+                reader.onload = (ev) => {
+                    if (ev.target.result) {
+                        handleSendMessage(type, ev.target.result);
+                    }
+                };
+                reader.onerror = () => {
+                    alert('Ошибка чтения файла');
+                };
                 reader.readAsDataURL(file); 
                 e.target.value = '';
             };
@@ -545,7 +560,11 @@
                         mediaRecorder.onstop = () => {
                             const blob = new Blob(audioChunks, { type: mediaRecorder.mimeType || 'audio/webm' });
                             const reader = new FileReader();
-                            reader.onload = (e) => handleSendMessage('audio', e.target.result);
+                            reader.onload = (e) => {
+                                if (e.target.result) {
+                                    handleSendMessage('audio', e.target.result);
+                                }
+                            };
                             reader.readAsDataURL(blob);
                             stream.getTracks().forEach(t => t.stop());
                         };
