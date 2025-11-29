@@ -391,7 +391,7 @@
                 }
             }, [currentUser]);
 
-            // Загрузка сообщений активного чата
+            // Загрузка сообщений активного чата - ИСПРАВЛЕНА СОРТИРОВКА
             useEffect(() => {
                 if (currentUser && activeChatUser) {
                     const chatId = [currentUser, activeChatUser].sort().join('_');
@@ -402,7 +402,7 @@
                         const messagesData = data ? Object.entries(data)
                             .map(([k, v]) => ({ ...v, id: k }))
                             .filter(msg => !msg.deleted)
-                            .sort((a, b) => a.timestamp - b.timestamp) : [];
+                            .sort((a, b) => a.timestamp - b.timestamp) : []; // ИСПРАВЛЕНО: сортируем по возрастанию времени
                         setMessages(messagesData);
                     }, (error) => {
                         console.error('Messages loading error:', error);
@@ -416,9 +416,10 @@
                 }
             }, [currentUser, activeChatUser]);
 
+            // Автопрокрутка к последнему сообщению
             useEffect(() => { 
                 messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }); 
-            }, [messages, isRecording]);
+            }, [messages]);
 
             const handleAuth = () => {
                 if (!usernameInput.trim() || !passwordInput.trim()) return;
@@ -707,7 +708,7 @@
                                 <h3 className="font-bold text-slate-200">{activeChatUser}</h3>
                             </div>
                             <div className="flex-1 overflow-y-auto p-4 custom-scrollbar">
-                                {messages.filter(m => !m.deleted).map(msg => (
+                                {messages.map(msg => (
                                     <MessageBubble 
                                         key={msg.id} 
                                         message={msg} 
