@@ -1,0 +1,8 @@
+{
+  "name": "DolbaebSMS Remastered",
+  "description": "A modern, secure messenger with a premium dark UI, featuring real-time messaging, media sharing, voice notes, and message reactions.",
+  "requestFramePermissions": [
+    "microphone",
+    "camera"
+  ]
+}
