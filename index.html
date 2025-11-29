@@ -34,22 +34,12 @@
             to { opacity: 1; transform: translateY(0); }
         }
 
-        @keyframes slideInRight {
+        @keyframes slideIn {
             from { transform: translateX(100%); opacity: 0; }
             to { transform: translateX(0); opacity: 1; }
         }
 
-        @keyframes slideInLeft {
-            from { transform: translateX(-100%); opacity: 0; }
-            to { transform: translateX(0); opacity: 1; }
-        }
-
-        @keyframes slideOutRight {
-            from { transform: translateX(0); opacity: 1; }
-            to { transform: translateX(100%); opacity: 0; }
-        }
-
-        @keyframes slideOutLeft {
+        @keyframes slideOut {
             from { transform: translateX(0); opacity: 1; }
             to { transform: translateX(-100%); opacity: 0; }
         }
@@ -115,21 +105,15 @@
             top: 0;
             left: 0;
             background: var(--surface);
-            animation-duration: 0.3s;
-            animation-fill-mode: both;
         }
 
         .screen.active {
             display: flex;
-            animation-name: slideInRight;
+            animation: slideIn 0.3s ease-out;
         }
 
-        .screen.slide-out {
-            animation-name: slideOutLeft;
-        }
-
-        .screen.slide-in-left {
-            animation-name: slideInLeft;
+        .screen.exiting {
+            animation: slideOut 0.3s ease-out;
         }
 
         /* Welcome Screen */
@@ -139,8 +123,6 @@
             text-align: center;
             gap: 2rem;
             padding: 1rem;
-            animation-name: fadeIn !important;
-            animation-duration: 0.6s;
         }
 
         .logo {
@@ -321,16 +303,19 @@
             width: 3px;
             background: white;
             border-radius: 2px;
+        }
+
+        .voice-bar.active {
             animation: voicePlay 0.6s ease-in-out infinite;
         }
 
-        .voice-bar:nth-child(1) { height: 8px; animation-delay: 0s; }
-        .voice-bar:nth-child(2) { height: 12px; animation-delay: 0.1s; }
-        .voice-bar:nth-child(3) { height: 16px; animation-delay: 0.2s; }
-        .voice-bar:nth-child(4) { height: 20px; animation-delay: 0.3s; }
-        .voice-bar:nth-child(5) { height: 16px; animation-delay: 0.4s; }
-        .voice-bar:nth-child(6) { height: 12px; animation-delay: 0.5s; }
-        .voice-bar:nth-child(7) { height: 8px; animation-delay: 0.6s; }
+        .voice-bar:nth-child(1).active { height: 8px; animation-delay: 0s; }
+        .voice-bar:nth-child(2).active { height: 12px; animation-delay: 0.1s; }
+        .voice-bar:nth-child(3).active { height: 16px; animation-delay: 0.2s; }
+        .voice-bar:nth-child(4).active { height: 20px; animation-delay: 0.3s; }
+        .voice-bar:nth-child(5).active { height: 16px; animation-delay: 0.4s; }
+        .voice-bar:nth-child(6).active { height: 12px; animation-delay: 0.5s; }
+        .voice-bar:nth-child(7).active { height: 8px; animation-delay: 0.6s; }
 
         .voice-duration {
             font-size: 0.9rem;
@@ -510,10 +495,10 @@
             </div>
             <div class="title">dolbaebsms</div>
             <div class="auth-buttons">
-                <button class="btn btn-primary" onclick="animateToScreen('register')">
+                <button class="btn btn-primary" onclick="navigateTo('register')">
                     Создать аккаунт
                 </button>
-                <button class="btn btn-secondary" onclick="animateToScreen('login')">
+                <button class="btn btn-secondary" onclick="navigateTo('login')">
                     Войти
                 </button>
             </div>
@@ -522,7 +507,7 @@
         <!-- Register Screen -->
         <div class="screen" id="register">
             <div class="chat-header">
-                <button class="btn btn-secondary" onclick="animateToScreen('welcome')" style="width: auto;">
+                <button class="btn btn-secondary" onclick="navigateTo('welcome')" style="width: auto;">
                     ← Назад
                 </button>
             </div>
@@ -543,7 +528,7 @@
         <!-- Login Screen -->
         <div class="screen" id="login">
             <div class="chat-header">
-                <button class="btn btn-secondary" onclick="animateToScreen('welcome')" style="width: auto;">
+                <button class="btn btn-secondary" onclick="navigateTo('welcome')" style="width: auto;">
                     ← Назад
                 </button>
             </div>
@@ -594,7 +579,7 @@
         <!-- Chat Messages Screen -->
         <div class="screen" id="chatMessages">
             <div class="chat-header">
-                <button class="btn btn-secondary" onclick="animateToScreen('chatList')" style="width: auto;">
+                <button class="btn btn-secondary" onclick="navigateTo('chatList')" style="width: auto;">
                     ← Назад
                 </button>
                 <div style="flex: 1; text-align: center;">
@@ -660,16 +645,20 @@
         let isRecording = false;
         let mediaRecorder = null;
         let audioChunks = [];
+        let currentAudio = null;
+        let currentlyPlayingMessageId = null;
 
-        // Анимированная смена экранов
-        function animateToScreen(screenId) {
+        // Улучшенная навигация
+        function navigateTo(screenId) {
             const currentScreen = document.querySelector('.screen.active');
             if (currentScreen) {
-                currentScreen.classList.add('slide-out');
+                currentScreen.classList.remove('active');
+                currentScreen.classList.add('exiting');
+                
                 setTimeout(() => {
-                    currentScreen.classList.remove('active', 'slide-out');
+                    currentScreen.classList.remove('exiting');
                     showScreen(screenId);
-                }, 280);
+                }, 300);
             } else {
                 showScreen(screenId);
             }
@@ -682,14 +671,7 @@
             
             const targetScreen = document.getElementById(screenId);
             if (targetScreen) {
-                if (screenId === 'welcome') {
-                    targetScreen.classList.add('active');
-                } else {
-                    targetScreen.classList.add('slide-in-left', 'active');
-                    setTimeout(() => {
-                        targetScreen.classList.remove('slide-in-left');
-                    }, 300);
-                }
+                targetScreen.classList.add('active');
             }
         }
 
@@ -705,7 +687,7 @@
             }
         });
 
-        // Регистрация и вход (остаются без изменений)
+        // Регистрация и вход
         function register() {
             const username = document.getElementById('regUsername').value.trim();
             const password = document.getElementById('regPassword').value;
@@ -782,13 +764,15 @@
                 lastSeen: Date.now()
             });
 
-            animateToScreen('chatList');
+            navigateTo('chatList');
             document.getElementById('userName').textContent = username;
             document.getElementById('userAvatar').textContent = username.charAt(0).toUpperCase();
             loadChatsList();
         }
 
         function logout() {
+            stopCurrentAudio();
+            
             if (currentUser) {
                 const userRef = database.ref('users/' + currentUser);
                 userRef.update({
@@ -808,10 +792,10 @@
             lastMessages.clear();
             currentMessages = {};
             
-            animateToScreen('welcome');
+            navigateTo('welcome');
         }
 
-        // Загрузка чатов и сообщений (остаются без изменений)
+        // Загрузка чатов и сообщений
         function loadChatsList() {
             const chatsList = document.getElementById('chatsList');
             chatsList.innerHTML = '<div class="chat-item">Загрузка чатов...</div>';
@@ -935,12 +919,13 @@
         }
 
         function startChat(username) {
+            stopCurrentAudio();
             currentChatWith = username;
             document.getElementById('searchInput').value = '';
             document.getElementById('searchResults').innerHTML = '';
             document.getElementById('chatWithUser').textContent = username;
             
-            animateToScreen('chatMessages');
+            navigateTo('chatMessages');
             loadChatMessages();
         }
 
@@ -1004,19 +989,20 @@
             messageDiv.className = `message ${isOwnMessage ? 'sent' : ''} ${isVoiceMessage ? 'voice-message' : ''}`;
             
             if (isVoiceMessage) {
+                const isCurrentlyPlaying = currentlyPlayingMessageId === messageId;
                 messageDiv.innerHTML = `
                     <div class="voice-player">
-                        <button onclick="playVoiceMessage('${message.audioData}')" style="background: none; border: none; color: white; font-size: 1.2rem;">
-                            <i class="fas fa-play"></i>
+                        <button onclick="toggleVoicePlayback('${messageId}', '${message.audioData}')" style="background: none; border: none; color: white; font-size: 1.2rem;">
+                            <i class="fas fa-${isCurrentlyPlaying ? 'pause' : 'play'}"></i>
                         </button>
                         <div class="voice-visualizer">
-                            <div class="voice-bar"></div>
-                            <div class="voice-bar"></div>
-                            <div class="voice-bar"></div>
-                            <div class="voice-bar"></div>
-                            <div class="voice-bar"></div>
-                            <div class="voice-bar"></div>
-                            <div class="voice-bar"></div>
+                            <div class="voice-bar ${isCurrentlyPlaying ? 'active' : ''}"></div>
+                            <div class="voice-bar ${isCurrentlyPlaying ? 'active' : ''}"></div>
+                            <div class="voice-bar ${isCurrentlyPlaying ? 'active' : ''}"></div>
+                            <div class="voice-bar ${isCurrentlyPlaying ? 'active' : ''}"></div>
+                            <div class="voice-bar ${isCurrentlyPlaying ? 'active' : ''}"></div>
+                            <div class="voice-bar ${isCurrentlyPlaying ? 'active' : ''}"></div>
+                            <div class="voice-bar ${isCurrentlyPlaying ? 'active' : ''}"></div>
                         </div>
                         <div class="voice-duration">${message.duration || '0:05'}</div>
                     </div>
@@ -1051,7 +1037,63 @@
             }
         }
 
-        // УДАЛЕНИЕ СООБЩЕНИЙ БЕЗ ПЕРЕЗАГРУЗКИ
+        // Управление воспроизведением голосовых сообщений
+        function stopCurrentAudio() {
+            if (currentAudio) {
+                currentAudio.pause();
+                currentAudio = null;
+            }
+            if (currentlyPlayingMessageId) {
+                const previousMessageElement = document.querySelector(`[onclick*="${currentlyPlayingMessageId}"]`);
+                if (previousMessageElement) {
+                    const icon = previousMessageElement.querySelector('i');
+                    if (icon) icon.className = 'fas fa-play';
+                    
+                    const voiceBars = previousMessageElement.closest('.voice-player').querySelectorAll('.voice-bar');
+                    voiceBars.forEach(bar => bar.classList.remove('active'));
+                }
+                currentlyPlayingMessageId = null;
+            }
+        }
+
+        function toggleVoicePlayback(messageId, audioData) {
+            if (currentlyPlayingMessageId === messageId) {
+                // Пауза текущего сообщения
+                stopCurrentAudio();
+            } else {
+                // Останавливаем предыдущее и начинаем новое
+                stopCurrentAudio();
+                
+                currentAudio = new Audio(audioData);
+                currentlyPlayingMessageId = messageId;
+                
+                // Обновляем иконку и анимацию
+                const messageElement = document.querySelector(`[onclick*="${messageId}"]`);
+                if (messageElement) {
+                    const icon = messageElement.querySelector('i');
+                    if (icon) icon.className = 'fas fa-pause';
+                    
+                    const voiceBars = messageElement.closest('.voice-player').querySelectorAll('.voice-bar');
+                    voiceBars.forEach(bar => bar.classList.add('active'));
+                }
+                
+                currentAudio.play().catch(error => {
+                    console.error('Ошибка воспроизведения:', error);
+                    alert('Не удалось воспроизвести голосовое сообщение');
+                    stopCurrentAudio();
+                });
+                
+                currentAudio.onended = () => {
+                    stopCurrentAudio();
+                };
+                
+                currentAudio.onpause = () => {
+                    stopCurrentAudio();
+                };
+            }
+        }
+
+        // УДАЛЕНИЕ СООБЩЕНИЙ
         function deleteMessage(messageId) {
             if (!currentUser || !currentChatWith || !messageId) return;
             
@@ -1152,20 +1194,12 @@
                     sender: currentUser,
                     type: 'voice',
                     audioData: base64Audio,
-                    duration: '0:05', // Можно добавить расчет длительности
+                    duration: '0:05',
                     timestamp: Date.now()
                 };
 
                 messagesRef.push(messageData);
             };
-        }
-
-        function playVoiceMessage(audioData) {
-            const audio = new Audio(audioData);
-            audio.play().catch(error => {
-                console.error('Ошибка воспроизведения:', error);
-                alert('Не удалось воспроизвести голосовое сообщение');
-            });
         }
 
         function sendMessage() {
