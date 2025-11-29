@@ -50,7 +50,6 @@
             display: none;
             flex-direction: column;
             height: 100%;
-            padding: 20px;
         }
 
         .screen.active {
@@ -62,6 +61,7 @@
             align-items: center;
             text-align: center;
             gap: 30px;
+            padding: 20px;
         }
 
         .logo {
@@ -108,6 +108,7 @@
             display: flex;
             flex-direction: column;
             gap: 20px;
+            padding: 20px;
         }
 
         .input-group {
@@ -152,7 +153,7 @@
             color: var(--text-secondary);
             cursor: pointer;
             font-size: 16px;
-            padding: 10px 0;
+            padding: 20px;
         }
 
         .chat-screen {
@@ -177,6 +178,93 @@
             justify-content: center;
             color: white;
             font-weight: bold;
+        }
+
+        .main-content {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        .sidebar {
+            width: 40%;
+            background: var(--surface-light);
+            border-right: 1px solid var(--surface);
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+        }
+
+        .chat-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .search-section {
+            padding: 15px;
+            background: var(--surface-light);
+            border-bottom: 1px solid var(--surface);
+        }
+
+        .search-box {
+            display: flex;
+            gap: 10px;
+        }
+
+        .search-box input {
+            flex: 1;
+            padding: 12px;
+            border: 1px solid var(--surface);
+            border-radius: 20px;
+            background: var(--background);
+            color: var(--text);
+            font-size: 16px;
+        }
+
+        .search-btn {
+            padding: 12px 20px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+        }
+
+        .chats-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 10px;
+        }
+
+        .chat-item {
+            padding: 12px;
+            margin: 5px 0;
+            background: var(--background);
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .chat-item:hover {
+            background: var(--primary);
+        }
+
+        .chat-item.active {
+            background: var(--primary);
+        }
+
+        .chat-user {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .last-message {
+            font-size: 12px;
+            color: var(--text-secondary);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
         .chat-messages {
@@ -231,36 +319,6 @@
             justify-content: center;
         }
 
-        .search-section {
-            padding: 15px 20px;
-            background: var(--surface-light);
-            border-bottom: 1px solid var(--surface);
-        }
-
-        .search-box {
-            display: flex;
-            gap: 10px;
-        }
-
-        .search-box input {
-            flex: 1;
-            padding: 12px;
-            border: 1px solid var(--surface);
-            border-radius: 20px;
-            background: var(--background);
-            color: var(--text);
-            font-size: 16px;
-        }
-
-        .search-btn {
-            padding: 12px 20px;
-            background: var(--primary);
-            color: white;
-            border: none;
-            border-radius: 20px;
-            cursor: pointer;
-        }
-
         .search-results {
             margin-top: 15px;
         }
@@ -298,6 +356,13 @@
             cursor: pointer;
             font-size: 14px;
         }
+
+        .section-title {
+            padding: 15px;
+            font-size: 14px;
+            color: var(--text-secondary);
+            border-bottom: 1px solid var(--surface);
+        }
     </style>
 </head>
 <body>
@@ -327,8 +392,8 @@
             <button class="back-btn" onclick="showScreen('welcome')">
                 ← Назад
             </button>
-            <h2 style="margin-bottom: 30px; text-align: center;">Создать аккаунт</h2>
             <div class="auth-form">
+                <h2 style="margin-bottom: 10px; text-align: center;">Создать аккаунт</h2>
                 <div class="input-group">
                     <label>Логин</label>
                     <input type="text" id="regUsername" placeholder="Придумайте логин">
@@ -348,8 +413,8 @@
             <button class="back-btn" onclick="showScreen('welcome')">
                 ← Назад
             </button>
-            <h2 style="margin-bottom: 30px; text-align: center;">Вход в аккаунт</h2>
             <div class="auth-form">
+                <h2 style="margin-bottom: 10px; text-align: center;">Вход в аккаунт</h2>
                 <div class="input-group">
                     <label>Логин</label>
                     <input type="text" id="loginUsername" placeholder="Ваш логин">
@@ -377,35 +442,43 @@
                 </button>
             </div>
 
-            <!-- Поиск пользователей -->
-            <div class="search-section">
-                <div class="search-box">
-                    <input type="text" id="searchInput" placeholder="Найти пользователя...">
-                    <button class="search-btn" onclick="searchUser()">
-                        <i class="fas fa-search"></i>
-                    </button>
+            <div class="main-content">
+                <!-- Боковая панель с чатами -->
+                <div class="sidebar">
+                    <div class="search-section">
+                        <div class="search-box">
+                            <input type="text" id="searchInput" placeholder="Поиск...">
+                            <button class="search-btn" onclick="searchUser()">
+                                <i class="fas fa-search"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="section-title">Мои чаты</div>
+                    <div class="chats-list" id="chatsList">
+                        <!-- Список чатов будет здесь -->
+                    </div>
+                    <div class="search-results" id="searchResults">
+                        <!-- Результаты поиска -->
+                    </div>
                 </div>
-                <div class="search-results" id="searchResults">
-                    <!-- Результаты поиска -->
-                </div>
-            </div>
 
-            <!-- Сообщения -->
-            <div class="chat-messages" id="messages">
-                <div class="message">
-                    Добро пожаловать в dolbaebsms! 🎉
+                <!-- Область сообщений -->
+                <div class="chat-area">
+                    <div class="chat-messages" id="messages">
+                        <div class="message">
+                            Добро пожаловать в dolbaebsms! 🎉
+                        </div>
+                        <div class="message">
+                            Выберите чат или найдите пользователя
+                        </div>
+                    </div>
+                    <div class="message-input">
+                        <input type="text" id="messageInput" placeholder="Введите сообщение...">
+                        <button class="send-btn" onclick="sendMessage()">
+                            <i class="fas fa-paper-plane"></i>
+                        </button>
+                    </div>
                 </div>
-                <div class="message">
-                    Найдите пользователя и начните общение
-                </div>
-            </div>
-
-            <!-- Ввод сообщения -->
-            <div class="message-input">
-                <input type="text" id="messageInput" placeholder="Введите сообщение...">
-                <button class="send-btn" onclick="sendMessage()">
-                    <i class="fas fa-paper-plane"></i>
-                </button>
             </div>
         </div>
     </div>
@@ -423,8 +496,7 @@
             projectId: "dolbaebsms-live",
             storageBucket: "dolbaebsms-live.firebasestorage.app",
             messagingSenderId: "912825721862",
-            appId: "1:912825721862:web:b92d7f7f553ca4536c0f87",
-            measurementId: "G-SCD5JVFM5E"
+            appId: "1:912825721862:web:b92d7f7f553ca4536c0f87"
         };
 
         // Инициализация Firebase
@@ -433,6 +505,7 @@
 
         let currentUser = null;
         let currentChatWith = null;
+        let messageListeners = {};
 
         function showScreen(screenId) {
             document.querySelectorAll('.screen').forEach(screen => {
@@ -512,6 +585,86 @@
             showScreen('chat');
             document.getElementById('userName').textContent = username;
             document.getElementById('userAvatar').textContent = username.charAt(0).toUpperCase();
+
+            // Загружаем список чатов
+            loadChatsList();
+        }
+
+        function loadChatsList() {
+            const chatsList = document.getElementById('chatsList');
+            chatsList.innerHTML = '<div class="chat-item">Загрузка чатов...</div>';
+
+            if (!currentUser) return;
+
+            // Ищем все чаты где участвует текущий пользователь
+            const messagesRef = database.ref('messages');
+            messagesRef.once('value').then((snapshot) => {
+                const chats = new Map();
+                
+                snapshot.forEach((chatSnapshot) => {
+                    const chatId = chatSnapshot.key;
+                    const users = chatId.split('_');
+                    
+                    if (users.includes(currentUser)) {
+                        const otherUser = users.find(user => user !== currentUser);
+                        const messages = chatSnapshot.val();
+                        const lastMessage = getLastMessage(messages);
+                        
+                        chats.set(otherUser, {
+                            user: otherUser,
+                            lastMessage: lastMessage,
+                            timestamp: lastMessage ? lastMessage.timestamp : 0
+                        });
+                    }
+                });
+
+                // Отображаем чаты
+                displayChatsList(Array.from(chats.values()));
+            });
+        }
+
+        function getLastMessage(messages) {
+            let lastMessage = null;
+            let lastTimestamp = 0;
+            
+            Object.values(messages).forEach(message => {
+                if (message.timestamp > lastTimestamp) {
+                    lastTimestamp = message.timestamp;
+                    lastMessage = message;
+                }
+            });
+            
+            return lastMessage;
+        }
+
+        function displayChatsList(chats) {
+            const chatsList = document.getElementById('chatsList');
+            
+            if (chats.length === 0) {
+                chatsList.innerHTML = '<div class="chat-item">Нет активных чатов</div>';
+                return;
+            }
+
+            // Сортируем по времени последнего сообщения
+            chats.sort((a, b) => b.timestamp - a.timestamp);
+            
+            chatsList.innerHTML = '';
+            chats.forEach(chat => {
+                const chatItem = document.createElement('div');
+                chatItem.className = 'chat-item';
+                chatItem.onclick = () => startChat(chat.user);
+                
+                const lastMsg = chat.lastMessage ? 
+                    (chat.lastMessage.sender === currentUser ? 'Вы: ' : '') + chat.lastMessage.text :
+                    'Нет сообщений';
+                
+                chatItem.innerHTML = `
+                    <div class="chat-user">${chat.user}</div>
+                    <div class="last-message">${lastMsg}</div>
+                `;
+                
+                chatsList.appendChild(chatItem);
+            });
         }
 
         function searchUser() {
@@ -520,7 +673,10 @@
             
             resultsContainer.innerHTML = '';
             
-            if (!searchTerm) return;
+            if (!searchTerm) {
+                loadChatsList();
+                return;
+            }
 
             const usersRef = database.ref('users');
             usersRef.orderByChild('username')
@@ -528,6 +684,8 @@
                    .endAt(searchTerm + '\uf8ff')
                    .once('value')
                    .then((snapshot) => {
+                resultsContainer.innerHTML = '<div class="section-title">Результаты поиска</div>';
+                
                 snapshot.forEach((childSnapshot) => {
                     const user = childSnapshot.val();
                     if (user.username !== currentUser) {
@@ -553,7 +711,12 @@
             document.getElementById('searchInput').value = '';
             document.getElementById('searchResults').innerHTML = '';
             
-            // Показываем историю сообщений
+            // Обновляем активный чат в списке
+            document.querySelectorAll('.chat-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            
+            // Загружаем сообщения
             loadChatMessages();
         }
 
@@ -564,11 +727,34 @@
             if (!currentUser || !currentChatWith) return;
 
             const chatId = generateChatId(currentUser, currentChatWith);
-            const messagesRef = database.ref('messages/' + chatId);
+            
+            // Отключаем предыдущий слушатель
+            if (messageListeners[chatId]) {
+                messageListeners[chatId]();
+            }
 
-            messagesRef.orderByChild('timestamp').on('child_added', (snapshot) => {
+            const messagesRef = database.ref('messages/' + chatId);
+            
+            // Слушаем новые сообщения
+            messageListeners[chatId] = messagesRef.orderByChild('timestamp').on('child_added', (snapshot) => {
                 const message = snapshot.val();
                 displayMessage(message);
+            });
+
+            // Загружаем существующие сообщения
+            messagesRef.orderByChild('timestamp').once('value').then((snapshot) => {
+                const messages = [];
+                snapshot.forEach((childSnapshot) => {
+                    messages.push(childSnapshot.val());
+                });
+                
+                // Сортируем по времени
+                messages.sort((a, b) => a.timestamp - b.timestamp);
+                
+                // Отображаем все сообщения
+                messages.forEach(message => {
+                    displayMessage(message);
+                });
             });
         }
 
@@ -601,6 +787,9 @@
 
             messagesRef.push(messageData);
             input.value = '';
+            
+            // Обновляем список чатов
+            setTimeout(() => loadChatsList(), 1000);
         }
 
         function generateChatId(user1, user2) {
