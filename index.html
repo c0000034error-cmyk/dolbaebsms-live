@@ -28,12 +28,29 @@
             --voice: #8b5cf6;
             --warning: #f59e0b;
             --new-chat: #8b5cf6;
+            --photo: #ec4899;
+            --video: #f97316;
         }
 
         /* Анимации */
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(20px); }
             to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes recording {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.2); opacity: 0.7; }
+        }
+
+        @keyframes voicePlay {
+            0%, 100% { transform: scaleY(1); }
+            50% { transform: scaleY(1.5); }
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
         }
 
         body {
@@ -140,6 +157,16 @@
 
         .btn-danger {
             background: var(--error);
+            color: white;
+        }
+
+        .btn-photo {
+            background: var(--photo);
+            color: white;
+        }
+
+        .btn-video {
+            background: var(--video);
             color: white;
         }
 
@@ -289,6 +316,30 @@
             padding: 1rem;
         }
 
+        .message.photo-message {
+            background: var(--photo);
+            padding: 0.5rem;
+        }
+
+        .message.video-message {
+            background: var(--video);
+            padding: 0.5rem;
+        }
+
+        .media-content {
+            max-width: 250px;
+            max-height: 300px;
+            border-radius: 12px;
+            overflow: hidden;
+            cursor: pointer;
+        }
+
+        .media-content img, .media-content video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
         .voice-player {
             display: flex;
             align-items: center;
@@ -308,7 +359,20 @@
             width: 3px;
             background: white;
             border-radius: 2px;
+            transition: all 0.3s ease;
         }
+
+        .voice-bar.active {
+            animation: voicePlay 0.6s ease-in-out infinite;
+        }
+
+        .voice-bar:nth-child(1).active { height: 8px; animation-delay: 0s; }
+        .voice-bar:nth-child(2).active { height: 12px; animation-delay: 0.1s; }
+        .voice-bar:nth-child(3).active { height: 16px; animation-delay: 0.2s; }
+        .voice-bar:nth-child(4).active { height: 20px; animation-delay: 0.3s; }
+        .voice-bar:nth-child(5).active { height: 16px; animation-delay: 0.4s; }
+        .voice-bar:nth-child(6).active { height: 12px; animation-delay: 0.5s; }
+        .voice-bar:nth-child(7).active { height: 8px; animation-delay: 0.6s; }
 
         .voice-duration {
             font-size: 0.9rem;
@@ -354,11 +418,16 @@
             display: none;
         }
 
-        .input-with-btn {
+        .input-with-buttons {
             display: flex;
             gap: 0.8rem;
             align-items: center;
             width: 100%;
+        }
+
+        .media-buttons {
+            display: flex;
+            gap: 0.5rem;
         }
 
         .message-input {
@@ -372,7 +441,7 @@
             min-height: 50px;
         }
 
-        .send-btn, .voice-btn {
+        .send-btn, .voice-btn, .photo-btn, .video-btn {
             width: 50px;
             height: 50px;
             color: white;
@@ -383,6 +452,7 @@
             align-items: center;
             justify-content: center;
             font-size: 1.2rem;
+            transition: all 0.3s ease;
         }
 
         .send-btn {
@@ -391,6 +461,19 @@
 
         .voice-btn {
             background: var(--voice);
+        }
+
+        .voice-btn.recording {
+            animation: recording 1s infinite;
+            background: var(--error);
+        }
+
+        .photo-btn {
+            background: var(--photo);
+        }
+
+        .video-btn {
+            background: var(--video);
         }
 
         .search-container {
@@ -428,6 +511,107 @@
             width: 100%;
         }
 
+        .recording-info {
+            display: none;
+            text-align: center;
+            color: var(--error);
+            margin-top: 0.5rem;
+            font-size: 0.9rem;
+        }
+
+        .recording-info.active {
+            display: block;
+        }
+
+        .media-preview {
+            display: none;
+            margin-bottom: 1rem;
+            text-align: center;
+        }
+
+        .media-preview.active {
+            display: block;
+        }
+
+        .preview-content {
+            max-width: 200px;
+            max-height: 200px;
+            border-radius: 12px;
+            overflow: hidden;
+            margin: 0 auto;
+            position: relative;
+        }
+
+        .preview-content img, .preview-content video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .remove-preview {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background: var(--error);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Модальное окно для медиа */
+        .media-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.9);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .media-modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            max-width: 90%;
+            max-height: 90%;
+            position: relative;
+        }
+
+        .modal-content img, .modal-content video {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            border-radius: 12px;
+        }
+
+        .close-modal {
+            position: absolute;
+            top: -40px;
+            right: 0;
+            background: var(--error);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+        }
+
         /* Адаптация для телефонов */
         @media (max-width: 768px) {
             .chat-header {
@@ -458,7 +642,7 @@
                 font-size: 1rem;
             }
             
-            .send-btn, .voice-btn {
+            .send-btn, .voice-btn, .photo-btn, .video-btn {
                 width: 45px;
                 height: 45px;
             }
@@ -469,6 +653,11 @@
             
             .auth-buttons {
                 max-width: 280px;
+            }
+
+            .media-content {
+                max-width: 200px;
+                max-height: 250px;
             }
         }
 
@@ -607,15 +796,52 @@
             </div>
 
             <div class="message-input-area hidden" id="messageInputArea">
-                <div class="input-with-btn">
+                <div class="media-preview" id="mediaPreview">
+                    <div class="preview-content" id="previewContent">
+                        <button class="remove-preview" onclick="removeMediaPreview()">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="input-with-buttons">
+                    <div class="media-buttons">
+                        <button class="voice-btn" id="voiceBtn" onclick="toggleVoiceRecording()">
+                            <i class="fas fa-microphone"></i>
+                        </button>
+                        <button class="photo-btn" onclick="openPhotoPicker()">
+                            <i class="fas fa-camera"></i>
+                        </button>
+                        <button class="video-btn" onclick="openVideoPicker()">
+                            <i class="fas fa-video"></i>
+                        </button>
+                    </div>
                     <input type="text" class="message-input" id="messageInput" placeholder="Сообщение...">
                     <button class="send-btn" onclick="sendMessage()">
                         <i class="fas fa-paper-plane"></i>
                     </button>
                 </div>
+                <div class="recording-info" id="recordingInfo">
+                    <i class="fas fa-circle" style="animation: recording 1s infinite"></i>
+                    Запись... Нажмите еще раз чтобы отправить
+                </div>
             </div>
         </div>
     </div>
+
+    <!-- Модальное окно для медиа -->
+    <div class="media-modal" id="mediaModal">
+        <div class="modal-content">
+            <button class="close-modal" onclick="closeMediaModal()">
+                <i class="fas fa-times"></i>
+            </button>
+            <div id="modalMediaContent"></div>
+        </div>
+    </div>
+
+    <!-- Скрытый input для выбора файлов -->
+    <input type="file" id="photoInput" accept="image/*" style="display: none;">
+    <input type="file" id="videoInput" accept="video/*" style="display: none;">
 
     <!-- Firebase -->
     <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js"></script>
@@ -623,7 +849,7 @@
     <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-analytics-compat.js"></script>
     
     <script>
-        // Конфигурация Firebase с measurementId
+        // Конфигурация Firebase
         const firebaseConfig = {
             apiKey: "AIzaSyA35T6z2FYS6m9IEJ9x7evxCphgpLhgMX4",
             authDomain: "dolbaebsms-live.firebaseapp.com",
@@ -655,22 +881,26 @@
         let currentMessages = {};
         let userChats = new Map();
         let unreadMessages = new Map();
+        let isRecording = false;
+        let mediaRecorder = null;
+        let audioChunks = [];
+        let currentAudio = null;
+        let currentlyPlayingMessageId = null;
+        let currentMediaFile = null;
+        let currentMediaType = null;
 
         // Навигация
         function showScreen(screenId) {
             console.log('Переход на экран:', screenId);
             
-            // Скрываем все экраны
             document.querySelectorAll('.screen').forEach(screen => {
                 screen.classList.remove('active');
             });
             
-            // Показываем нужный экран
             const targetScreen = document.getElementById(screenId);
             if (targetScreen) {
                 targetScreen.classList.add('active');
             } else {
-                console.error('Экран не найден:', screenId);
                 document.getElementById('welcomeScreen').classList.add('active');
             }
         }
@@ -683,11 +913,6 @@
 
             if (!username || !password) {
                 alert('Заполните все поля');
-                return;
-            }
-
-            if (username.length < 3) {
-                alert('Логин должен быть не менее 3 символов');
                 return;
             }
 
@@ -710,9 +935,6 @@
                             localStorage.setItem('savedPassword', password);
                         }
                         loginUser(username);
-                    }).catch((error) => {
-                        console.error("Ошибка регистрации:", error);
-                        alert('Ошибка регистрации');
                     });
                 }
             });
@@ -742,17 +964,11 @@
                     if (remember) {
                         localStorage.setItem('savedUser', username);
                         localStorage.setItem('savedPassword', password);
-                    } else {
-                        localStorage.removeItem('savedUser');
-                        localStorage.removeItem('savedPassword');
                     }
                     loginUser(username);
                 } else {
                     alert('Неверный пароль');
                 }
-            }).catch((error) => {
-                console.error("Ошибка входа:", error);
-                alert('Ошибка входа');
             });
         }
 
@@ -922,10 +1138,16 @@
                 if (chat.lastMessage) {
                     if (chat.lastMessage.deleted) {
                         lastMsg = '🗑️ Сообщение удалено';
+                    } else if (chat.lastMessage.type === 'voice') {
+                        lastMsg = '🎤 Голосовое сообщение';
+                    } else if (chat.lastMessage.type === 'photo') {
+                        lastMsg = '📷 Фото';
+                    } else if (chat.lastMessage.type === 'video') {
+                        lastMsg = '🎥 Видео';
                     } else if (chat.lastMessage.sender === currentUser) {
-                        lastMsg = 'Вы: ' + (chat.lastMessage.type === 'voice' ? '🎤 Голосовое сообщение' : chat.lastMessage.text);
+                        lastMsg = 'Вы: ' + chat.lastMessage.text;
                     } else {
-                        lastMsg = chat.lastMessage.type === 'voice' ? '🎤 Голосовое сообщение' : chat.lastMessage.text;
+                        lastMsg = chat.lastMessage.text;
                     }
                 }
                 
@@ -989,6 +1211,8 @@
         }
 
         function startChat(username) {
+            stopCurrentAudio();
+            removeMediaPreview();
             currentChatWith = username;
             document.getElementById('searchInput').value = '';
             document.getElementById('searchResults').innerHTML = '';
@@ -1018,7 +1242,6 @@
                 messagesRef.off('child_added', messageListener);
             }
 
-            // Загружаем существующие сообщения
             messagesRef.orderByChild('timestamp').once('value').then((snapshot) => {
                 if (snapshot.exists()) {
                     snapshot.forEach((childSnapshot) => {
@@ -1033,7 +1256,6 @@
                 markMessagesAsRead(currentChatWith);
             });
 
-            // Слушаем новые сообщения
             messageListener = messagesRef.orderByChild('timestamp').on('child_added', (snapshot) => {
                 const message = snapshot.val();
                 const messageId = snapshot.key;
@@ -1049,7 +1271,7 @@
         }
 
         function displayMessage(message, messageId) {
-            const messageUniqueId = `${message.sender}_${message.timestamp}_${message.text ? message.text.substring(0, 20) : 'voice'}`;
+            const messageUniqueId = `${message.sender}_${message.timestamp}_${message.text ? message.text.substring(0, 20) : message.type}`;
             
             if (lastMessages.has(messageUniqueId)) {
                 return;
@@ -1062,27 +1284,47 @@
             const messageDiv = document.createElement('div');
             
             const isOwnMessage = message.sender === currentUser;
-            const isVoiceMessage = message.type === 'voice';
+            const messageType = message.type || 'text';
             
-            messageDiv.className = `message ${isOwnMessage ? 'sent' : 'received'} ${isVoiceMessage ? 'voice-message' : ''}`;
+            messageDiv.className = `message ${isOwnMessage ? 'sent' : 'received'} ${messageType}-message`;
             messageDiv.setAttribute('data-message-id', messageId);
             
-            if (isVoiceMessage) {
+            if (messageType === 'voice') {
+                const isCurrentlyPlaying = currentlyPlayingMessageId === messageId;
                 messageDiv.innerHTML = `
                     <div class="voice-player">
-                        <button style="background: none; border: none; color: white; font-size: 1.2rem;">
-                            <i class="fas fa-play"></i>
+                        <button onclick="toggleVoicePlayback('${messageId}', '${message.audioData}')" style="background: none; border: none; color: white; font-size: 1.2rem;">
+                            <i class="fas fa-${isCurrentlyPlaying ? 'pause' : 'play'}"></i>
                         </button>
                         <div class="voice-visualizer">
-                            <div class="voice-bar"></div>
-                            <div class="voice-bar"></div>
-                            <div class="voice-bar"></div>
-                            <div class="voice-bar"></div>
-                            <div class="voice-bar"></div>
-                            <div class="voice-bar"></div>
-                            <div class="voice-bar"></div>
+                            <div class="voice-bar ${isCurrentlyPlaying ? 'active' : ''}"></div>
+                            <div class="voice-bar ${isCurrentlyPlaying ? 'active' : ''}"></div>
+                            <div class="voice-bar ${isCurrentlyPlaying ? 'active' : ''}"></div>
+                            <div class="voice-bar ${isCurrentlyPlaying ? 'active' : ''}"></div>
+                            <div class="voice-bar ${isCurrentlyPlaying ? 'active' : ''}"></div>
+                            <div class="voice-bar ${isCurrentlyPlaying ? 'active' : ''}"></div>
+                            <div class="voice-bar ${isCurrentlyPlaying ? 'active' : ''}"></div>
                         </div>
                         <div class="voice-duration">${message.duration || '0:05'}</div>
+                    </div>
+                    ${isOwnMessage ? `
+                        <div class="message-actions">
+                            <button class="delete-btn" onclick="deleteMessage('${messageId}')" title="Удалить">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    ` : ''}
+                `;
+            } else if (messageType === 'photo' || messageType === 'video') {
+                const mediaElement = messageType === 'photo' ? 
+                    `<img src="${message.mediaUrl}" alt="Фото" onclick="openMediaModal('${message.mediaUrl}', '${messageType}')">` :
+                    `<video controls onclick="openMediaModal('${message.mediaUrl}', '${messageType}')">
+                        <source src="${message.mediaUrl}" type="video/mp4">
+                    </video>`;
+                
+                messageDiv.innerHTML = `
+                    <div class="media-content">
+                        ${mediaElement}
                     </div>
                     ${isOwnMessage ? `
                         <div class="message-actions">
@@ -1115,53 +1357,246 @@
             }
         }
 
-        // УДАЛЕНИЕ СООБЩЕНИЙ
-        function deleteMessage(messageId) {
-            if (!currentUser || !currentChatWith || !messageId) return;
-            
-            if (confirm('Удалить это сообщение? Оно будет удалено у всех участников чата.')) {
-                const chatId = generateChatId(currentUser, currentChatWith);
-                const messageRef = database.ref('messages/' + chatId + '/' + messageId);
-                
-                messageRef.update({
-                    deleted: true,
-                    deletedAt: Date.now(),
-                    deletedBy: currentUser
-                }).then(() => {
-                    console.log("Сообщение удалено для всех участников");
-                    
-                    const messageElement = document.querySelector(`[data-message-id="${messageId}"]`);
-                    if (messageElement) {
-                        messageElement.classList.add('deleted');
-                        if (messageElement.querySelector('.message-actions')) {
-                            messageElement.querySelector('.message-actions').style.display = 'none';
-                        }
-                        
-                        const currentMessage = currentMessages[messageId];
-                        if (currentMessage) {
-                            if (currentMessage.type === 'voice') {
-                                messageElement.innerHTML = `
-                                    <div style="opacity: 0.7; font-style: italic;">
-                                        <i class="fas fa-trash"></i> Голосовое сообщение удалено
-                                    </div>
-                                `;
-                            } else {
-                                messageElement.innerHTML = `
-                                    <div style="opacity: 0.7; font-style: italic;">
-                                        <i class="fas fa-trash"></i> Сообщение удалено
-                                    </div>
-                                `;
-                            }
-                        }
-                    }
-                }).catch((error) => {
-                    console.error("Ошибка удаления:", error);
-                    alert('Ошибка удаления сообщения');
-                });
+        // ГОЛОСОВЫЕ СООБЩЕНИЯ
+        function toggleVoiceRecording() {
+            if (!isRecording) {
+                startVoiceRecording();
+            } else {
+                stopVoiceRecording();
             }
         }
 
+        function startVoiceRecording() {
+            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                alert('Ваш браузер не поддерживает запись аудио');
+                return;
+            }
+
+            navigator.mediaDevices.getUserMedia({ audio: true })
+                .then(stream => {
+                    isRecording = true;
+                    mediaRecorder = new MediaRecorder(stream);
+                    audioChunks = [];
+
+                    mediaRecorder.ondataavailable = event => {
+                        audioChunks.push(event.data);
+                    };
+
+                    mediaRecorder.onstop = () => {
+                        const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+                        sendVoiceMessage(audioBlob);
+                    };
+
+                    mediaRecorder.start();
+                    
+                    document.getElementById('voiceBtn').classList.add('recording');
+                    document.getElementById('recordingInfo').classList.add('active');
+                    document.getElementById('voiceBtn').innerHTML = '<i class="fas fa-stop"></i>';
+                })
+                .catch(error => {
+                    console.error('Ошибка доступа к микрофону:', error);
+                    alert('Не удалось получить доступ к микрофону');
+                });
+        }
+
+        function stopVoiceRecording() {
+            if (mediaRecorder && isRecording) {
+                mediaRecorder.stop();
+                isRecording = false;
+                
+                mediaRecorder.stream.getTracks().forEach(track => track.stop());
+                
+                document.getElementById('voiceBtn').classList.remove('recording');
+                document.getElementById('recordingInfo').classList.remove('active');
+                document.getElementById('voiceBtn').innerHTML = '<i class="fas fa-microphone"></i>';
+            }
+        }
+
+        function sendVoiceMessage(audioBlob) {
+            if (!currentUser || !currentChatWith) return;
+
+            const reader = new FileReader();
+            reader.readAsDataURL(audioBlob);
+            reader.onloadend = function() {
+                const base64Audio = reader.result;
+                
+                const chatId = generateChatId(currentUser, currentChatWith);
+                const messagesRef = database.ref('messages/' + chatId);
+
+                const messageData = {
+                    sender: currentUser,
+                    type: 'voice',
+                    audioData: base64Audio,
+                    duration: '0:05',
+                    timestamp: Date.now()
+                };
+
+                messagesRef.push(messageData);
+            };
+        }
+
+        function toggleVoicePlayback(messageId, audioData) {
+            if (currentlyPlayingMessageId === messageId) {
+                stopCurrentAudio();
+            } else {
+                stopCurrentAudio();
+                
+                currentAudio = new Audio(audioData);
+                currentlyPlayingMessageId = messageId;
+                
+                const messageElement = document.querySelector(`[onclick*="${messageId}"]`);
+                if (messageElement) {
+                    const icon = messageElement.querySelector('i');
+                    if (icon) icon.className = 'fas fa-pause';
+                    
+                    const voiceBars = messageElement.closest('.voice-player').querySelectorAll('.voice-bar');
+                    voiceBars.forEach(bar => bar.classList.add('active'));
+                }
+                
+                currentAudio.play().catch(error => {
+                    console.error('Ошибка воспроизведения:', error);
+                    alert('Не удалось воспроизвести голосовое сообщение');
+                    stopCurrentAudio();
+                });
+                
+                currentAudio.onended = () => {
+                    stopCurrentAudio();
+                };
+            }
+        }
+
+        function stopCurrentAudio() {
+            if (currentAudio) {
+                currentAudio.pause();
+                currentAudio = null;
+            }
+            if (currentlyPlayingMessageId) {
+                const previousMessageElement = document.querySelector(`[onclick*="${currentlyPlayingMessageId}"]`);
+                if (previousMessageElement) {
+                    const icon = previousMessageElement.querySelector('i');
+                    if (icon) icon.className = 'fas fa-play';
+                    
+                    const voiceBars = previousMessageElement.closest('.voice-player').querySelectorAll('.voice-bar');
+                    voiceBars.forEach(bar => bar.classList.remove('active'));
+                }
+                currentlyPlayingMessageId = null;
+            }
+        }
+
+        // ФОТО И ВИДЕО
+        function openPhotoPicker() {
+            document.getElementById('photoInput').click();
+        }
+
+        function openVideoPicker() {
+            document.getElementById('videoInput').click();
+        }
+
+        document.getElementById('photoInput').addEventListener('change', function(e) {
+            handleMediaSelection(e.target.files[0], 'photo');
+        });
+
+        document.getElementById('videoInput').addEventListener('change', function(e) {
+            handleMediaSelection(e.target.files[0], 'video');
+        });
+
+        function handleMediaSelection(file, type) {
+            if (!file) return;
+
+            const maxSize = type === 'photo' ? 10 * 1024 * 1024 : 50 * 1024 * 1024; // 10MB для фото, 50MB для видео
+            if (file.size > maxSize) {
+                alert(`Файл слишком большой. Максимальный размер: ${maxSize / 1024 / 1024}MB`);
+                return;
+            }
+
+            currentMediaFile = file;
+            currentMediaType = type;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const previewContent = document.getElementById('previewContent');
+                if (type === 'photo') {
+                    previewContent.innerHTML = `
+                        <button class="remove-preview" onclick="removeMediaPreview()">
+                            <i class="fas fa-times"></i>
+                        </button>
+                        <img src="${e.target.result}" alt="Предпросмотр фото">
+                    `;
+                } else {
+                    previewContent.innerHTML = `
+                        <button class="remove-preview" onclick="removeMediaPreview()">
+                            <i class="fas fa-times"></i>
+                        </button>
+                        <video controls>
+                            <source src="${e.target.result}" type="video/mp4">
+                        </video>
+                    `;
+                }
+                document.getElementById('mediaPreview').classList.add('active');
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function removeMediaPreview() {
+            currentMediaFile = null;
+            currentMediaType = null;
+            document.getElementById('mediaPreview').classList.remove('active');
+            document.getElementById('previewContent').innerHTML = `
+                <button class="remove-preview" onclick="removeMediaPreview()">
+                    <i class="fas fa-times"></i>
+                </button>
+            `;
+        }
+
+        function sendMediaMessage() {
+            if (!currentMediaFile || !currentUser || !currentChatWith) return;
+
+            const reader = new FileReader();
+            reader.readAsDataURL(currentMediaFile);
+            reader.onloadend = function() {
+                const mediaData = reader.result;
+                
+                const chatId = generateChatId(currentUser, currentChatWith);
+                const messagesRef = database.ref('messages/' + chatId);
+
+                const messageData = {
+                    sender: currentUser,
+                    type: currentMediaType,
+                    mediaUrl: mediaData,
+                    timestamp: Date.now()
+                };
+
+                messagesRef.push(messageData);
+                removeMediaPreview();
+            };
+        }
+
+        // МОДАЛЬНОЕ ОКНО ДЛЯ МЕДИА
+        function openMediaModal(mediaUrl, type) {
+            const modalContent = document.getElementById('modalMediaContent');
+            if (type === 'photo') {
+                modalContent.innerHTML = `<img src="${mediaUrl}" alt="Фото">`;
+            } else {
+                modalContent.innerHTML = `<video controls autoplay>
+                    <source src="${mediaUrl}" type="video/mp4">
+                </video>`;
+            }
+            document.getElementById('mediaModal').classList.add('active');
+        }
+
+        function closeMediaModal() {
+            document.getElementById('mediaModal').classList.remove('active');
+            const modalContent = document.getElementById('modalMediaContent');
+            modalContent.innerHTML = '';
+        }
+
+        // ОСНОВНЫЕ ФУНКЦИИ
         function sendMessage() {
+            if (currentMediaFile) {
+                sendMediaMessage();
+                return;
+            }
+
             const input = document.getElementById('messageInput');
             const text = input.value.trim();
 
@@ -1178,6 +1613,21 @@
 
             messagesRef.push(messageData);
             input.value = '';
+        }
+
+        function deleteMessage(messageId) {
+            if (!currentUser || !currentChatWith || !messageId) return;
+            
+            if (confirm('Удалить это сообщение? Оно будет удалено у всех участников чата.')) {
+                const chatId = generateChatId(currentUser, currentChatWith);
+                const messageRef = database.ref('messages/' + chatId + '/' + messageId);
+                
+                messageRef.update({
+                    deleted: true,
+                    deletedAt: Date.now(),
+                    deletedBy: currentUser
+                });
+            }
         }
 
         function generateChatId(user1, user2) {
@@ -1199,15 +1649,15 @@
         });
 
         // Обработчики клавиш
-        document.getElementById('messageInput')?.addEventListener('keypress', function(e) {
+        document.getElementById('messageInput').addEventListener('keypress', function(e) {
             if (e.key === 'Enter') sendMessage();
         });
 
-        document.getElementById('regPassword')?.addEventListener('keypress', function(e) {
+        document.getElementById('regPassword').addEventListener('keypress', function(e) {
             if (e.key === 'Enter') register();
         });
 
-        document.getElementById('loginPassword')?.addEventListener('keypress', function(e) {
+        document.getElementById('loginPassword').addEventListener('keypress', function(e) {
             if (e.key === 'Enter') login();
         });
     </script>
