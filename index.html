@@ -103,6 +103,20 @@
         100% { transform: scale(1); }
       }
 
+      @keyframes diceRoll {
+        0% { transform: rotate(0deg) scale(1); }
+        25% { transform: rotate(90deg) scale(1.1); }
+        50% { transform: rotate(180deg) scale(1); }
+        75% { transform: rotate(270deg) scale(1.1); }
+        100% { transform: rotate(360deg) scale(1); }
+      }
+
+      @keyframes cardFlip {
+        0% { transform: rotateY(0deg); }
+        50% { transform: rotateY(90deg); }
+        100% { transform: rotateY(0deg); }
+      }
+
       .slot-machine {
         background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
         border: 2px solid #475569;
@@ -131,6 +145,101 @@
       .win-animation {
         animation: win 0.5s ease-in-out 3;
       }
+
+      .dice-rolling {
+        animation: diceRoll 0.5s ease-in-out;
+      }
+
+      .card-flipping {
+        animation: cardFlip 0.6s ease-in-out;
+      }
+
+      /* Card styles */
+      .card {
+        width: 80px;
+        height: 120px;
+        background: #1e293b;
+        border: 2px solid #475569;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 24px;
+        font-weight: bold;
+        color: white;
+        margin: 5px;
+      }
+
+      .card.red { background: #dc2626; }
+      .card.black { background: #1f2937; }
+      .card.win { box-shadow: 0 0 20px #22c55e; }
+
+      /* Roulette styles */
+      .roulette-wheel {
+        width: 200px;
+        height: 200px;
+        border-radius: 50%;
+        background: conic-gradient(
+          #ef4444 0deg 60deg,
+          #000000 60deg 120deg,
+          #3b82f6 120deg 180deg,
+          #ef4444 180deg 240deg,
+          #000000 240deg 300deg,
+          #3b82f6 300deg 360deg
+        );
+        position: relative;
+        margin: 0 auto;
+        transition: transform 3s cubic-bezier(0.2, 0.8, 0.3, 1);
+      }
+
+      .roulette-pointer {
+        position: absolute;
+        top: -10px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 0;
+        height: 0;
+        border-left: 10px solid transparent;
+        border-right: 10px solid transparent;
+        border-top: 20px solid #ffffff;
+        z-index: 10;
+      }
+
+      /* Coin flip */
+      .coin {
+        width: 100px;
+        height: 100px;
+        border-radius: 50%;
+        background: linear-gradient(45deg, #f59e0b, #fbbf24);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 40px;
+        margin: 0 auto;
+        position: relative;
+        transform-style: preserve-3d;
+        transition: transform 1s;
+      }
+
+      .coin.flipped {
+        transform: rotateY(180deg);
+      }
+
+      .coin-face {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        backface-visibility: hidden;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .coin-back {
+        transform: rotateY(180deg);
+        background: linear-gradient(45deg, #dc2626, #ef4444);
+      }
     </style>
 
     <!-- Import Map -->
@@ -153,7 +262,7 @@
     <script type="text/babel" data-type="module">
         import React, { useState, useEffect, useRef } from 'react';
         import { createRoot } from 'react-dom/client';
-        import { Search, Send, Image as ImageIcon, Mic, X, ChevronLeft, Video, Settings as SettingsIcon, Menu, Trash2, Smile, MoreVertical, Lock, LogOut, User as UserIcon, Loader2, Coins, Zap, Crown, Palette, Edit3, Dice5 } from 'lucide-react';
+        import { Search, Send, Image as ImageIcon, Mic, X, ChevronLeft, Video, Settings as SettingsIcon, Menu, Trash2, Smile, MoreVertical, Lock, LogOut, User as UserIcon, Loader2, Coins, Zap, Crown, Palette, Edit3, Dice5, Trophy } from 'lucide-react';
         import { format } from 'date-fns';
         import { initializeApp } from 'firebase/app';
         import { getDatabase, ref, onValue, set, update, push, off, query, orderByChild, startAt, endAt, remove, get } from 'firebase/database';
@@ -194,18 +303,48 @@
             );
         };
 
-        // 2. Casino Modal
+        // 2. Casino Modal with Multiple Games
         const CasinoModal = ({ isOpen, onClose, currentUser, userCoins, onCoinsUpdate }) => {
+            const [activeGame, setActiveGame] = useState('slots');
             const [betAmount, setBetAmount] = useState(1);
             const [isSpinning, setIsSpinning] = useState(false);
             const [result, setResult] = useState(null);
             const [lastWin, setLastWin] = useState(0);
+
+            // Slots state
             const [slots, setSlots] = useState(['🍒', '🍋', '🍊']);
+            
+            // Dice state
+            const [dice1, setDice1] = useState(1);
+            const [dice2, setDice2] = useState(1);
+            const [diceBet, setDiceBet] = useState('over'); // 'over' or 'under'
+            
+            // Cards state
+            const [cards, setCards] = useState([null, null, null]);
+            const [selectedCard, setSelectedCard] = useState(null);
+            
+            // Roulette state
+            const [rouletteNumber, setRouletteNumber] = useState(0);
+            const [rouletteColor, setRouletteColor] = useState('red'); // 'red', 'black', 'blue'
+            const [rouletteBet, setRouletteBet] = useState('red');
+            
+            // Coin flip state
+            const [coinSide, setCoinSide] = useState('heads');
+            const [coinBet, setCoinBet] = useState('heads');
 
             if (!isOpen) return null;
 
+            const games = [
+                { id: 'slots', name: '🎰 Слоты', description: '3 одинаковых = x3' },
+                { id: 'dice', name: '🎲 Кости', description: 'Шанс 60%' },
+                { id: 'cards', name: '🃏 Карты', description: 'Найди туза!' },
+                { id: 'roulette', name: '🎡 Рулетка', description: 'Цвета' },
+                { id: 'coin', name: '🪙 Монетка', description: '50/50' }
+            ];
+
             const symbols = ['🍒', '🍋', '🍊', '🍇', '🍉', '⭐', '7️⃣'];
 
+            // SLOTS GAME
             const spinSlots = async () => {
                 if (isSpinning || betAmount > userCoins || betAmount <= 0) return;
                 
@@ -233,24 +372,38 @@
                     if (spinCount >= spins) {
                         clearInterval(spinInterval);
                         
-                        // Final result
+                        // Final result with HIGHER WIN CHANCES
                         const finalSlots = [
                             symbols[Math.floor(Math.random() * symbols.length)],
                             symbols[Math.floor(Math.random() * symbols.length)],
                             symbols[Math.floor(Math.random() * symbols.length)]
                         ];
+                        
+                        // Increase chances of winning
+                        if (Math.random() < 0.6) { // 60% chance to manipulate for win
+                            if (Math.random() < 0.7) {
+                                // Make two symbols the same
+                                finalSlots[1] = finalSlots[0];
+                            }
+                            if (Math.random() < 0.4) {
+                                // Make all three the same
+                                finalSlots[2] = finalSlots[0];
+                                finalSlots[1] = finalSlots[0];
+                            }
+                        }
+                        
                         setSlots(finalSlots);
 
-                        // Calculate win
+                        // Calculate win with BETTER ODDS
                         let winMultiplier = 0;
                         if (finalSlots[0] === finalSlots[1] && finalSlots[1] === finalSlots[2]) {
                             // Three same symbols
-                            if (finalSlots[0] === '7️⃣') winMultiplier = 10;
-                            else if (finalSlots[0] === '⭐') winMultiplier = 5;
-                            else winMultiplier = 3;
-                        } else if (finalSlots[0] === finalSlots[1] || finalSlots[1] === finalSlots[2]) {
-                            // Two same symbols
-                            winMultiplier = 1.5;
+                            if (finalSlots[0] === '7️⃣') winMultiplier = 5;
+                            else if (finalSlots[0] === '⭐') winMultiplier = 3;
+                            else winMultiplier = 2.5;
+                        } else if (finalSlots[0] === finalSlots[1] || finalSlots[1] === finalSlots[2] || finalSlots[0] === finalSlots[2]) {
+                            // Two same symbols - MORE FREQUENT
+                            winMultiplier = 1.8;
                         }
 
                         const winAmount = betAmount * winMultiplier;
@@ -272,13 +425,434 @@
                 }, 100);
             };
 
+            // DICE GAME
+            const rollDice = async () => {
+                if (isSpinning || betAmount > userCoins || betAmount <= 0) return;
+                
+                setIsSpinning(true);
+                setResult(null);
+
+                const newCoins = userCoins - betAmount;
+                await update(ref(db, `users/${currentUser}`), { coins: newCoins });
+                onCoinsUpdate(newCoins);
+
+                // Animate dice
+                let rollCount = 0;
+                const rollInterval = setInterval(() => {
+                    setDice1(Math.floor(Math.random() * 6) + 1);
+                    setDice2(Math.floor(Math.random() * 6) + 1);
+                    rollCount++;
+
+                    if (rollCount >= 10) {
+                        clearInterval(rollInterval);
+                        
+                        // Final roll with BETTER ODDS
+                        const total = Math.floor(Math.random() * 11) + 2; // 2-12
+                        
+                        // Manipulate results for better player experience
+                        let finalTotal;
+                        if (diceBet === 'over') {
+                            // Higher chance to roll over 7
+                            finalTotal = Math.random() < 0.65 ? 
+                                Math.floor(Math.random() * 5) + 8 : // 8-12 (65% chance)
+                                Math.floor(Math.random() * 6) + 2;  // 2-7 (35% chance)
+                        } else {
+                            // Higher chance to roll under 7
+                            finalTotal = Math.random() < 0.65 ? 
+                                Math.floor(Math.random() * 5) + 2 : // 2-6 (65% chance)
+                                Math.floor(Math.random() * 6) + 7;  // 7-12 (35% chance)
+                        }
+                        
+                        // Set individual dice values to match total
+                        const die1 = Math.floor(Math.random() * 6) + 1;
+                        const die2 = finalTotal - die1;
+                        
+                        setDice1(Math.max(1, Math.min(6, die1)));
+                        setDice2(Math.max(1, Math.min(6, die2)));
+
+                        const win = (diceBet === 'over' && finalTotal > 7) || 
+                                   (diceBet === 'under' && finalTotal < 7);
+                        
+                        const winAmount = win ? betAmount * 1.8 : 0;
+                        if (win) {
+                            const finalCoins = newCoins + winAmount;
+                            update(ref(db, `users/${currentUser}`), { coins: finalCoins });
+                            onCoinsUpdate(finalCoins);
+                            setLastWin(winAmount);
+                        }
+
+                        setResult({
+                            win: win,
+                            amount: winAmount,
+                            total: finalTotal
+                        });
+
+                        setIsSpinning(false);
+                    }
+                }, 100);
+            };
+
+            // CARD GAME
+            const startCardGame = async () => {
+                if (isSpinning || betAmount > userCoins || betAmount <= 0) return;
+                
+                setIsSpinning(true);
+                setResult(null);
+                setSelectedCard(null);
+
+                const newCoins = userCoins - betAmount;
+                await update(ref(db, `users/${currentUser}`), { coins: newCoins });
+                onCoinsUpdate(newCoins);
+
+                // Create cards - one ace, two other cards
+                const cardTypes = ['A', 'K', 'Q'];
+                const shuffled = [...cardTypes].sort(() => Math.random() - 0.5);
+                setCards(shuffled);
+
+                setIsSpinning(false);
+            };
+
+            const selectCard = async (index) => {
+                if (selectedCard !== null || isSpinning) return;
+                
+                setIsSpinning(true);
+                setSelectedCard(index);
+
+                // Reveal result after delay
+                setTimeout(() => {
+                    const isAce = cards[index] === 'A';
+                    const winAmount = isAce ? betAmount * 3 : 0;
+                    
+                    if (isAce) {
+                        const finalCoins = userCoins - betAmount + winAmount;
+                        update(ref(db, `users/${currentUser}`), { coins: finalCoins });
+                        onCoinsUpdate(finalCoins);
+                        setLastWin(winAmount);
+                    }
+
+                    setResult({
+                        win: isAce,
+                        amount: winAmount,
+                        card: cards[index]
+                    });
+
+                    setIsSpinning(false);
+                }, 1000);
+            };
+
+            // ROULETTE GAME
+            const spinRoulette = async () => {
+                if (isSpinning || betAmount > userCoins || betAmount <= 0) return;
+                
+                setIsSpinning(true);
+                setResult(null);
+
+                const newCoins = userCoins - betAmount;
+                await update(ref(db, `users/${currentUser}`), { coins: newCoins });
+                onCoinsUpdate(newCoins);
+
+                // Animate roulette
+                const spins = 50 + Math.floor(Math.random() * 20);
+                let spinCount = 0;
+
+                const spinInterval = setInterval(() => {
+                    const num = Math.floor(Math.random() * 6);
+                    const colors = ['red', 'black', 'blue'];
+                    setRouletteNumber(num);
+                    setRouletteColor(colors[num % 3]);
+                    spinCount++;
+
+                    if (spinCount >= spins) {
+                        clearInterval(spinInterval);
+                        
+                        // Final result with BETTER COLOR DISTRIBUTION
+                        const finalNumber = Math.floor(Math.random() * 6);
+                        const colorMap = {
+                            0: 'red', 1: 'black', 2: 'blue',
+                            3: 'red', 4: 'black', 5: 'blue'
+                        };
+                        const finalColor = colorMap[finalNumber];
+                        
+                        setRouletteNumber(finalNumber);
+                        setRouletteColor(finalColor);
+
+                        // Increase win chances for color bets
+                        let win = false;
+                        if (rouletteBet === finalColor) {
+                            win = true;
+                        } else if (Math.random() < 0.3) { // 30% chance to force win
+                            win = true;
+                        }
+
+                        const winAmount = win ? betAmount * 2 : 0;
+                        if (win) {
+                            const finalCoins = newCoins + winAmount;
+                            update(ref(db, `users/${currentUser}`), { coins: finalCoins });
+                            onCoinsUpdate(finalCoins);
+                            setLastWin(winAmount);
+                        }
+
+                        setResult({
+                            win: win,
+                            amount: winAmount,
+                            color: finalColor
+                        });
+
+                        setIsSpinning(false);
+                    }
+                }, 50);
+            };
+
+            // COIN FLIP GAME
+            const flipCoin = async () => {
+                if (isSpinning || betAmount > userCoins || betAmount <= 0) return;
+                
+                setIsSpinning(true);
+                setResult(null);
+
+                const newCoins = userCoins - betAmount;
+                await update(ref(db, `users/${currentUser}`), { coins: newCoins });
+                onCoinsUpdate(newCoins);
+
+                // Animate coin flip
+                let flipCount = 0;
+                const flipInterval = setInterval(() => {
+                    setCoinSide(Math.random() > 0.5 ? 'heads' : 'tails');
+                    flipCount++;
+
+                    if (flipCount >= 10) {
+                        clearInterval(flipInterval);
+                        
+                        // Final result with SLIGHTLY BETTER ODDS
+                        const finalSide = Math.random() < 0.55 ? coinBet : 
+                                         (coinBet === 'heads' ? 'tails' : 'heads');
+                        
+                        setCoinSide(finalSide);
+
+                        const win = finalSide === coinBet;
+                        const winAmount = win ? betAmount * 1.9 : 0;
+                        if (win) {
+                            const finalCoins = newCoins + winAmount;
+                            update(ref(db, `users/${currentUser}`), { coins: finalCoins });
+                            onCoinsUpdate(finalCoins);
+                            setLastWin(winAmount);
+                        }
+
+                        setResult({
+                            win: win,
+                            amount: winAmount,
+                            side: finalSide
+                        });
+
+                        setIsSpinning(false);
+                    }
+                }, 100);
+            };
+
             const maxBet = Math.min(userCoins, 100);
+
+            const renderGame = () => {
+                switch (activeGame) {
+                    case 'slots':
+                        return (
+                            <div className="space-y-4">
+                                <div className="slot-machine">
+                                    <div className="flex justify-between mb-4">
+                                        <div className={`slot-reel flex-1 ${isSpinning ? 'spinning' : ''}`}>
+                                            {slots[0]}
+                                        </div>
+                                        <div className={`slot-reel flex-1 ${isSpinning ? 'spinning' : ''}`}>
+                                            {slots[1]}
+                                        </div>
+                                        <div className={`slot-reel flex-1 ${isSpinning ? 'spinning' : ''}`}>
+                                            {slots[2]}
+                                        </div>
+                                    </div>
+                                </div>
+                                <Button 
+                                    onClick={spinSlots}
+                                    isLoading={isSpinning}
+                                    disabled={userCoins < betAmount || isSpinning}
+                                    variant="gold"
+                                    className="w-full"
+                                >
+                                    {isSpinning ? 'Крутим...' : `Крутить за ${betAmount.toFixed(3)} коинов`}
+                                </Button>
+                            </div>
+                        );
+
+                    case 'dice':
+                        return (
+                            <div className="space-y-4">
+                                <div className="text-center">
+                                    <div className="flex justify-center gap-4 mb-4">
+                                        <div className={`text-4xl p-4 bg-slate-800 rounded-lg ${isSpinning ? 'dice-rolling' : ''}`}>
+                                            {dice1}
+                                        </div>
+                                        <div className={`text-4xl p-4 bg-slate-800 rounded-lg ${isSpinning ? 'dice-rolling' : ''}`}>
+                                            {dice2}
+                                        </div>
+                                    </div>
+                                    <div className="flex gap-2 mb-4">
+                                        <button
+                                            onClick={() => setDiceBet('over')}
+                                            className={`flex-1 py-2 rounded-lg ${
+                                                diceBet === 'over' ? 'bg-green-600 text-white' : 'bg-slate-700 text-slate-300'
+                                            }`}
+                                        >
+                                            Больше 7
+                                        </button>
+                                        <button
+                                            onClick={() => setDiceBet('under')}
+                                            className={`flex-1 py-2 rounded-lg ${
+                                                diceBet === 'under' ? 'bg-green-600 text-white' : 'bg-slate-700 text-slate-300'
+                                            }`}
+                                        >
+                                            Меньше 7
+                                        </button>
+                                    </div>
+                                </div>
+                                <Button 
+                                    onClick={rollDice}
+                                    isLoading={isSpinning}
+                                    disabled={userCoins < betAmount || isSpinning}
+                                    variant="gold"
+                                    className="w-full"
+                                >
+                                    {isSpinning ? 'Бросаем...' : `Бросить за ${betAmount.toFixed(3)} коинов`}
+                                </Button>
+                            </div>
+                        );
+
+                    case 'cards':
+                        return (
+                            <div className="space-y-4">
+                                <div className="flex justify-center gap-2 mb-4">
+                                    {cards.map((card, index) => (
+                                        <div
+                                            key={index}
+                                            onClick={() => selectCard(index)}
+                                            className={`card ${selectedCard === index ? 'card-flipping' : ''} ${
+                                                selectedCard !== null && cards[index] === 'A' ? 'win' : ''
+                                            } ${selectedCard === index ? (cards[index] === 'A' ? 'red' : 'black') : ''}`}
+                                        >
+                                            {selectedCard === index ? card : '?'}
+                                        </div>
+                                    ))}
+                                </div>
+                                {cards.every(card => card === null) ? (
+                                    <Button 
+                                        onClick={startCardGame}
+                                        disabled={userCoins < betAmount}
+                                        variant="gold"
+                                        className="w-full"
+                                    >
+                                        Начать игру за {betAmount.toFixed(3)} коинов
+                                    </Button>
+                                ) : (
+                                    <Button 
+                                        onClick={startCardGame}
+                                        disabled={userCoins < betAmount || isSpinning}
+                                        variant="gold"
+                                        className="w-full"
+                                    >
+                                        Новая игра за {betAmount.toFixed(3)} коинов
+                                    </Button>
+                                )}
+                            </div>
+                        );
+
+                    case 'roulette':
+                        return (
+                            <div className="space-y-4">
+                                <div className="relative">
+                                    <div className="roulette-wheel" style={{ transform: `rotate(${rouletteNumber * 60}deg)` }}>
+                                        <div className="roulette-pointer"></div>
+                                    </div>
+                                    <div className="text-center mt-4 text-xl font-bold">
+                                        <span className={rouletteColor === 'red' ? 'text-red-400' : rouletteColor === 'blue' ? 'text-blue-400' : 'text-white'}>
+                                            {rouletteColor === 'red' ? 'КРАСНОЕ' : rouletteColor === 'blue' ? 'СИНЕЕ' : 'ЧЕРНОЕ'}
+                                        </span>
+                                    </div>
+                                </div>
+                                <div className="flex gap-2 mb-4">
+                                    {['red', 'black', 'blue'].map(color => (
+                                        <button
+                                            key={color}
+                                            onClick={() => setRouletteBet(color)}
+                                            className={`flex-1 py-2 rounded-lg ${
+                                                rouletteBet === color ? 
+                                                (color === 'red' ? 'bg-red-600' : color === 'blue' ? 'bg-blue-600' : 'bg-gray-800') + ' text-white' : 
+                                                'bg-slate-700 text-slate-300'
+                                            }`}
+                                        >
+                                            {color === 'red' ? 'Красное' : color === 'blue' ? 'Синее' : 'Черное'}
+                                        </button>
+                                    ))}
+                                </div>
+                                <Button 
+                                    onClick={spinRoulette}
+                                    isLoading={isSpinning}
+                                    disabled={userCoins < betAmount || isSpinning}
+                                    variant="gold"
+                                    className="w-full"
+                                >
+                                    {isSpinning ? 'Крутим...' : `Крутить за ${betAmount.toFixed(3)} коинов`}
+                                </Button>
+                            </div>
+                        );
+
+                    case 'coin':
+                        return (
+                            <div className="space-y-4">
+                                <div className={`coin ${isSpinning ? 'flipped' : ''}`}>
+                                    <div className="coin-face">
+                                        {coinSide === 'heads' ? '👑' : '⭐'}
+                                    </div>
+                                    <div className="coin-face coin-back">
+                                        {coinSide === 'tails' ? '⭐' : '👑'}
+                                    </div>
+                                </div>
+                                <div className="flex gap-2 mb-4">
+                                    <button
+                                        onClick={() => setCoinBet('heads')}
+                                        className={`flex-1 py-2 rounded-lg ${
+                                            coinBet === 'heads' ? 'bg-yellow-600 text-white' : 'bg-slate-700 text-slate-300'
+                                        }`}
+                                    >
+                                        👑 Орёл
+                                    </button>
+                                    <button
+                                        onClick={() => setCoinBet('tails')}
+                                        className={`flex-1 py-2 rounded-lg ${
+                                            coinBet === 'tails' ? 'bg-yellow-600 text-white' : 'bg-slate-700 text-slate-300'
+                                        }`}
+                                    >
+                                        ⭐ Решка
+                                    </button>
+                                </div>
+                                <Button 
+                                    onClick={flipCoin}
+                                    isLoading={isSpinning}
+                                    disabled={userCoins < betAmount || isSpinning}
+                                    variant="gold"
+                                    className="w-full"
+                                >
+                                    {isSpinning ? 'Подбрасываем...' : `Подбросить за ${betAmount.toFixed(3)} коинов`}
+                                </Button>
+                            </div>
+                        );
+
+                    default:
+                        return null;
+                }
+            };
 
             return (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
                     <div className="w-full max-w-md bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl overflow-hidden">
                         <div className="p-4 border-b border-slate-800 flex items-center justify-between bg-slate-900">
-                            <h2 className="text-xl font-bold text-white flex items-center gap-2"><Dice5 size={20} className="text-yellow-500" /> Казино</h2>
+                            <h2 className="text-xl font-bold text-white flex items-center gap-2"><Trophy size={20} className="text-yellow-500" /> Казино</h2>
                             <button onClick={onClose} className="text-slate-400 hover:text-white"><X size={24} /></button>
                         </div>
                         <div className="p-6">
@@ -287,26 +861,52 @@
                                 <div className="text-2xl font-bold text-yellow-500">{userCoins.toFixed(3)} коинов</div>
                             </div>
 
-                            {/* Slot Machine */}
-                            <div className="slot-machine mb-6">
-                                <div className="flex justify-between mb-4">
-                                    <div className={`slot-reel flex-1 ${isSpinning ? 'spinning' : ''}`}>
-                                        {slots[0]}
-                                    </div>
-                                    <div className={`slot-reel flex-1 ${isSpinning ? 'spinning' : ''}`}>
-                                        {slots[1]}
-                                    </div>
-                                    <div className={`slot-reel flex-1 ${isSpinning ? 'spinning' : ''}`}>
-                                        {slots[2]}
-                                    </div>
+                            {/* Game Selection */}
+                            <div className="grid grid-cols-3 gap-2 mb-6">
+                                {games.map(game => (
+                                    <button
+                                        key={game.id}
+                                        onClick={() => setActiveGame(game.id)}
+                                        className={`p-2 rounded-lg text-center text-sm ${
+                                            activeGame === game.id 
+                                            ? 'bg-indigo-600 text-white' 
+                                            : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
+                                        }`}
+                                    >
+                                        <div className="font-medium">{game.name}</div>
+                                        <div className="text-xs opacity-75">{game.description}</div>
+                                    </button>
+                                ))}
+                            </div>
+
+                            {/* Bet Controls */}
+                            <div className="mb-6">
+                                <label className="text-slate-400 text-sm mb-2 block">Ставка: {betAmount.toFixed(3)} коинов</label>
+                                <input 
+                                    type="range" 
+                                    min="0.1" 
+                                    max={maxBet} 
+                                    step="0.1"
+                                    value={betAmount} 
+                                    onChange={e => setBetAmount(parseFloat(e.target.value))}
+                                    className="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer slider"
+                                    disabled={isSpinning}
+                                />
+                                <div className="flex justify-between text-xs text-slate-500 mt-1">
+                                    <span>0.1</span>
+                                    <span>{maxBet.toFixed(1)}</span>
                                 </div>
                             </div>
 
+                            {/* Game Area */}
+                            {renderGame()}
+
+                            {/* Result Display */}
                             {result && (
-                                <div className={`text-center mb-4 p-3 rounded-lg ${result.win ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'}`}>
+                                <div className={`text-center mt-4 p-3 rounded-lg ${result.win ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'}`}>
                                     {result.win ? (
                                         <div className="win-animation">
-                                            🎉 Вы выиграли {result.amount.toFixed(3)} коинов! (x{result.multiplier})
+                                            🎉 Вы выиграли {result.amount.toFixed(3)} коинов!
                                         </div>
                                     ) : (
                                         '😢 Попробуйте еще раз!'
@@ -314,40 +914,26 @@
                                 </div>
                             )}
 
-                            {/* Bet Controls */}
-                            <div className="space-y-4">
-                                <div>
-                                    <label className="text-slate-400 text-sm mb-2 block">Ставка: {betAmount.toFixed(3)} коинов</label>
-                                    <input 
-                                        type="range" 
-                                        min="0.1" 
-                                        max={maxBet} 
-                                        step="0.1"
-                                        value={betAmount} 
-                                        onChange={e => setBetAmount(parseFloat(e.target.value))}
-                                        className="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer slider"
-                                        disabled={isSpinning}
-                                    />
-                                    <div className="flex justify-between text-xs text-slate-500 mt-1">
-                                        <span>0.1</span>
-                                        <span>{maxBet.toFixed(1)}</span>
-                                    </div>
-                                </div>
-
-                                <Button 
-                                    onClick={spinSlots}
-                                    isLoading={isSpinning}
-                                    disabled={userCoins < betAmount || isSpinning}
-                                    variant="gold"
-                                    className="w-full"
-                                >
-                                    {isSpinning ? 'Крутим...' : `Ставка: ${betAmount.toFixed(3)} коинов`}
-                                </Button>
-
-                                <div className="text-xs text-slate-500 text-center">
-                                    <div>Выигрыши: 3 одинаковых = x3, 2 одинаковых = x1.5</div>
-                                    <div>7️⃣7️⃣7️⃣ = x10, ⭐⭐⭐ = x5</div>
-                                </div>
+                            {/* Game Instructions */}
+                            <div className="text-xs text-slate-500 text-center mt-4 space-y-1">
+                                {activeGame === 'slots' && (
+                                    <>
+                                        <div>3 одинаковых = x2.5 | 2 одинаковых = x1.8</div>
+                                        <div>⭐ = x3 | 7️⃣ = x5</div>
+                                    </>
+                                )}
+                                {activeGame === 'dice' && (
+                                    <div>Выигрыш: x1.8 | Шанс: ~65%</div>
+                                )}
+                                {activeGame === 'cards' && (
+                                    <div>Найдите туза! Выигрыш: x3</div>
+                                )}
+                                {activeGame === 'roulette' && (
+                                    <div>Выигрыш: x2 | Красное/Синее/Черное</div>
+                                )}
+                                {activeGame === 'coin' && (
+                                    <div>Выигрыш: x1.9 | Шанс: 55%</div>
+                                )}
                             </div>
                         </div>
                     </div>
@@ -1039,7 +1625,12 @@
                     'cyan': '#06b6d4',
                     'rainbow': 'linear-gradient(45deg, #ff0000, #ff9900, #ffff00, #00ff00, #00ffff, #0000ff, #9900ff)'
                 };
-                return { color: colors[colorId] || '#ffffff' };
+                return { 
+                    color: colors[colorId] || '#ffffff',
+                    background: colorId === 'rainbow' ? colors[colorId] : 'transparent',
+                    WebkitBackgroundClip: colorId === 'rainbow' ? 'text' : 'initial',
+                    WebkitTextFillColor: colorId === 'rainbow' ? 'transparent' : 'initial'
+                };
             };
 
             return (
@@ -1193,6 +1784,7 @@
                                         <p>🖼️ Рамки = от 10 до 500 коинов</p>
                                         <p>🎨 Цвет имени = 20 коинов</p>
                                         <p>💬 Статус = 20 коинов</p>
+                                        <p>🎰 Казино = 5 игр с высокими шансами!</p>
                                         {currentUser === 'kayivi' && (
                                             <p className="text-green-500">👑 Вы можете добавлять и убавлять коины</p>
                                         )}
@@ -1903,7 +2495,7 @@
                                     className="p-2 rounded-xl bg-slate-800 text-slate-400 hover:text-yellow-500 relative"
                                     title="Казино"
                                 >
-                                    <Dice5 size={20} />
+                                    <Trophy size={20} />
                                 </button>
                                 <button 
                                     onClick={() => setIsNameColorModalOpen(true)}
