@@ -429,7 +429,11 @@
 
                 setIsLoading(true);
                 try {
-                    const newNFTs = [...(userNFTs || []), { id: nft.id, purchasedAt: Date.now() }];
+                    const newNFTs = [...(userNFTs || []), { 
+                        id: nft.id, 
+                        purchasedAt: Date.now(),
+                        hidden: false 
+                    }];
                     await update(ref(db, `users/${currentUser}`), { 
                         coins: userCoins - currentPrice,
                         nfts: newNFTs
@@ -446,17 +450,67 @@
             };
 
             const handleRemoveNFT = async (nftId) => {
+                if (!confirm('Вы уверены, что хотите убрать этот NFT из профиля? Он останется в вашей коллекции, но не будет отображаться.')) {
+                    return;
+                }
+
                 setIsLoading(true);
                 try {
-                    const newNFTs = userNFTs.filter(nft => nft.id !== nftId);
+                    // Находим NFT в коллекции пользователя
+                    const nftIndex = userNFTs.findIndex(nft => nft.id === nftId);
+                    if (nftIndex === -1) {
+                        alert('NFT не найден в вашей коллекции');
+                        return;
+                    }
+
+                    // Создаем копию массива NFT
+                    const newNFTs = [...userNFTs];
+                    
+                    // Убираем NFT из отображения (добавляем флаг hidden)
+                    newNFTs[nftIndex] = {
+                        ...newNFTs[nftIndex],
+                        hidden: true
+                    };
+
                     await update(ref(db, `users/${currentUser}`), { 
                         nfts: newNFTs
                     });
                     onNFTUpdate(newNFTs);
-                    alert(`NFT удален из вашего профиля!`);
+                    alert(`NFT убран из вашего профиля! Вы можете вернуть его в любое время.`);
                 } catch (error) {
                     console.error('NFT remove error:', error);
                     alert('Ошибка при удалении NFT');
+                }
+                setIsLoading(false);
+            };
+
+            const handleRestoreNFT = async (nftId) => {
+                setIsLoading(true);
+                try {
+                    // Находим NFT в коллекции пользователя
+                    const nftIndex = userNFTs.findIndex(nft => nft.id === nftId);
+                    if (nftIndex === -1) {
+                        alert('NFT не найден в вашей коллекции');
+                        return;
+                    }
+
+                    // Создаем копию массива NFT
+                    const newNFTs = [...userNFTs];
+                    
+                    // Восстанавливаем NFT (убираем флаг hidden)
+                    newNFTs[nftIndex] = {
+                        ...newNFTs[nftIndex],
+                        hidden: false
+                    };
+
+                    await update(ref(db, `users/${currentUser}`), { 
+                        nfts: newNFTs
+                    });
+                    onNFTUpdate(newNFTs);
+                    alert(`NFT восстановлен в вашем профиле!`);
+                } catch (error) {
+                    console.error('NFT restore error:', error);
+                    alert('Ошибка при восстановлении NFT');
                 }
                 setIsLoading(false);
             };
@@ -493,8 +547,14 @@
                         nfts: newSenderNFTs
                     });
 
-                    // Добавляем NFT получателю
-                    const newRecipientNFTs = [...recipientNFTs, { id: giftNFT.id, gifted: true, from: currentUser, giftedAt: Date.now() }];
+                    // Добавляем NFT получателю с информацией о подарке
+                    const newRecipientNFTs = [...recipientNFTs, { 
+                        id: giftNFT.id, 
+                        gifted: true, 
+                        from: currentUser, 
+                        giftedAt: Date.now(),
+                        hidden: false
+                    }];
                     await update(recipientRef, { 
                         nfts: newRecipientNFTs
                     });
@@ -564,7 +624,8 @@
                     
                     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
                         {nfts.map((nft) => {
-                            const isPurchased = userNFTs.some(userNft => userNft.id === nft.id);
+                            const userNFT = userNFTs.find(userNft => userNft.id === nft.id);
+                            const isPurchased = !!userNFT;
                             const currentPrice = getCurrentPrice(nft);
                             
                             if (isPurchased) return null;
@@ -613,7 +674,9 @@
                                     return (
                                         <div
                                             key={nft.id}
-                                            className={`p-3 rounded-xl flex flex-col items-center gap-2 ${getRarityClass(nft.rarity)}`}
+                                            className={`p-3 rounded-xl flex flex-col items-center gap-2 ${getRarityClass(nft.rarity)} ${
+                                                userNft.hidden ? 'opacity-50 bg-slate-800' : ''
+                                            }`}
                                         >
                                             <div className="text-3xl">{nft.emoji}</div>
                                             <div className="text-center">
@@ -626,23 +689,41 @@
                                                         Подарок от {userNft.from}
                                                     </p>
                                                 )}
+                                                {userNft.hidden && (
+                                                    <p className="text-xs text-yellow-400 mt-1">
+                                                        Скрыт
+                                                    </p>
+                                                )}
                                             </div>
                                             <div className="flex gap-1 w-full">
-                                                <Button 
-                                                    onClick={() => handleRemoveNFT(nft.id)}
-                                                    isLoading={isLoading}
-                                                    variant="danger"
-                                                    className="flex-1 text-xs"
-                                                >
-                                                    Убрать
-                                                </Button>
-                                                <Button 
-                                                    onClick={() => setGiftNFT(nft)}
-                                                    variant="primary"
-                                                    className="flex-1 text-xs"
-                                                >
-                                                    Подарить
-                                                </Button>
+                                                {userNft.hidden ? (
+                                                    <Button 
+                                                        onClick={() => handleRestoreNFT(nft.id)}
+                                                        isLoading={isLoading}
+                                                        variant="primary"
+                                                        className="flex-1 text-xs"
+                                                    >
+                                                        Восстановить
+                                                    </Button>
+                                                ) : (
+                                                    <>
+                                                        <Button 
+                                                            onClick={() => handleRemoveNFT(nft.id)}
+                                                            isLoading={isLoading}
+                                                            variant="danger"
+                                                            className="flex-1 text-xs"
+                                                        >
+                                                            Убрать
+                                                        </Button>
+                                                        <Button 
+                                                            onClick={() => setGiftNFT(nft)}
+                                                            variant="primary"
+                                                            className="flex-1 text-xs"
+                                                        >
+                                                            Подарить
+                                                        </Button>
+                                                    </>
+                                                )}
                                             </div>
                                         </div>
                                     );
@@ -980,12 +1061,12 @@
                                     <div className={`w-20 h-20 rounded-full bg-gradient-to-tr from-indigo-600 to-purple-600 flex items-center justify-center text-white font-bold text-3xl shadow-xl ${getFrameClass(user.frame)}`}>
                                         {user.avatar || user.username[0].toUpperCase()}
                                     </div>
-                                    {user.nfts && user.nfts.length > 0 && (
+                                    {user.nfts && user.nfts.filter(nft => !nft.hidden).length > 0 && (
                                         <div className="nft-orbital">
-                                            {user.nfts.map((nft, index) => {
+                                            {user.nfts.filter(nft => !nft.hidden).map((nft, index) => {
                                                 const nftData = nfts.find(n => n.id === nft.id);
                                                 if (!nftData) return null;
-                                                const angle = (index / user.nfts.length) * 360;
+                                                const angle = (index / user.nfts.filter(nft => !nft.hidden).length) * 360;
                                                 return (
                                                     <div 
                                                         key={nft.id}
@@ -1057,11 +1138,11 @@
                                 </div>
                             )}
 
-                            {user.nfts && user.nfts.length > 0 && (
+                            {user.nfts && user.nfts.filter(nft => !nft.hidden).length > 0 && (
                                 <div className="mb-4">
                                     <label className="text-slate-400 text-sm mb-2 block">Коллекция NFT</label>
                                     <div className="flex flex-wrap gap-2">
-                                        {user.nfts.map(nft => {
+                                        {user.nfts.filter(nft => !nft.hidden).map(nft => {
                                             const nftData = nfts.find(n => n.id === nft.id);
                                             if (!nftData) return null;
                                             return (
@@ -2386,7 +2467,7 @@
             );
         };
 
-        // 11. Settings Modal
+        // 11. Settings Modal (ИСПРАВЛЕННАЯ ВЕРСИЯ)
         const SettingsModal = ({ isOpen, onClose, currentUser, onLogout, userCoins, onCoinsUpdate, userAvatar, userFrame, userNameColor, userStatus, userStatusEmoji, onAvatarChange, onFrameChange, onColorChange, onStatusChange, purchasedAvatars, purchasedFrames, purchasedColors, purchasedStatuses }) => {
             const [activeTab, setActiveTab] = useState('profile');
             const [oldPassword, setOldPassword] = useState('');
@@ -2399,6 +2480,12 @@
             const [targetUser, setTargetUser] = useState('');
             const [coinsToAddToOther, setCoinsToAddToOther] = useState('');
             const [targetUserToAdd, setTargetUserToAdd] = useState('');
+
+            // Добавляем пропсы для модальных окон
+            const [isAvatarModalOpen, setIsAvatarModalOpen] = useState(false);
+            const [isFrameModalOpen, setIsFrameModalOpen] = useState(false);
+            const [isNameColorModalOpen, setIsNameColorModalOpen] = useState(false);
+            const [isStatusModalOpen, setIsStatusModalOpen] = useState(false);
 
             if (!isOpen) return null;
 
@@ -2586,281 +2673,322 @@
             };
 
             return (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-3 bg-black/60 backdrop-blur-sm animate-fade-in safe-area-top safe-area-bottom">
-                    <div className="w-full max-w-md bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[95vh]">
-                        <div className="p-3 border-b border-slate-800 flex items-center justify-between bg-slate-900 shrink-0">
-                            <h2 className="text-lg font-bold text-white flex items-center gap-2"><UserIcon size={18} className="text-indigo-500" /> Настройки</h2>
-                            <button onClick={onClose} className="text-slate-400 hover:text-white p-1"><X size={20} /></button>
-                        </div>
-                        <div className="flex border-b border-slate-800 bg-slate-900/50 shrink-0 overflow-x-auto">
-                            {['profile', 'appearance', 'coins', 'security', 'danger'].map(tab => (
-                                <button 
-                                    key={tab} 
-                                    onClick={() => setActiveTab(tab)} 
-                                    className={`flex-1 py-2 text-xs font-medium transition-colors capitalize min-h-[44px] whitespace-nowrap px-2 ${
-                                        activeTab === tab ? 'text-indigo-400 border-b-2 border-indigo-400' : 'text-slate-400'
-                                    }`}
-                                >
-                                    {tab === 'profile' ? 'Профиль' : 
-                                     tab === 'appearance' ? 'Внешность' :
-                                     tab === 'coins' ? 'Коинсы' : 
-                                     tab === 'security' ? 'Пароль' : 'Удалить'}
-                                </button>
-                            ))}
-                        </div>
-                        <div className="p-4 overflow-y-auto custom-scrollbar flex-1">
-                            {message.text && (
-                                <div className={`mb-3 p-2 rounded-lg text-xs text-center ${
-                                    message.type === 'error' ? 'text-red-400 bg-red-500/10' : 'text-green-400 bg-green-500/10'
-                                }`}>
-                                    {message.text}
-                                </div>
-                            )}
-                            
-                            {activeTab === 'profile' && (
-                                <div className="space-y-4 text-center">
-                                    <div className={`w-20 h-20 mx-auto rounded-full bg-gradient-to-tr from-indigo-600 to-purple-600 flex items-center justify-center text-white font-bold text-3xl shadow-xl ${getFrameClass(userFrame)}`}>
-                                        {userAvatar || currentUser[0].toUpperCase()}
-                                    </div>
-                                    <div>
-                                        <h3 className="text-xl font-bold" style={getNameColorStyle(userNameColor)}>{currentUser}</h3>
-                                        <p className="text-slate-400 text-sm flex items-center justify-center gap-1">
-                                            {userStatusEmoji} {userStatus || 'В сети'}
-                                        </p>
-                                    </div>
-                                    <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-xl p-3">
-                                        <div className="flex items-center justify-center gap-2 text-yellow-500">
-                                            <Coins size={18} />
-                                            <span className="font-bold text-md">{userCoins.toFixed(3)} коинов</span>
-                                        </div>
-                                    </div>
-                                    <Button 
-                                        variant="secondary" 
-                                        onClick={onLogout} 
-                                        className="w-full text-sm" 
-                                        icon={<LogOut size={16} />}
+                <>
+                    {/* Модальные окна для настроек внешности */}
+                    <AvatarModal
+                        isOpen={isAvatarModalOpen}
+                        onClose={() => setIsAvatarModalOpen(false)}
+                        currentUser={currentUser}
+                        userCoins={userCoins}
+                        onAvatarChange={onAvatarChange}
+                        purchasedAvatars={purchasedAvatars}
+                    />
+                    
+                    <FrameModal
+                        isOpen={isFrameModalOpen}
+                        onClose={() => setIsFrameModalOpen(false)}
+                        currentUser={currentUser}
+                        userCoins={userCoins}
+                        onFrameChange={onFrameChange}
+                        userFrame={userFrame}
+                        purchasedFrames={purchasedFrames}
+                    />
+
+                    <NameColorModal
+                        isOpen={isNameColorModalOpen}
+                        onClose={() => setIsNameColorModalOpen(false)}
+                        currentUser={currentUser}
+                        userCoins={userCoins}
+                        onColorChange={onColorChange}
+                        purchasedColors={purchasedColors}
+                    />
+
+                    <StatusModal
+                        isOpen={isStatusModalOpen}
+                        onClose={() => setIsStatusModalOpen(false)}
+                        currentUser={currentUser}
+                        userCoins={userCoins}
+                        onStatusChange={onStatusChange}
+                        purchasedStatuses={purchasedStatuses}
+                    />
+
+                    {/* Основное модальное окно настроек */}
+                    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 bg-black/60 backdrop-blur-sm animate-fade-in safe-area-top safe-area-bottom">
+                        <div className="w-full max-w-md bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[95vh]">
+                            <div className="p-3 border-b border-slate-800 flex items-center justify-between bg-slate-900 shrink-0">
+                                <h2 className="text-lg font-bold text-white flex items-center gap-2"><UserIcon size={18} className="text-indigo-500" /> Настройки</h2>
+                                <button onClick={onClose} className="text-slate-400 hover:text-white p-1"><X size={20} /></button>
+                            </div>
+                            <div className="flex border-b border-slate-800 bg-slate-900/50 shrink-0 overflow-x-auto">
+                                {['profile', 'appearance', 'coins', 'security', 'danger'].map(tab => (
+                                    <button 
+                                        key={tab} 
+                                        onClick={() => setActiveTab(tab)} 
+                                        className={`flex-1 py-2 text-xs font-medium transition-colors capitalize min-h-[44px] whitespace-nowrap px-2 ${
+                                            activeTab === tab ? 'text-indigo-400 border-b-2 border-indigo-400' : 'text-slate-400'
+                                        }`}
                                     >
-                                        Выйти
-                                    </Button>
-                                </div>
-                            )}
-
-                            {activeTab === 'appearance' && (
-                                <div className="space-y-3">
-                                    <div className="settings-grid">
-                                        <Button 
-                                            onClick={() => {/* Open Avatar Modal */}}
-                                            variant="secondary"
-                                            className="flex-col h-auto py-3"
-                                            icon={<UserIcon size={16} />}
-                                        >
-                                            Аватарка
-                                        </Button>
-                                        <Button 
-                                            onClick={() => {/* Open Frame Modal */}}
-                                            variant="secondary"
-                                            className="flex-col h-auto py-3"
-                                            icon={<ImageIcon size={16} />}
-                                        >
-                                            Рамка
-                                        </Button>
-                                        <Button 
-                                            onClick={() => {/* Open Color Modal */}}
-                                            variant="secondary"
-                                            className="flex-col h-auto py-3"
-                                            icon={<Palette size={16} />}
-                                        >
-                                            Цвет имени
-                                        </Button>
-                                        <Button 
-                                            onClick={() => {/* Open Status Modal */}}
-                                            variant="secondary"
-                                            className="flex-col h-auto py-3"
-                                            icon={<Edit3 size={16} />}
-                                        >
-                                            Статус
-                                        </Button>
+                                        {tab === 'profile' ? 'Профиль' : 
+                                         tab === 'appearance' ? 'Внешность' :
+                                         tab === 'coins' ? 'Коинсы' : 
+                                         tab === 'security' ? 'Пароль' : 'Удалить'}
+                                    </button>
+                                ))}
+                            </div>
+                            <div className="p-4 overflow-y-auto custom-scrollbar flex-1">
+                                {message.text && (
+                                    <div className={`mb-3 p-2 rounded-lg text-xs text-center ${
+                                        message.type === 'error' ? 'text-red-400 bg-red-500/10' : 'text-green-400 bg-green-500/10'
+                                    }`}>
+                                        {message.text}
                                     </div>
-                                    <div className="text-xs text-slate-400 text-center">
-                                        Настройте внешний вид вашего профиля
-                                    </div>
-                                </div>
-                            )}
-
-                            {activeTab === 'coins' && (
-                                <div className="space-y-3">
-                                    <div className="text-center p-3 bg-yellow-500/10 border border-yellow-500/20 rounded-xl">
-                                        <div className="flex items-center justify-center gap-2 text-yellow-500 mb-1">
-                                            <Coins size={20} />
-                                            <span className="font-bold text-lg">{userCoins.toFixed(3)}</span>
+                                )}
+                                
+                                {activeTab === 'profile' && (
+                                    <div className="space-y-4 text-center">
+                                        <div className={`w-20 h-20 mx-auto rounded-full bg-gradient-to-tr from-indigo-600 to-purple-600 flex items-center justify-center text-white font-bold text-3xl shadow-xl ${getFrameClass(userFrame)}`}>
+                                            {userAvatar || currentUser[0].toUpperCase()}
                                         </div>
-                                        <p className="text-slate-400 text-xs">Ваш баланс коинов</p>
-                                    </div>
-                                    
-                                    {currentUser === 'kayivi' && (
-                                        <>
-                                            <div className="space-y-2 p-3 bg-green-500/10 border border-green-500/20 rounded-xl">
-                                                <div className="flex items-center gap-2 text-green-500 mb-1">
-                                                    <Crown size={14} />
-                                                    <span className="font-bold text-sm">Добавить коины себе</span>
-                                                </div>
-                                                <div className="flex gap-2">
-                                                    <input 
-                                                        type="number" 
-                                                        step="0.001"
-                                                        placeholder="Количество коинов" 
-                                                        value={coinsToAdd} 
-                                                        onChange={e => setCoinsToAdd(e.target.value)}
-                                                        className="flex-1 bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white focus:border-green-500 outline-none text-sm" 
-                                                    />
-                                                    <Button 
-                                                        onClick={handleAddCoins} 
-                                                        isLoading={isLoading}
-                                                        variant="gold"
-                                                        className="whitespace-nowrap text-xs"
-                                                    >
-                                                        Добавить
-                                                    </Button>
-                                                </div>
+                                        <div>
+                                            <h3 className="text-xl font-bold" style={getNameColorStyle(userNameColor)}>{currentUser}</h3>
+                                            <p className="text-slate-400 text-sm flex items-center justify-center gap-1">
+                                                {userStatusEmoji} {userStatus || 'В сети'}
+                                            </p>
+                                        </div>
+                                        <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-xl p-3">
+                                            <div className="flex items-center justify-center gap-2 text-yellow-500">
+                                                <Coins size={18} />
+                                                <span className="font-bold text-md">{userCoins.toFixed(3)} коинов</span>
                                             </div>
-                                            
-                                            <div className="space-y-2 p-3 bg-blue-500/10 border border-blue-500/20 rounded-xl">
-                                                <div className="flex items-center gap-2 text-blue-500 mb-1">
-                                                    <Crown size={14} />
-                                                    <span className="font-bold text-sm">Добавить коины другому</span>
-                                                </div>
-                                                <div className="space-y-2">
-                                                    <input 
-                                                        type="text" 
-                                                        placeholder="Имя пользователя" 
-                                                        value={targetUserToAdd} 
-                                                        onChange={e => setTargetUserToAdd(e.target.value)}
-                                                        className="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white focus:border-blue-500 outline-none text-sm" 
-                                                    />
+                                        </div>
+                                        <Button 
+                                            variant="secondary" 
+                                            onClick={onLogout} 
+                                            className="w-full text-sm" 
+                                            icon={<LogOut size={16} />}
+                                        >
+                                            Выйти
+                                        </Button>
+                                    </div>
+                                )}
+
+                                {activeTab === 'appearance' && (
+                                    <div className="space-y-3">
+                                        <div className="settings-grid">
+                                            <Button 
+                                                onClick={() => setIsAvatarModalOpen(true)}
+                                                variant="secondary"
+                                                className="flex-col h-auto py-3"
+                                                icon={<UserIcon size={16} />}
+                                            >
+                                                Аватарка
+                                            </Button>
+                                            <Button 
+                                                onClick={() => setIsFrameModalOpen(true)}
+                                                variant="secondary"
+                                                className="flex-col h-auto py-3"
+                                                icon={<ImageIcon size={16} />}
+                                            >
+                                                Рамка
+                                            </Button>
+                                            <Button 
+                                                onClick={() => setIsNameColorModalOpen(true)}
+                                                variant="secondary"
+                                                className="flex-col h-auto py-3"
+                                                icon={<Palette size={16} />}
+                                            >
+                                                Цвет имени
+                                            </Button>
+                                            <Button 
+                                                onClick={() => setIsStatusModalOpen(true)}
+                                                variant="secondary"
+                                                className="flex-col h-auto py-3"
+                                                icon={<Edit3 size={16} />}
+                                            >
+                                                Статус
+                                            </Button>
+                                        </div>
+                                        <div className="text-xs text-slate-400 text-center">
+                                            Настройте внешний вид вашего профиля
+                                        </div>
+                                    </div>
+                                )}
+
+                                {activeTab === 'coins' && (
+                                    <div className="space-y-3">
+                                        <div className="text-center p-3 bg-yellow-500/10 border border-yellow-500/20 rounded-xl">
+                                            <div className="flex items-center justify-center gap-2 text-yellow-500 mb-1">
+                                                <Coins size={20} />
+                                                <span className="font-bold text-lg">{userCoins.toFixed(3)}</span>
+                                            </div>
+                                            <p className="text-slate-400 text-xs">Ваш баланс коинов</p>
+                                        </div>
+                                        
+                                        {currentUser === 'kayivi' && (
+                                            <>
+                                                <div className="space-y-2 p-3 bg-green-500/10 border border-green-500/20 rounded-xl">
+                                                    <div className="flex items-center gap-2 text-green-500 mb-1">
+                                                        <Crown size={14} />
+                                                        <span className="font-bold text-sm">Добавить коины себе</span>
+                                                    </div>
                                                     <div className="flex gap-2">
                                                         <input 
                                                             type="number" 
                                                             step="0.001"
                                                             placeholder="Количество коинов" 
-                                                            value={coinsToAddToOther} 
-                                                            onChange={e => setCoinsToAddToOther(e.target.value)}
-                                                            className="flex-1 bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white focus:border-blue-500 outline-none text-sm" 
+                                                            value={coinsToAdd} 
+                                                            onChange={e => setCoinsToAdd(e.target.value)}
+                                                            className="flex-1 bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white focus:border-green-500 outline-none text-sm" 
                                                         />
                                                         <Button 
-                                                            onClick={handleAddCoinsToOther} 
+                                                            onClick={handleAddCoins} 
                                                             isLoading={isLoading}
-                                                            variant="primary"
+                                                            variant="gold"
                                                             className="whitespace-nowrap text-xs"
                                                         >
                                                             Добавить
                                                         </Button>
                                                     </div>
                                                 </div>
-                                            </div>
-                                            
-                                            <div className="space-y-2 p-3 bg-red-500/10 border border-red-500/20 rounded-xl">
-                                                <div className="flex items-center gap-2 text-red-500 mb-1">
-                                                    <Crown size={14} />
-                                                    <span className="font-bold text-sm">Убавить коины</span>
-                                                </div>
-                                                <div className="space-y-2">
-                                                    <input 
-                                                        type="text" 
-                                                        placeholder="Имя пользователя" 
-                                                        value={targetUser} 
-                                                        onChange={e => setTargetUser(e.target.value)}
-                                                        className="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white focus:border-red-500 outline-none text-sm" 
-                                                    />
-                                                    <div className="flex gap-2">
+                                                
+                                                <div className="space-y-2 p-3 bg-blue-500/10 border border-blue-500/20 rounded-xl">
+                                                    <div className="flex items-center gap-2 text-blue-500 mb-1">
+                                                        <Crown size={14} />
+                                                        <span className="font-bold text-sm">Добавить коины другому</span>
+                                                    </div>
+                                                    <div className="space-y-2">
                                                         <input 
-                                                            type="number" 
-                                                            step="0.001"
-                                                            placeholder="Количество коинов" 
-                                                            value={coinsToRemove} 
-                                                            onChange={e => setCoinsToRemove(e.target.value)}
-                                                            className="flex-1 bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white focus:border-red-500 outline-none text-sm" 
+                                                            type="text" 
+                                                            placeholder="Имя пользователя" 
+                                                            value={targetUserToAdd} 
+                                                            onChange={e => setTargetUserToAdd(e.target.value)}
+                                                            className="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white focus:border-blue-500 outline-none text-sm" 
                                                         />
-                                                        <Button 
-                                                            onClick={handleRemoveCoins} 
-                                                            isLoading={isLoading}
-                                                            variant="danger"
-                                                            className="whitespace-nowrap text-xs"
-                                                        >
-                                                            Убавить
-                                                        </Button>
+                                                        <div className="flex gap-2">
+                                                            <input 
+                                                                type="number" 
+                                                                step="0.001"
+                                                                placeholder="Количество коинов" 
+                                                                value={coinsToAddToOther} 
+                                                                onChange={e => setCoinsToAddToOther(e.target.value)}
+                                                                className="flex-1 bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white focus:border-blue-500 outline-none text-sm" 
+                                                            />
+                                                            <Button 
+                                                                onClick={handleAddCoinsToOther} 
+                                                                isLoading={isLoading}
+                                                                variant="primary"
+                                                                className="whitespace-nowrap text-xs"
+                                                            >
+                                                                Добавить
+                                                            </Button>
+                                                        </div>
                                                     </div>
                                                 </div>
-                                            </div>
-                                        </>
-                                    )}
-
-                                    <div className="text-slate-400 text-xs space-y-1">
-                                        <p>💎 1 клик = +0.001 коин (можно улучшить)</p>
-                                        <p>🤖 Автокликер = 10 коинов + улучшения</p>
-                                        <p>🔄 Аватарки = от 50 до 3000 коинов</p>
-                                        <p>🖼️ Рамки = от 50 до 10000 коинов</p>
-                                        <p>🎨 Цвет имени = 50 коинов</p>
-                                        <p>💬 Статус = 50 коинов</p>
-                                        <p>🎰 Казино = 5 игр с высокими шансами!</p>
-                                        <p>🎁 NFT = от 600 до 3000 коинов</p>
-                                        {currentUser === 'kayivi' && (
-                                            <p className="text-green-500">👑 Вы можете добавлять и убавлять коины</p>
+                                                
+                                                <div className="space-y-2 p-3 bg-red-500/10 border border-red-500/20 rounded-xl">
+                                                    <div className="flex items-center gap-2 text-red-500 mb-1">
+                                                        <Crown size={14} />
+                                                        <span className="font-bold text-sm">Убавить коины</span>
+                                                    </div>
+                                                    <div className="space-y-2">
+                                                        <input 
+                                                            type="text" 
+                                                            placeholder="Имя пользователя" 
+                                                            value={targetUser} 
+                                                            onChange={e => setTargetUser(e.target.value)}
+                                                            className="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white focus:border-red-500 outline-none text-sm" 
+                                                        />
+                                                        <div className="flex gap-2">
+                                                            <input 
+                                                                type="number" 
+                                                                step="0.001"
+                                                                placeholder="Количество коинов" 
+                                                                value={coinsToRemove} 
+                                                                onChange={e => setCoinsToRemove(e.target.value)}
+                                                                className="flex-1 bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white focus:border-red-500 outline-none text-sm" 
+                                                            />
+                                                            <Button 
+                                                                onClick={handleRemoveCoins} 
+                                                                isLoading={isLoading}
+                                                                variant="danger"
+                                                                className="whitespace-nowrap text-xs"
+                                                            >
+                                                                Убавить
+                                                            </Button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </>
                                         )}
+
+                                        <div className="text-slate-400 text-xs space-y-1">
+                                            <p>💎 1 клик = +0.001 коин (можно улучшить)</p>
+                                            <p>🤖 Автокликер = 10 коинов + улучшения</p>
+                                            <p>🔄 Аватарки = от 50 до 3000 коинов</p>
+                                            <p>🖼️ Рамки = от 50 до 10000 коинов</p>
+                                            <p>🎨 Цвет имени = 50 коинов</p>
+                                            <p>💬 Статус = 50 коинов</p>
+                                            <p>🎰 Казино = 5 игр с высокими шансами!</p>
+                                            <p>🎁 NFT = от 600 до 3000 коинов</p>
+                                            {currentUser === 'kayivi' && (
+                                                <p className="text-green-500">👑 Вы можете добавлять и убавлять коины</p>
+                                            )}
+                                        </div>
                                     </div>
-                                </div>
-                            )}
+                                )}
 
-                            {activeTab === 'security' && (
-                                <div className="space-y-3">
-                                    <input 
-                                        type="password" 
-                                        placeholder="Текущий пароль" 
-                                        value={oldPassword} 
-                                        onChange={e => setOldPassword(e.target.value)} 
-                                        className="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white focus:border-indigo-500 outline-none text-sm" 
-                                    />
-                                    <input 
-                                        type="password" 
-                                        placeholder="Новый пароль" 
-                                        value={newPassword} 
-                                        onChange={e => setNewPassword(e.target.value)} 
-                                        className="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white focus:border-indigo-500 outline-none text-sm" 
-                                    />
-                                    <Button 
-                                        onClick={handleChangePassword} 
-                                        isLoading={isLoading} 
-                                        disabled={!oldPassword || !newPassword} 
-                                        className="w-full text-sm"
-                                    >
-                                        Обновить
-                                    </Button>
-                                </div>
-                            )}
+                                {activeTab === 'security' && (
+                                    <div className="space-y-3">
+                                        <input 
+                                            type="password" 
+                                            placeholder="Текущий пароль" 
+                                            value={oldPassword} 
+                                            onChange={e => setOldPassword(e.target.value)} 
+                                            className="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white focus:border-indigo-500 outline-none text-sm" 
+                                        />
+                                        <input 
+                                            type="password" 
+                                            placeholder="Новый пароль" 
+                                            value={newPassword} 
+                                            onChange={e => setNewPassword(e.target.value)} 
+                                            className="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white focus:border-indigo-500 outline-none text-sm" 
+                                        />
+                                        <Button 
+                                            onClick={handleChangePassword} 
+                                            isLoading={isLoading} 
+                                            disabled={!oldPassword || !newPassword} 
+                                            className="w-full text-sm"
+                                        >
+                                            Обновить
+                                        </Button>
+                                    </div>
+                                )}
 
-                            {activeTab === 'danger' && (
-                                <div className="space-y-3 p-3 bg-red-500/5 border border-red-500/10 rounded-xl">
-                                    <p className="text-xs text-slate-400">Введите <b>{currentUser}</b> для удаления аккаунта.</p>
-                                    <input 
-                                        type="text" 
-                                        placeholder={currentUser} 
-                                        value={confirmDelete} 
-                                        onChange={e => setConfirmDelete(e.target.value)} 
-                                        className="w-full bg-slate-800 border border-red-900/30 rounded-xl px-3 py-2 text-white focus:border-red-500 outline-none text-sm" 
-                                    />
-                                    <Button 
-                                        variant="danger" 
-                                        onClick={handleDeleteAccount} 
-                                        isLoading={isLoading} 
-                                        disabled={confirmDelete !== currentUser} 
-                                        className="w-full text-sm"
-                                    >
-                                        Удалить навсегда
-                                    </Button>
-                                </div>
-                            )}
+                                {activeTab === 'danger' && (
+                                    <div className="space-y-3 p-3 bg-red-500/5 border border-red-500/10 rounded-xl">
+                                        <p className="text-xs text-slate-400">Введите <b>{currentUser}</b> для удаления аккаунта.</p>
+                                        <input 
+                                            type="text" 
+                                            placeholder={currentUser} 
+                                            value={confirmDelete} 
+                                            onChange={e => setConfirmDelete(e.target.value)} 
+                                            className="w-full bg-slate-800 border border-red-900/30 rounded-xl px-3 py-2 text-white focus:border-red-500 outline-none text-sm" 
+                                        />
+                                        <Button 
+                                            variant="danger" 
+                                            onClick={handleDeleteAccount} 
+                                            isLoading={isLoading} 
+                                            disabled={confirmDelete !== currentUser} 
+                                            className="w-full text-sm"
+                                        >
+                                            Удалить навсегда
+                                        </Button>
+                                    </div>
+                                )}
+                            </div>
                         </div>
                     </div>
-                </div>
+                </>
             );
         };
 
@@ -3659,9 +3787,9 @@
                                     >
                                         {userAvatar || currentUser[0].toUpperCase()}
                                     </button>
-                                    {userNFTs && userNFTs.length > 0 && (
+                                    {userNFTs && userNFTs.filter(nft => !nft.hidden).length > 0 && (
                                         <div className="nft-orbital">
-                                            {userNFTs.map((nft, index) => {
+                                            {userNFTs.filter(nft => !nft.hidden).map((nft, index) => {
                                                 const nftsData = [
                                                     { id: 'dragon', emoji: '🐉' },
                                                     { id: 'phoenix', emoji: '🦚' },
@@ -3682,7 +3810,7 @@
                                                 ];
                                                 const nftData = nftsData.find(n => n.id === nft.id);
                                                 if (!nftData) return null;
-                                                const angle = (index / userNFTs.length) * 360;
+                                                const angle = (index / userNFTs.filter(nft => !nft.hidden).length) * 360;
                                                 return (
                                                     <div 
                                                         key={nft.id}
@@ -3794,9 +3922,9 @@
                                             <div className={`w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center text-slate-300 font-bold border border-slate-700 text-md ${getFrameClass(u.frame)}`}>
                                                 {u.avatar || u.username[0].toUpperCase()}
                                             </div>
-                                            {u.nfts && u.nfts.length > 0 && (
+                                            {u.nfts && u.nfts.filter(nft => !nft.hidden).length > 0 && (
                                                 <div className="nft-orbital">
-                                                    {u.nfts.map((nft, index) => {
+                                                    {u.nfts.filter(nft => !nft.hidden).map((nft, index) => {
                                                         const nftsData = [
                                                             { id: 'dragon', emoji: '🐉' },
                                                             { id: 'phoenix', emoji: '🦚' },
@@ -3817,7 +3945,7 @@
                                                         ];
                                                         const nftData = nftsData.find(n => n.id === nft.id);
                                                         if (!nftData) return null;
-                                                        const angle = (index / u.nfts.length) * 360;
+                                                        const angle = (index / u.nfts.filter(nft => !nft.hidden).length) * 360;
                                                         return (
                                                             <div 
                                                                 key={nft.id}
@@ -3863,9 +3991,9 @@
                                                 <div className={`w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center text-white font-bold border border-slate-700 text-md ${getFrameClass(userData?.frame)}`}>
                                                     {userData?.avatar || c.user[0].toUpperCase()}
                                                 </div>
-                                                {userData?.nfts && userData.nfts.length > 0 && (
+                                                {userData?.nfts && userData.nfts.filter(nft => !nft.hidden).length > 0 && (
                                                     <div className="nft-orbital">
-                                                        {userData.nfts.map((nft, index) => {
+                                                        {userData.nfts.filter(nft => !nft.hidden).map((nft, index) => {
                                                             const nftsData = [
                                                                 { id: 'dragon', emoji: '🐉' },
                                                                 { id: 'phoenix', emoji: '🦚' },
@@ -3886,7 +4014,7 @@
                                                             ];
                                                             const nftData = nftsData.find(n => n.id === nft.id);
                                                             if (!nftData) return null;
-                                                            const angle = (index / userData.nfts.length) * 360;
+                                                            const angle = (index / userData.nfts.filter(nft => !nft.hidden).length) * 360;
                                                             return (
                                                                 <div 
                                                                     key={nft.id}
@@ -3949,9 +4077,9 @@
                                     <div className={`w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold ${getFrameClass(usersData[activeChatUser]?.frame)}`}>
                                         {usersData[activeChatUser]?.avatar || activeChatUser[0].toUpperCase()}
                                     </div>
-                                    {usersData[activeChatUser]?.nfts && usersData[activeChatUser].nfts.length > 0 && (
+                                    {usersData[activeChatUser]?.nfts && usersData[activeChatUser].nfts.filter(nft => !nft.hidden).length > 0 && (
                                         <div className="nft-orbital">
-                                            {usersData[activeChatUser].nfts.map((nft, index) => {
+                                            {usersData[activeChatUser].nfts.filter(nft => !nft.hidden).map((nft, index) => {
                                                 const nftsData = [
                                                     { id: 'dragon', emoji: '🐉' },
                                                     { id: 'phoenix', emoji: '🦚' },
@@ -3972,7 +4100,7 @@
                                                 ];
                                                 const nftData = nftsData.find(n => n.id === nft.id);
                                                 if (!nftData) return null;
-                                                const angle = (index / usersData[activeChatUser].nfts.length) * 360;
+                                                const angle = (index / usersData[activeChatUser].nfts.filter(nft => !nft.hidden).length) * 360;
                                                 return (
                                                     <div 
                                                         key={nft.id}
