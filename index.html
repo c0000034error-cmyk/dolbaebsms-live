@@ -3,117 +3,62 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    <title>DolbaebSMS - Secure Messenger</title>
-    
-    <!-- Tailwind CSS -->
+    <title>DolbaebSMS - Market Update</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
       tailwind.config = {
         theme: {
           extend: {
             fontFamily: { sans: ['Inter', 'sans-serif'] },
-            colors: {
-              gray: { 750: '#2d3748', 850: '#1a202c', 950: '#0d1117' }
-            },
             animation: {
               'fade-in': 'fadeIn 0.3s ease-out',
               'slide-up': 'slideUp 0.3s ease-out',
               'pulse-gold': 'pulseGold 2s infinite',
               'float': 'float 3s ease-in-out infinite',
-              'gift-float': 'giftFloat 2s ease-in-out',
             },
             keyframes: {
               fadeIn: { '0%': { opacity: '0' }, '100%': { opacity: '1' } },
               slideUp: { '0%': { transform: 'translateY(10px)', opacity: '0' }, '100%': { transform: 'translateY(0)', opacity: '1' } },
               pulseGold: { '0%, 100%': { transform: 'scale(1)', opacity: '1' }, '50%': { transform: 'scale(1.05)', opacity: '0.8' } },
-              float: { '0%, 100%': { transform: 'translateY(0)' }, '50%': { transform: 'translateY(-10px)' } },
-              giftFloat: { 
-                '0%': { transform: 'translateY(100px) scale(0.5)', opacity: '0' },
-                '50%': { transform: 'translateY(-20px) scale(1.2)', opacity: '1' },
-                '100%': { transform: 'translateY(0) scale(1)', opacity: '1' }
-              }
+              float: { '0%, 100%': { transform: 'translateY(0)' }, '50%': { transform: 'translateY(-10px)' } }
             }
           }
         }
       }
     </script>
-
-    <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    
-    <!-- Babel for in-browser compilation -->
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-
-    <!-- Styles -->
     <style>
       * { box-sizing: border-box; }
-      body { background-color: #0f172a; color: #e2e8f0; overscroll-behavior-y: none; height: 100vh; overflow: hidden; }
+      body { background-color: #0f172a; color: #e2e8f0; height: 100vh; overflow: hidden; }
       #root { height: 100vh; overflow: hidden; }
-      
-      ::-webkit-scrollbar { width: 6px; height: 6px; }
+      ::-webkit-scrollbar { width: 5px; }
       ::-webkit-scrollbar-track { background: transparent; }
-      ::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
-      ::-webkit-scrollbar-thumb:hover { background: #475569; }
+      ::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
       
-      .custom-scrollbar::-webkit-scrollbar { width: 5px; }
-      .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
-      .custom-scrollbar::-webkit-scrollbar-thumb { background: #475569; border-radius: 10px; }
-      
-      /* Frames */
-      .frame-basic { border: 2px solid #6b7280; box-shadow: 0 0 5px rgba(107, 114, 128, 0.5); }
-      .frame-silver { border: 3px solid #c0c0c0; box-shadow: 0 0 10px rgba(192, 192, 192, 0.7); }
-      .frame-gold { border: 3px solid #ffd700; box-shadow: 0 0 15px rgba(255, 215, 0, 0.8); }
-      .frame-diamond { border: 3px solid #b9f2ff; box-shadow: 0 0 20px rgba(185, 242, 255, 0.9); }
-      .frame-rainbow { border: 3px solid transparent; background: linear-gradient(45deg, #ff0000, #ff9900, #ffff00, #00ff00, #00ffff, #0000ff, #9900ff) border-box; box-shadow: 0 0 25px rgba(255, 255, 255, 0.5); }
-      .frame-platinum { border: 3px solid #e5e4e2; box-shadow: 0 0 20px rgba(229, 228, 226, 0.8); }
-      .frame-obsidian { border: 3px solid #0b0b0b; box-shadow: 0 0 25px rgba(11, 11, 11, 0.9); }
-      .frame-emerald { border: 3px solid #50c878; box-shadow: 0 0 20px rgba(80, 200, 120, 0.8); }
-      .frame-ruby { border: 3px solid #e0115f; box-shadow: 0 0 20px rgba(224, 17, 95, 0.8); }
-      .frame-sapphire { border: 3px solid #0f52ba; box-shadow: 0 0 20px rgba(15, 82, 186, 0.8); }
-      .frame-legendary { border: 3px solid transparent; background: linear-gradient(45deg, #ff6b6b, #ffa500, #ffff00, #00ff00, #00ffff, #0000ff, #8a2be2) border-box; box-shadow: 0 0 30px rgba(255, 255, 255, 0.7); animation: legendary-glow 3s infinite alternate; }
-      
-      @keyframes legendary-glow {
-        0% { box-shadow: 0 0 20px rgba(255, 107, 107, 0.7); }
-        50% { box-shadow: 0 0 30px rgba(255, 255, 0, 0.7); }
-        100% { box-shadow: 0 0 20px rgba(138, 43, 226, 0.7); }
-      }
-      
-      @media (max-width: 640px) {
-        .safe-area-bottom { padding-bottom: max(1rem, env(safe-area-inset-bottom)); }
-        .safe-area-top { padding-top: max(0.5rem, env(safe-area-inset-top)); }
-        .compact-header { padding: 0.5rem; height: 50px; }
-      }
-
-      .avatar-locked { filter: grayscale(1) brightness(0.5); position: relative; }
-      .avatar-locked::after { content: "🔒"; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 20px; z-index: 10; }
-
-      /* NFT styles */
       .nft-container { position: relative; display: inline-block; }
-      .nft-orbital { position: absolute; width: 60px; height: 60px; top: 50%; left: 50%; margin-top: -30px; margin-left: -30px; animation: orbit 10s linear infinite; z-index: 5; pointer-events: none; }
-      .nft-item { position: absolute; font-size: 20px; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; animation: float 3s ease-in-out infinite; text-shadow: 0 0 5px black; }
-      @keyframes orbit { 0% { transform: rotate(0deg) translateX(40px) rotate(0deg); } 100% { transform: rotate(360deg) translateX(40px) rotate(-360deg); } }
-
-      /* Slot machine */
-      .slot-machine { background: linear-gradient(135deg, #1e293b 0%, #334155 100%); border: 2px solid #475569; border-radius: 12px; padding: 8px; position: relative; overflow: hidden; }
-      .slot-reel { height: 50px; display: flex; align-items: center; justify-content: center; font-size: 20px; background: #0f172a; border-radius: 6px; margin: 4px; border: 1px solid #334155; }
-      .spinning { animation: spin 0.1s linear infinite; }
-      @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-
-      .settings-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 8px; }
-
-      /* NFT Rarity & Float Colors */
-      .nft-float-good { color: #4ade80; } /* Low float */
-      .nft-float-mid { color: #fbbf24; }
-      .nft-float-bad { color: #f87171; }
+      .nft-orbital { position: absolute; width: 60px; height: 60px; top: 50%; left: 50%; margin-top: -30px; margin-left: -30px; animation: orbit 10s linear infinite; pointer-events: none; z-index: 10; }
+      .nft-item { position: absolute; font-size: 16px; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; animation: float 3s ease-in-out infinite; text-shadow: 0 0 5px black; }
+      @keyframes orbit { 0% { transform: rotate(0deg) translateX(35px) rotate(0deg); } 100% { transform: rotate(360deg) translateX(35px) rotate(-360deg); } }
       
-      .price-up { color: #4ade80; animation: pulse-green 1s; }
-      .price-down { color: #f87171; animation: pulse-red 1s; }
-      
-      @keyframes pulse-green { 0% { opacity: 0.5; } 50% { opacity: 1; transform: scale(1.1); } 100% { opacity: 1; } }
-      @keyframes pulse-red { 0% { opacity: 0.5; } 50% { opacity: 1; transform: scale(0.9); } 100% { opacity: 1; } }
+      .rarity-common { border: 1px solid #9ca3af; background: rgba(156, 163, 175, 0.1); }
+      .rarity-rare { border: 1px solid #3b82f6; background: rgba(59, 130, 246, 0.1); }
+      .rarity-epic { border: 1px solid #a855f7; background: rgba(168, 85, 247, 0.1); }
+      .rarity-legendary { border: 1px solid #eab308; background: rgba(234, 179, 8, 0.1); box-shadow: 0 0 10px rgba(234, 179, 8, 0.2); }
+      .rarity-mythic { border: 1px solid #ef4444; background: rgba(239, 68, 68, 0.1); box-shadow: 0 0 15px rgba(239, 68, 68, 0.3); animation: pulse-red 2s infinite; }
+
+      .float-fn { color: #4ade80; } /* Factory New */
+      .float-mw { color: #a3e635; } /* Minimal Wear */
+      .float-ft { color: #facc15; } /* Field Tested */
+      .float-ww { color: #fb923c; } /* Well Worn */
+      .float-bs { color: #f87171; } /* Battle Scarred */
+
+      @media (max-width: 640px) {
+        .mobile-chat-hidden { display: none; }
+        .mobile-chat-visible { display: flex; width: 100%; }
+        .mobile-sidebar-hidden { display: none; }
+      }
     </style>
-
-    <!-- Import Map -->
     <script type="importmap">
     {
       "imports": {
@@ -133,625 +78,413 @@
     <script type="text/babel" data-type="module">
         import React, { useState, useEffect, useRef } from 'react';
         import { createRoot } from 'react-dom/client';
-        import { Search, Send, Image as ImageIcon, Mic, X, ChevronLeft, Video, Settings as SettingsIcon, Menu, Trash2, Smile, MoreVertical, Lock, LogOut, User as UserIcon, Loader2, Coins, Zap, Crown, Palette, Edit3, Dice5, Trophy, Gift, Bot, TrendingUp, Send as SendIcon, Info, Clock, Star, Sparkles, ShoppingCart, Users, ArrowLeftRight, Shirt } from 'lucide-react';
+        import { Search, Send, Image as ImageIcon, Mic, X, ChevronLeft, Settings, Trash2, Smile, MoreVertical, LogOut, User, Loader2, Coins, TrendingUp, Info, ShoppingCart } from 'lucide-react';
         import { format } from 'date-fns';
         import { initializeApp } from 'firebase/app';
         import { getDatabase, ref, onValue, set, update, push, off, query, orderByChild, startAt, endAt, remove, get } from 'firebase/database';
 
         const firebaseConfig = {
-            apiKey: "AIzaSyA35T6z2FYS6m9IEJ9x7evxCphgpLhgMX4",
-            authDomain: "dolbaebsms-live.firebaseapp.com",
-            databaseURL: "https://dolbaebsms-live-default-rtdb.firebaseio.com",
-            projectId: "dolbaebsms-live",
-            storageBucket: "dolbaebsms-live.firebasestorage.app",
-            messagingSenderId: "912825721862",
-            appId: "1:912825721862:web:b92d7f7f553ca4536c0f87",
-            measurementId: "G-SCD5JVFM5E"
+          apiKey: "AIzaSyA35T6z2FYS6m9IEJ9x7evxCphgpLhgMX4",
+          authDomain: "dolbaebsms-live.firebaseapp.com",
+          databaseURL: "https://dolbaebsms-live-default-rtdb.firebaseio.com",
+          projectId: "dolbaebsms-live",
+          storageBucket: "dolbaebsms-live.firebasestorage.app",
+          messagingSenderId: "912825721862",
+          appId: "1:912825721862:web:b92d7f7f553ca4536c0f87",
+          measurementId: "G-SCD5JVFM5E"
         };
 
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
 
-        // --- Global NFT Definitions (Massive List) ---
-        const ALL_NFTS = [
-            // Animals
-            { id: 'ghost', name: 'Призрак', emoji: '👻', basePrice: 600, rarity: 'common', power: 10, volatility: 0.05 },
-            { id: 'robot', name: 'Робот', emoji: '🤖', basePrice: 800, rarity: 'common', power: 15, volatility: 0.05 },
-            { id: 'panda', name: 'Панда', emoji: '🐼', basePrice: 900, rarity: 'common', power: 12, volatility: 0.04 },
-            { id: 'fox', name: 'Лиса', emoji: '🦊', basePrice: 1100, rarity: 'common', power: 18, volatility: 0.06 },
-            { id: 'cat', name: 'Кот', emoji: '🐱', basePrice: 750, rarity: 'common', power: 11, volatility: 0.03 },
-            { id: 'dog', name: 'Пес', emoji: '🐶', basePrice: 700, rarity: 'common', power: 12, volatility: 0.03 },
+        // --- NFT DEFINITIONS ---
+        const NFT_ITEMS = [
+            // Common (Start ~500)
+            { id: 'apple', emoji: '🍎', name: 'Яблоко', base: 500, rarity: 'common' },
+            { id: 'rock', emoji: '🪨', name: 'Камень', base: 450, rarity: 'common' },
+            { id: 'wood', emoji: '🪵', name: 'Бревно', base: 480, rarity: 'common' },
+            { id: 'leaf', emoji: '🍃', name: 'Лист', base: 420, rarity: 'common' },
+            { id: 'bread', emoji: '🍞', name: 'Хлеб', base: 550, rarity: 'common' },
+            { id: 'mouse', emoji: '🐭', name: 'Мышь', base: 600, rarity: 'common' },
+            { id: 'ant', emoji: '🐜', name: 'Муравей', base: 400, rarity: 'common' },
             
-            // Rare
-            { id: 'alien', name: 'Пришелец', emoji: '👽', basePrice: 1200, rarity: 'rare', power: 25, volatility: 0.08 },
-            { id: 'tiger', name: 'Тигр', emoji: '🐯', basePrice: 1300, rarity: 'rare', power: 30, volatility: 0.07 },
-            { id: 'lion', name: 'Лев', emoji: '🦁', basePrice: 1400, rarity: 'rare', power: 35, volatility: 0.07 },
-            { id: 'eagle', name: 'Орёл', emoji: '🦅', basePrice: 1600, rarity: 'rare', power: 28, volatility: 0.09 },
-            { id: 'skull', name: 'Череп', emoji: '💀', basePrice: 1500, rarity: 'rare', power: 33, volatility: 0.1 },
+            // Rare (Start ~1000-1500)
+            { id: 'sword', emoji: '⚔️', name: 'Меч', base: 1200, rarity: 'rare' },
+            { id: 'shield', emoji: '🛡️', name: 'Щит', base: 1100, rarity: 'rare' },
+            { id: 'potion', emoji: '🧪', name: 'Зелье', base: 1300, rarity: 'rare' },
+            { id: 'bow', emoji: '🏹', name: 'Лук', base: 1250, rarity: 'rare' },
+            { id: 'ring', emoji: '💍', name: 'Кольцо', base: 1500, rarity: 'rare' },
+            { id: 'ghost', emoji: '👻', name: 'Призрак', base: 1400, rarity: 'rare' },
+            { id: 'alien', emoji: '👽', name: 'Пришелец', base: 1450, rarity: 'rare' },
+            { id: 'robot', emoji: '🤖', name: 'Робот', base: 1350, rarity: 'rare' },
             
-            // Epic
-            { id: 'dragon', name: 'Дракон', emoji: '🐉', basePrice: 1800, rarity: 'epic', power: 50, volatility: 0.12 },
-            { id: 'dinosaur', name: 'Динозавр', emoji: '🦖', basePrice: 2000, rarity: 'epic', power: 45, volatility: 0.11 },
-            { id: 'phoenix', name: 'Феникс', emoji: '🦚', basePrice: 2200, rarity: 'epic', power: 55, volatility: 0.13 },
-            { id: 'whale', name: 'Кит', emoji: '🐋', basePrice: 2400, rarity: 'epic', power: 48, volatility: 0.08 },
+            // Epic (Start ~2500-4000)
+            { id: 'car', emoji: '🏎️', name: 'Спорткар', base: 2800, rarity: 'epic' },
+            { id: 'house', emoji: '🏠', name: 'Дом', base: 3500, rarity: 'epic' },
+            { id: 'island', emoji: '🏝️', name: 'Остров', base: 4000, rarity: 'epic' },
+            { id: 'tiger', emoji: '🐯', name: 'Тигр', base: 2600, rarity: 'epic' },
+            { id: 'dragon_egg', emoji: '🥚', name: 'Яйцо Дракона', base: 3200, rarity: 'epic' },
+            { id: 'diamond', emoji: '💎', name: 'Алмаз', base: 3000, rarity: 'epic' },
             
-            // Legendary
-            { id: 'unicorn', name: 'Единорог', emoji: '🦄', basePrice: 3000, rarity: 'legendary', power: 80, volatility: 0.15 },
-            { id: 'spaceship', name: 'Корабль', emoji: '🚀', basePrice: 3500, rarity: 'legendary', power: 75, volatility: 0.18 },
-            { id: 'comet', name: 'Комета', emoji: '☄️', basePrice: 4000, rarity: 'legendary', power: 85, volatility: 0.16 },
-            { id: 'diamond', name: 'Алмаз', emoji: '💎', basePrice: 5000, rarity: 'legendary', power: 90, volatility: 0.05 },
+            // Legendary (Start ~8000-12000)
+            { id: 'dragon', emoji: '🐉', name: 'Дракон', base: 9000, rarity: 'legendary' },
+            { id: 'unicorn', emoji: '🦄', name: 'Единорог', base: 8500, rarity: 'legendary' },
+            { id: 'rocket', emoji: '🚀', name: 'Ракета', base: 10000, rarity: 'legendary' },
+            { id: 'crown', emoji: '👑', name: 'Корона', base: 12000, rarity: 'legendary' },
+            { id: 'earth', emoji: '🌍', name: 'Земля', base: 15000, rarity: 'legendary' },
             
-            // Mythic
-            { id: 'crown', name: 'Корона', emoji: '👑', basePrice: 8000, rarity: 'mythic', power: 150, volatility: 0.2 },
-            { id: 'blackhole', name: 'Черная Дыра', emoji: '🕳️', basePrice: 10000, rarity: 'mythic', power: 180, volatility: 0.25 },
-            { id: 'dna', name: 'ДНК', emoji: '🧬', basePrice: 12000, rarity: 'mythic', power: 200, volatility: 0.15 },
-            
-            // Weapons/Items
-            { id: 'sword', name: 'Меч', emoji: '⚔️', basePrice: 950, rarity: 'common', power: 20, volatility: 0.06 },
-            { id: 'shield', name: 'Щит', emoji: '🛡️', basePrice: 900, rarity: 'common', power: 20, volatility: 0.04 },
-            { id: 'bomb', name: 'Бомба', emoji: '💣', basePrice: 1100, rarity: 'rare', power: 40, volatility: 0.12 },
-            { id: 'gun', name: 'Пистолет', emoji: '🔫', basePrice: 1250, rarity: 'rare', power: 35, volatility: 0.1 },
-            
-            // Vehicles
-            { id: 'car', name: 'Тачка', emoji: '🏎️', basePrice: 2500, rarity: 'epic', power: 60, volatility: 0.1 },
-            { id: 'plane', name: 'Самолет', emoji: '✈️', basePrice: 3200, rarity: 'legendary', power: 70, volatility: 0.12 },
-            
-            // Meme/Fun
-            { id: 'poop', name: 'Какашка', emoji: '💩', basePrice: 5000, rarity: 'mythic', power: 1, volatility: 0.5 },
-            { id: 'clown', name: 'Клоун', emoji: '🤡', basePrice: 1500, rarity: 'rare', power: 25, volatility: 0.3 },
-            { id: 'peach', name: 'Персик', emoji: '🍑', basePrice: 800, rarity: 'common', power: 5, volatility: 0.1 }
+            // Mythic (Start ~50000+)
+            { id: 'blackhole', emoji: '🕳️', name: 'Черная Дыра', base: 50000, rarity: 'mythic' },
+            { id: 'galaxy', emoji: '🌌', name: 'Галактика', base: 60000, rarity: 'mythic' },
+            { id: 'time', emoji: '⏳', name: 'Время', base: 75000, rarity: 'mythic' }
         ];
 
-        // --- Components ---
+        // --- COMPONENTS ---
 
-        const Button = ({ children, variant = 'primary', className = '', isLoading, icon, ...props }) => {
-            const baseStyles = "relative flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl font-medium transition-all duration-200 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed text-sm min-h-[44px]";
+        const Button = ({ children, variant = 'primary', className = '', ...props }) => {
             const variants = {
-                primary: "bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-500/20",
-                secondary: "bg-slate-700 hover:bg-slate-600 text-slate-100 border border-slate-600",
-                danger: "bg-red-500/10 hover:bg-red-500/20 text-red-500 border border-red-500/20",
-                ghost: "bg-transparent hover:bg-white/5 text-slate-300",
-                gold: "bg-yellow-500 hover:bg-yellow-400 text-white shadow-lg shadow-yellow-500/20"
+                primary: "bg-indigo-600 hover:bg-indigo-500 text-white",
+                secondary: "bg-slate-700 hover:bg-slate-600 text-slate-100",
+                danger: "bg-red-500/20 text-red-500 border border-red-500/50",
+                gold: "bg-yellow-600 hover:bg-yellow-500 text-white shadow-lg shadow-yellow-500/20"
             };
             return (
-                <button className={`${baseStyles} ${variants[variant]} ${className}`} disabled={isLoading || props.disabled} {...props}>
-                    {isLoading ? (<Loader2 className="animate-spin h-4 w-4" />) : (<>{icon && <span className="text-base">{icon}</span>}{children}</>)}
+                <button className={`px-4 py-2 rounded-xl font-medium transition active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2 ${variants[variant]} ${className}`} {...props}>
+                    {children}
                 </button>
             );
         };
 
-        const NFTMarketModal = ({ isOpen, onClose, currentUser, userCoins, onCoinsUpdate, userNFTs, onNFTUpdate }) => {
-            const [activeTab, setActiveTab] = useState('market');
+        const NFTMarket = ({ isOpen, onClose, currentUser, userCoins, userNFTs }) => {
             const [marketPrices, setMarketPrices] = useState({});
-            const [priceTrends, setPriceTrends] = useState({}); // 'up' or 'down'
+            const [activeTab, setActiveTab] = useState('buy'); // buy, sell
             const [isLoading, setIsLoading] = useState(false);
-            const [giftRecipient, setGiftRecipient] = useState('');
-            const [selectedNFTInstance, setSelectedNFTInstance] = useState(null);
 
-            // Listen to market prices
+            // Logic to fetch/update market prices
             useEffect(() => {
-                const pricesRef = ref(db, 'marketState');
-                const unsubscribe = onValue(pricesRef, (snapshot) => {
-                    const data = snapshot.val();
-                    if (data && data.prices) {
-                        setPriceTrends(prev => {
-                            const newTrends = {};
-                            Object.keys(data.prices).forEach(key => {
-                                if (prev[key]) {
-                                    newTrends[key] = data.prices[key] > prev[key] ? 'up' : 'down';
-                                }
-                            });
-                            return { ...prev, ...newTrends };
+                if (!isOpen) return;
+                
+                const marketRef = ref(db, 'market_v2');
+                const unsub = onValue(marketRef, (snap) => {
+                    const data = snap.val() || { prices: {}, lastUpdate: 0 };
+                    const now = Date.now();
+
+                    // If data is old (> 20 sec), update it (Client-side simulation of server logic)
+                    if (now - data.lastUpdate > 20000) {
+                        const newPrices = {};
+                        NFT_ITEMS.forEach(item => {
+                            const oldPrice = data.prices[item.id] || item.base;
+                            // Volatility: +/- 10%
+                            const change = (Math.random() - 0.5) * 0.2; 
+                            let newPrice = Math.floor(oldPrice * (1 + change));
+                            // Clamp price (min 10% of base, max 500% of base)
+                            newPrice = Math.max(Math.floor(item.base * 0.1), Math.min(Math.floor(item.base * 5), newPrice));
+                            newPrices[item.id] = newPrice;
                         });
+                        update(marketRef, { prices: newPrices, lastUpdate: now });
+                    } else {
                         setMarketPrices(data.prices);
                     }
                 });
-                return () => off(pricesRef);
-            }, []);
+                return () => off(marketRef);
+            }, [isOpen]);
 
             if (!isOpen) return null;
 
-            const getCurrentPrice = (nftId) => {
-                return Math.floor(marketPrices[nftId] || ALL_NFTS.find(n => n.id === nftId).basePrice);
-            };
-
-            const handleBuyNFT = async (nftDef) => {
-                const currentPrice = getCurrentPrice(nftDef.id);
-                if (userCoins < currentPrice) {
-                    alert(`Недостаточно коинов! Нужно ${currentPrice}`);
-                    return;
-                }
-
+            const buyNFT = async (item) => {
+                const price = marketPrices[item.id] || item.base;
+                if (userCoins < price) { alert("Недостаточно средств"); return; }
+                
                 setIsLoading(true);
-                try {
-                    // Generate unique stats
-                    const newNFT = {
-                        id: nftDef.id,
-                        instanceId: `${Date.now()}_${Math.floor(Math.random() * 10000)}`,
-                        purchasedAt: Date.now(),
-                        wear: parseFloat(Math.random().toFixed(4)), // 0.0000 - 1.0000
-                        pattern: Math.floor(Math.random() * 1000), // 0 - 999
-                        isEquipped: false
-                    };
+                // Create unique Item
+                const newItem = {
+                    id: item.id,
+                    uuid: Date.now() + Math.random().toString(),
+                    float: parseFloat(Math.random().toFixed(4)), // 0.0000 - 1.0000
+                    pattern: Math.floor(Math.random() * 1000),
+                    boughtAt: price,
+                    isEquipped: false
+                };
 
-                    const newNFTList = [...(userNFTs || []), newNFT];
-                    
-                    await update(ref(db, `users/${currentUser}`), { 
-                        coins: userCoins - currentPrice,
+                try {
+                    const newNFTList = [...(userNFTs || []), newItem];
+                    await update(ref(db, `users/${currentUser}`), {
+                        coins: userCoins - price,
                         nfts: newNFTList
                     });
-                    
-                    onCoinsUpdate(userCoins - currentPrice);
-                    onNFTUpdate(newNFTList);
-                    alert(`Куплен: ${nftDef.name} (Float: ${newNFT.wear})`);
-                } catch (error) {
-                    console.error(error);
-                    alert('Ошибка покупки');
-                }
+                    alert(`Куплено! Float: ${newItem.float}`);
+                } catch(e) { console.error(e); }
                 setIsLoading(false);
             };
 
-            const toggleEquip = async (instanceId) => {
-                const updatedNFTs = userNFTs.map(nft => {
-                    if (nft.instanceId === instanceId) {
-                        return { ...nft, isEquipped: !nft.isEquipped };
-                    }
-                    return nft;
-                });
-                
-                await update(ref(db, `users/${currentUser}`), { nfts: updatedNFTs });
-                onNFTUpdate(updatedNFTs);
-            };
+            const sellNFT = async (userItem) => {
+                const baseMarketPrice = marketPrices[userItem.id] || 0;
+                // Price formula: MarketPrice * (1 - 0.5 * float) 
+                // Best float (0.00) = 100% price, Worst (1.00) = 50% price
+                const sellPrice = Math.floor(baseMarketPrice * (1 - (userItem.float * 0.5)));
 
-            const handleSellNFT = async (nftInstance) => {
-                const currentPrice = getCurrentPrice(nftInstance.id);
-                const sellPrice = Math.floor(currentPrice * 0.8); // 80% of current market value
-                
-                if (confirm(`Продать ${ALL_NFTS.find(n => n.id === nftInstance.id).name} за ${sellPrice} коинов?`)) {
+                if(confirm(`Продать за ${sellPrice}? (Износ снизил цену на ${Math.floor(userItem.float * 50)}%)`)) {
                     setIsLoading(true);
-                    const newNFTList = userNFTs.filter(n => n.instanceId !== nftInstance.instanceId);
-                    
-                    await update(ref(db, `users/${currentUser}`), { 
+                    const newNFTList = userNFTs.filter(n => n.uuid !== userItem.uuid);
+                    await update(ref(db, `users/${currentUser}`), {
                         coins: userCoins + sellPrice,
                         nfts: newNFTList
                     });
-                    
-                    onCoinsUpdate(userCoins + sellPrice);
-                    onNFTUpdate(newNFTList);
                     setIsLoading(false);
                 }
             };
 
-            const handleGift = async () => {
-                if (!giftRecipient.trim() || !selectedNFTInstance) return;
-                
-                setIsLoading(true);
-                try {
-                    const recipientRef = ref(db, `users/${giftRecipient.toLowerCase()}`);
-                    const snap = await get(recipientRef);
-                    if (!snap.exists()) {
-                        alert('Пользователь не найден');
-                        setIsLoading(false);
-                        return;
-                    }
-
-                    const recData = snap.val();
-                    const recNFTs = recData.nfts || [];
-
-                    // Remove from sender
-                    const senderNFTs = userNFTs.filter(n => n.instanceId !== selectedNFTInstance.instanceId);
-                    await update(ref(db, `users/${currentUser}`), { nfts: senderNFTs });
-
-                    // Add to recipient (Reset equipped status)
-                    const giftedNFT = { ...selectedNFTInstance, isEquipped: false, giftedFrom: currentUser };
-                    await update(recipientRef, { nfts: [...recNFTs, giftedNFT] });
-
-                    // Send message
-                    const chatId = [currentUser, giftRecipient.toLowerCase()].sort().join('_');
-                    await push(ref(db, `messages/${chatId}`), {
-                        sender: currentUser,
-                        text: `Вам отправлен NFT!`,
-                        type: 'nft_gift',
-                        nftData: { ...giftedNFT, ...ALL_NFTS.find(n => n.id === giftedNFT.id) },
-                        timestamp: Date.now()
-                    });
-
-                    onNFTUpdate(senderNFTs);
-                    setSelectedNFTInstance(null);
-                    setGiftRecipient('');
-                    alert('Отправлено!');
-                } catch (e) {
-                    console.error(e);
-                    alert('Ошибка отправки');
-                }
-                setIsLoading(false);
+            const toggleEquip = async (userItem) => {
+                const newNFTList = userNFTs.map(n => {
+                    if (n.uuid === userItem.uuid) return { ...n, isEquipped: !n.isEquipped };
+                    return n;
+                });
+                await update(ref(db, `users/${currentUser}`), { nfts: newNFTList });
             };
 
-            const getWearColor = (wear) => {
-                if (wear < 0.1) return 'text-green-400 font-bold'; // Factory New
-                if (wear < 0.3) return 'text-green-200'; // Minimal Wear
-                if (wear < 0.6) return 'text-yellow-200'; // Field Tested
-                return 'text-red-400'; // Battle Scarred
+            const getFloatColor = (f) => {
+                if(f < 0.07) return 'text-green-400 font-bold'; // FN
+                if(f < 0.15) return 'text-green-200'; // MW
+                if(f < 0.38) return 'text-yellow-200'; // FT
+                if(f < 0.45) return 'text-orange-300'; // WW
+                return 'text-red-400'; // BS
             };
 
+            const getRarityClass = (r) => `rarity-${r}`;
+
             return (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-3 bg-black/80 backdrop-blur-sm animate-fade-in safe-area-top safe-area-bottom">
-                    <div className="w-full max-w-4xl bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
-                        <div className="p-3 border-b border-slate-800 flex justify-between items-center bg-slate-900">
-                            <h2 className="text-lg font-bold text-white flex gap-2"><TrendingUp className="text-yellow-500" /> NFT Биржа</h2>
-                            <button onClick={onClose}><X className="text-slate-400" /></button>
-                        </div>
-                        
-                        <div className="flex border-b border-slate-800">
-                            {['market', 'inventory', 'gift'].map(t => (
-                                <button key={t} onClick={() => setActiveTab(t)} className={`flex-1 py-3 text-sm ${activeTab === t ? 'text-indigo-400 border-b-2 border-indigo-400' : 'text-slate-400'}`}>
-                                    {t === 'market' ? 'Магазин' : t === 'inventory' ? 'Инвентарь' : 'Подарить'}
-                                </button>
-                            ))}
-                        </div>
-
-                        <div className="p-4 overflow-y-auto custom-scrollbar flex-1 bg-slate-950">
-                            {activeTab === 'market' && (
-                                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-                                    {ALL_NFTS.map(nft => {
-                                        const price = getCurrentPrice(nft.id);
-                                        const trend = priceTrends[nft.id];
-                                        return (
-                                            <div key={nft.id} className="bg-slate-900 border border-slate-800 p-3 rounded-xl flex flex-col items-center gap-2 relative overflow-hidden group hover:border-indigo-500 transition-colors">
-                                                <div className="text-4xl transform group-hover:scale-110 transition-transform">{nft.emoji}</div>
-                                                <div className="text-center w-full">
-                                                    <div className="font-bold text-sm">{nft.name}</div>
-                                                    <div className={`text-xs font-mono flex justify-center items-center gap-1 ${trend === 'up' ? 'price-up' : trend === 'down' ? 'price-down' : 'text-yellow-500'}`}>
-                                                        {price} coins
-                                                        {trend === 'up' ? '▲' : trend === 'down' ? '▼' : ''}
-                                                    </div>
-                                                </div>
-                                                <Button onClick={() => handleBuyNFT(nft)} variant="gold" className="w-full text-xs h-8">Купить</Button>
-                                            </div>
-                                        );
-                                    })}
-                                </div>
-                            )}
-
-                            {activeTab === 'inventory' && (
-                                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                                    {userNFTs.map(inst => {
-                                        const def = ALL_NFTS.find(n => n.id === inst.id);
-                                        if (!def) return null;
-                                        return (
-                                            <div key={inst.instanceId} className={`bg-slate-900 border ${inst.isEquipped ? 'border-green-500 bg-green-500/10' : 'border-slate-800'} p-3 rounded-xl flex flex-col items-center gap-2`}>
-                                                <div className="text-4xl">{def.emoji}</div>
-                                                <div className="text-center w-full">
-                                                    <div className="font-bold text-sm">{def.name}</div>
-                                                    <div className={`text-[10px] ${getWearColor(inst.wear)}`}>Float: {inst.wear}</div>
-                                                    <div className="text-[10px] text-slate-500">Pattern: {inst.pattern}</div>
-                                                </div>
-                                                <div className="flex gap-1 w-full">
-                                                    <Button onClick={() => toggleEquip(inst.instanceId)} variant={inst.isEquipped ? 'secondary' : 'primary'} className="flex-1 text-[10px] h-8 px-1">
-                                                        {inst.isEquipped ? 'Снять' : 'Надеть'}
-                                                    </Button>
-                                                    <Button onClick={() => handleSellNFT(inst)} variant="danger" className="flex-1 text-[10px] h-8 px-1">
-                                                        Продать ({Math.floor(getCurrentPrice(inst.id) * 0.8)})
-                                                    </Button>
-                                                </div>
-                                                <Button onClick={() => { setSelectedNFTInstance(inst); setActiveTab('gift'); }} variant="ghost" className="w-full text-[10px] h-6">Подарить</Button>
-                                            </div>
-                                        );
-                                    })}
-                                    {userNFTs.length === 0 && <div className="col-span-full text-center text-slate-500">Пусто</div>}
-                                </div>
-                            )}
-
-                            {activeTab === 'gift' && (
-                                <div className="flex flex-col items-center gap-4">
-                                    {selectedNFTInstance ? (
-                                        <div className="bg-slate-800 p-4 rounded-xl text-center border border-yellow-500/50">
-                                            <div className="text-6xl mb-2">{ALL_NFTS.find(n => n.id === selectedNFTInstance.id).emoji}</div>
-                                            <div className="font-bold">{ALL_NFTS.find(n => n.id === selectedNFTInstance.id).name}</div>
-                                            <div className="text-xs text-slate-400">Float: {selectedNFTInstance.wear} | Pattern: {selectedNFTInstance.pattern}</div>
-                                        </div>
-                                    ) : (
-                                        <div className="text-slate-400">Выберите NFT в инвентаре и нажмите "Подарить"</div>
-                                    )}
-                                    <input 
-                                        className="w-full bg-slate-800 border border-slate-700 rounded-xl p-3 outline-none" 
-                                        placeholder="Никнейм получателя (маленькие буквы)"
-                                        value={giftRecipient}
-                                        onChange={e => setGiftRecipient(e.target.value.toLowerCase())}
-                                    />
-                                    <Button onClick={handleGift} disabled={!selectedNFTInstance || !giftRecipient} className="w-full" variant="gold">Отправить подарок</Button>
-                                </div>
-                            )}
-                        </div>
-                    </div>
-                </div>
-            );
-        };
-
-        const SettingsModal = ({ isOpen, onClose, currentUser, onLogout, onOpenAvatar, onOpenFrame, onOpenColor, onOpenStatus, userCoins }) => {
-            if (!isOpen) return null;
-            return (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
-                    <div className="w-full max-w-md bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl overflow-hidden">
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+                    <div className="w-full max-w-4xl bg-slate-900 border border-slate-700 rounded-2xl flex flex-col max-h-[90vh]">
                         <div className="p-4 border-b border-slate-800 flex justify-between items-center">
-                            <h2 className="text-lg font-bold flex gap-2 items-center"><SettingsIcon size={20}/> Настройки</h2>
+                            <h2 className="text-xl font-bold text-white flex gap-2"><ShoppingCart className="text-yellow-500"/> Биржа NFT</h2>
                             <button onClick={onClose}><X className="text-slate-400"/></button>
                         </div>
-                        <div className="p-4 space-y-4">
-                             <div className="grid grid-cols-2 gap-3">
-                                <Button onClick={onOpenAvatar} variant="secondary" className="h-auto py-4 flex-col gap-2">
-                                    <UserIcon size={24}/> <span>Аватарка</span>
-                                </Button>
-                                <Button onClick={onOpenFrame} variant="secondary" className="h-auto py-4 flex-col gap-2">
-                                    <ImageIcon size={24}/> <span>Рамка</span>
-                                </Button>
-                                <Button onClick={onOpenColor} variant="secondary" className="h-auto py-4 flex-col gap-2">
-                                    <Palette size={24}/> <span>Цвет ника</span>
-                                </Button>
-                                <Button onClick={onOpenStatus} variant="secondary" className="h-auto py-4 flex-col gap-2">
-                                    <Edit3 size={24}/> <span>Статус</span>
-                                </Button>
-                            </div>
-                            <div className="bg-slate-800 p-3 rounded-xl text-center">
-                                <div className="text-slate-400 text-xs">Ваш баланс</div>
-                                <div className="text-xl font-bold text-yellow-500">{userCoins.toFixed(3)}</div>
-                            </div>
-                            <Button onClick={onLogout} variant="danger" className="w-full" icon={<LogOut size={16}/>}>Выйти из аккаунта</Button>
+                        <div className="flex bg-slate-800/50">
+                            <button onClick={() => setActiveTab('buy')} className={`flex-1 p-3 ${activeTab === 'buy' ? 'text-white border-b-2 border-indigo-500' : 'text-slate-400'}`}>Купить</button>
+                            <button onClick={() => setActiveTab('sell')} className={`flex-1 p-3 ${activeTab === 'sell' ? 'text-white border-b-2 border-indigo-500' : 'text-slate-400'}`}>Инвентарь / Продать</button>
+                        </div>
+                        <div className="flex-1 overflow-y-auto p-4 custom-scrollbar bg-slate-950">
+                            {activeTab === 'buy' ? (
+                                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                                    {NFT_ITEMS.map(item => {
+                                        const price = marketPrices[item.id] || item.base;
+                                        const diff = price - item.base;
+                                        return (
+                                            <div key={item.id} className={`p-3 rounded-xl flex flex-col items-center gap-2 ${getRarityClass(item.rarity)}`}>
+                                                <div className="text-4xl">{item.emoji}</div>
+                                                <div className="text-center">
+                                                    <div className="font-bold text-sm">{item.name}</div>
+                                                    <div className={`text-xs ${diff >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                                                        {price} ({diff > 0 ? '+' : ''}{Math.floor((diff/item.base)*100)}%)
+                                                    </div>
+                                                </div>
+                                                <Button disabled={isLoading} onClick={() => buyNFT(item)} variant="gold" className="w-full text-xs h-8">Купить</Button>
+                                            </div>
+                                        )
+                                    })}
+                                </div>
+                            ) : (
+                                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                                    {userNFTs && userNFTs.length > 0 ? userNFTs.map(inst => {
+                                        const def = NFT_ITEMS.find(n => n.id === inst.id);
+                                        if(!def) return null;
+                                        const marketP = marketPrices[def.id] || def.base;
+                                        const value = Math.floor(marketP * (1 - (inst.float * 0.5)));
+                                        return (
+                                            <div key={inst.uuid} className={`p-3 rounded-xl flex flex-col items-center gap-1 border ${inst.isEquipped ? 'border-green-500 bg-green-500/10' : 'border-slate-700 bg-slate-900'}`}>
+                                                <div className="text-4xl">{def.emoji}</div>
+                                                <div className="font-bold text-sm">{def.name}</div>
+                                                <div className={`text-[10px] ${getFloatColor(inst.float)}`}>Float: {inst.float}</div>
+                                                <div className="text-[10px] text-slate-500">Pattern: {inst.pattern}</div>
+                                                <div className="text-xs text-yellow-500 font-mono">~{value} coins</div>
+                                                <div className="flex gap-1 w-full mt-2">
+                                                    <Button onClick={() => toggleEquip(inst)} variant="secondary" className="flex-1 text-[10px] h-7 px-0">{inst.isEquipped ? 'Снять' : 'Надеть'}</Button>
+                                                    <Button onClick={() => sellNFT(inst)} variant="danger" className="flex-1 text-[10px] h-7 px-0">Sell</Button>
+                                                </div>
+                                            </div>
+                                        )
+                                    }) : <div className="text-slate-500 text-center col-span-full">Пусто</div>}
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>
             );
         };
 
-        // --- Main App ---
+        const ChatBubble = ({ msg, isMe, usersData }) => {
+            const date = new Date(msg.timestamp);
+            return (
+                <div className={`flex mb-4 ${isMe ? 'justify-end' : 'justify-start'} animate-slide-up`}>
+                    {!isMe && (
+                        <div className="nft-container mr-2 shrink-0">
+                            <div className="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center text-sm border border-slate-600">
+                                {usersData[msg.sender]?.avatar || msg.sender[0].toUpperCase()}
+                            </div>
+                            {usersData[msg.sender]?.nfts && (
+                                <div className="nft-orbital">
+                                    {usersData[msg.sender].nfts.filter(n=>n.isEquipped).map((n, i, arr) => {
+                                        const def = NFT_ITEMS.find(d => d.id === n.id);
+                                        if(!def) return null;
+                                        const angle = (i / arr.length) * 360;
+                                        return <div key={n.uuid} className="nft-item" style={{transform: `rotate(${angle}deg) translateX(25px) rotate(-${angle}deg)`}}>{def.emoji}</div>
+                                    })}
+                                </div>
+                            )}
+                        </div>
+                    )}
+                    <div className={`max-w-[75%] rounded-2xl px-4 py-2 ${isMe ? 'bg-indigo-600 text-white rounded-br-none' : 'bg-slate-800 text-slate-200 rounded-bl-none'}`}>
+                        {!isMe && <div className="text-[10px] text-slate-400 mb-1">{msg.sender}</div>}
+                        {msg.type === 'photo' ? (
+                            <img src={msg.content} className="rounded-lg max-w-full" alt="img" />
+                        ) : msg.type === 'audio' ? (
+                            <audio controls src={msg.content} className="w-[200px] h-8" />
+                        ) : (
+                            <p className="whitespace-pre-wrap break-words">{msg.content}</p>
+                        )}
+                        <div className="text-[9px] opacity-70 text-right mt-1">{format(date, 'HH:mm')}</div>
+                    </div>
+                </div>
+            );
+        };
+
         const App = () => {
-            // State
-            const [currentUser, setCurrentUser] = useState(() => localStorage.getItem('dolbaeb_user'));
-            const [isLoginView, setIsLoginView] = useState(true);
-            const [usernameInput, setUsernameInput] = useState('');
-            const [passwordInput, setPasswordInput] = useState('');
-            const [authError, setAuthError] = useState('');
+            const [user, setUser] = useState(() => localStorage.getItem('user'));
+            const [loginInput, setLoginInput] = useState('');
+            const [usersData, setUsersData] = useState({});
+            const [chats, setChats] = useState([]);
+            const [activeChat, setActiveChat] = useState(null);
+            const [messages, setMessages] = useState([]);
+            const [inputText, setInputText] = useState('');
+            const [searchQuery, setSearchQuery] = useState('');
             
             // Modals
-            const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-            const [isAvatarModalOpen, setIsAvatarModalOpen] = useState(false);
-            const [isFrameModalOpen, setIsFrameModalOpen] = useState(false);
-            const [isColorModalOpen, setIsColorModalOpen] = useState(false);
-            const [isStatusModalOpen, setIsStatusModalOpen] = useState(false);
-            const [isNFTMarketOpen, setIsNFTMarketOpen] = useState(false);
+            const [isNFTMarketOpen, setNFTMarketOpen] = useState(false);
+            const [isSettingsOpen, setSettingsOpen] = useState(false);
 
-            // User Data
-            const [userCoins, setUserCoins] = useState(0);
-            const [userAvatar, setUserAvatar] = useState('');
-            const [userFrame, setUserFrame] = useState('');
-            const [userNameColor, setUserNameColor] = useState('');
-            const [userStatus, setUserStatus] = useState('');
-            const [userNFTs, setUserNFTs] = useState([]);
-            
-            // Other Data
-            const [usersData, setUsersData] = useState({});
+            // User Self Data
+            const [coins, setCoins] = useState(0);
+            const [myNFTs, setMyNFTs] = useState([]);
 
-            // Market Logic (Global Price Updates)
+            // Init App
             useEffect(() => {
-                if (currentUser) {
-                    const updateMarket = () => {
-                        const pricesRef = ref(db, 'marketState');
-                        get(pricesRef).then(snap => {
-                            const data = snap.val() || { prices: {}, lastUpdate: 0 };
-                            const now = Date.now();
-                            
-                            // Update prices every 30 seconds
-                            if (now - data.lastUpdate > 30000) {
-                                const newPrices = {};
-                                ALL_NFTS.forEach(nft => {
-                                    const oldPrice = data.prices[nft.id] || nft.basePrice;
-                                    const change = (Math.random() - 0.5) * 2 * nft.volatility;
-                                    let newPrice = oldPrice * (1 + change);
-                                    
-                                    // Ensure price stays sane (0.1x to 10x base)
-                                    newPrice = Math.max(nft.basePrice * 0.1, Math.min(nft.basePrice * 10, newPrice));
-                                    newPrices[nft.id] = Math.floor(newPrice);
-                                });
-                                update(pricesRef, { prices: newPrices, lastUpdate: now });
-                            }
-                        });
-                    };
-                    
-                    const interval = setInterval(updateMarket, 10000); // Check every 10s if update needed
-                    updateMarket(); // Initial check
-                    return () => clearInterval(interval);
-                }
-            }, [currentUser]);
-
-            // Sync User Data
-            useEffect(() => {
-                if (currentUser) {
-                    const userRef = ref(db, `users/${currentUser}`);
-                    return onValue(userRef, (snapshot) => {
-                        const data = snapshot.val();
-                        if (data) {
-                            setUserCoins(data.coins || 0);
-                            setUserAvatar(data.avatar || '');
-                            setUserFrame(data.frame || '');
-                            setUserNameColor(data.nameColor || '');
-                            setUserStatus(data.status || '');
-                            setUserNFTs(data.nfts || []);
+                if (user) {
+                    // Load User Data
+                    const userRef = ref(db, `users/${user}`);
+                    onValue(userRef, snap => {
+                        const d = snap.val();
+                        if (d) {
+                            setCoins(d.coins || 0);
+                            setMyNFTs(d.nfts || []);
                         }
                     });
-                }
-            }, [currentUser]);
 
-            // Auth
-            const handleAuth = () => {
-                let cleanUsername = usernameInput.trim().toLowerCase();
+                    // Load All Users (for avatars/nfts display)
+                    onValue(ref(db, 'users'), snap => setUsersData(snap.val() || {}));
+
+                    // Load Chats
+                    const msgRef = ref(db, 'messages');
+                    onValue(msgRef, snap => {
+                        const allMsgs = snap.val() || {};
+                        const chatSet = new Set();
+                        
+                        Object.keys(allMsgs).forEach(key => {
+                            const participants = key.split('_');
+                            if (participants.includes(user)) {
+                                const other = participants.find(p => p !== user);
+                                chatSet.add(other);
+                            }
+                        });
+                        setChats(Array.from(chatSet));
+                    });
+                }
+            }, [user]);
+
+            // Load Active Chat Messages
+            useEffect(() => {
+                if (user && activeChat) {
+                    const chatId = [user, activeChat].sort().join('_');
+                    const chatRef = ref(db, `messages/${chatId}`);
+                    const unsub = onValue(chatRef, snap => {
+                        const msgs = snap.val();
+                        if (msgs) {
+                            setMessages(Object.values(msgs).sort((a,b) => a.timestamp - b.timestamp));
+                        } else {
+                            setMessages([]);
+                        }
+                    });
+                    return () => off(chatRef);
+                }
+            }, [user, activeChat]);
+
+            const handleLogin = () => {
+                const nick = loginInput.trim().toLowerCase().replace(/[^a-z0-9а-я]/g, '').substring(0, 20);
+                if (!nick) return alert('Никнейм некорректен');
                 
-                // Validate Username
-                const regex = /^[a-zа-я0-9]{1,20}$/;
-                if (!regex.test(cleanUsername)) {
-                    setAuthError('Ник: 1-20 символов, только буквы (ru/en) и цифры, без спецсимволов.');
-                    return;
-                }
-
-                if (!passwordInput.trim()) return;
-
-                const userRef = ref(db, `users/${cleanUsername}`);
-                get(userRef).then((snapshot) => {
-                    const data = snapshot.val();
-                    if (isLoginView) {
-                        if (data && data.password === passwordInput) {
-                            localStorage.setItem('dolbaeb_user', cleanUsername);
-                            setCurrentUser(cleanUsername);
-                            setAuthError('');
-                        } else {
-                            setAuthError('Неверные данные');
-                        }
-                    } else {
-                        if (data) {
-                            setAuthError('Ник занят');
-                        } else {
-                            set(userRef, {
-                                username: cleanUsername,
-                                password: passwordInput,
-                                coins: 100, // Bonus for new users
-                                createdAt: Date.now()
-                            }).then(() => {
-                                localStorage.setItem('dolbaeb_user', cleanUsername);
-                                setCurrentUser(cleanUsername);
-                                setAuthError('');
-                            });
-                        }
+                // Create user if not exists
+                const uRef = ref(db, `users/${nick}`);
+                get(uRef).then(snap => {
+                    if (!snap.exists()) {
+                        set(uRef, { coins: 1000, joined: Date.now() }); // Bonus start coins
                     }
                 });
+                
+                localStorage.setItem('user', nick);
+                setUser(nick);
             };
 
-            const handleLogout = () => {
-                localStorage.removeItem('dolbaeb_user');
-                setCurrentUser(null);
-                setUserCoins(0);
-                setIsSettingsOpen(false);
+            const sendMessage = (type = 'text', content = inputText) => {
+                if (!content && type === 'text') return;
+                const chatId = [user, activeChat].sort().join('_');
+                push(ref(db, `messages/${chatId}`), {
+                    sender: user,
+                    type,
+                    content,
+                    timestamp: Date.now()
+                });
+                setInputText('');
             };
 
-            // Render Render
-            if (!currentUser) {
+            const handleFileUpload = (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onload = (ev) => sendMessage('photo', ev.target.result);
+                reader.readAsDataURL(file);
+            };
+
+            if (!user) {
                 return (
-                    <div className="min-h-screen flex items-center justify-center p-4 bg-slate-950">
-                        <div className="w-full max-w-md bg-slate-900 p-6 rounded-3xl border border-slate-700 shadow-2xl">
-                            <h1 className="text-3xl font-bold text-center mb-6">DolbaebSMS</h1>
-                            {authError && <div className="p-3 bg-red-500/10 text-red-400 rounded-xl mb-4 text-sm text-center">{authError}</div>}
-                            <div className="space-y-3">
-                                <input className="w-full bg-slate-800 border border-slate-700 rounded-xl p-3 outline-none" placeholder="Никнейм (a-z, а-я, 0-9)" value={usernameInput} onChange={e => setUsernameInput(e.target.value)} />
-                                <input className="w-full bg-slate-800 border border-slate-700 rounded-xl p-3 outline-none" type="password" placeholder="Пароль" value={passwordInput} onChange={e => setPasswordInput(e.target.value)} />
-                                <Button onClick={handleAuth} className="w-full">{isLoginView ? 'Войти' : 'Создать'}</Button>
-                            </div>
-                            <button onClick={() => { setIsLoginView(!isLoginView); setAuthError(''); }} className="w-full mt-4 text-sm text-slate-400">{isLoginView ? 'Нет аккаунта? Создать' : 'Есть аккаунт? Войти'}</button>
+                    <div className="flex h-screen items-center justify-center bg-slate-950">
+                        <div className="bg-slate-900 p-8 rounded-2xl border border-slate-700 shadow-2xl w-full max-w-sm">
+                            <h1 className="text-3xl font-bold text-center mb-2 text-white">DolbaebSMS</h1>
+                            <p className="text-center text-slate-400 mb-6 text-sm">Economy & Chats</p>
+                            <input 
+                                className="w-full bg-slate-800 border border-slate-600 rounded-xl p-3 text-white mb-4 outline-none focus:border-indigo-500"
+                                placeholder="Никнейм (только буквы/цифры)"
+                                value={loginInput}
+                                onChange={e => setLoginInput(e.target.value)}
+                            />
+                            <Button onClick={handleLogin} className="w-full">Войти</Button>
                         </div>
                     </div>
                 );
             }
 
             return (
-                <div className="flex h-screen bg-slate-950 text-white overflow-hidden safe-area-top">
-                    {/* Modals */}
-                    <SettingsModal 
-                        isOpen={isSettingsOpen} 
-                        onClose={() => setIsSettingsOpen(false)} 
-                        currentUser={currentUser}
-                        onLogout={handleLogout}
-                        userCoins={userCoins}
-                        onOpenAvatar={() => setIsAvatarModalOpen(true)}
-                        onOpenFrame={() => setIsFrameModalOpen(true)}
-                        onOpenColor={() => setIsColorModalOpen(true)}
-                        onOpenStatus={() => setIsStatusModalOpen(true)}
+                <div className="flex h-screen bg-slate-950 text-slate-100 overflow-hidden">
+                    <NFTMarket 
+                        isOpen={isNFTMarketOpen} 
+                        onClose={() => setNFTMarketOpen(false)}
+                        currentUser={user}
+                        userCoins={coins}
+                        userNFTs={myNFTs}
                     />
 
-                    <NFTMarketModal 
-                        isOpen={isNFTMarketOpen}
-                        onClose={() => setIsNFTMarketOpen(false)}
-                        currentUser={currentUser}
-                        userCoins={userCoins}
-                        onCoinsUpdate={setUserCoins}
-                        userNFTs={userNFTs}
-                        onNFTUpdate={setUserNFTs}
-                    />
-
-                    {/* Placeholder Modals for Avatar/Frame/Color/Status (Basic Implementation for functionality check) */}
-                    {isAvatarModalOpen && (
-                        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80">
-                            <div className="bg-slate-900 p-5 rounded-xl border border-slate-700">
-                                <h3 className="text-xl font-bold mb-3">Магазин Аватарок</h3>
-                                <div className="grid grid-cols-4 gap-2 mb-4">
-                                    {['🐶','🐱','🦊','🐼','🤖','👽','👻','💀'].map(emoji => (
-                                        <button key={emoji} onClick={() => {
-                                            update(ref(db, `users/${currentUser}`), { avatar: emoji });
-                                            setIsAvatarModalOpen(false);
-                                        }} className="text-3xl p-2 hover:bg-slate-800 rounded-lg">{emoji}</button>
-                                    ))}
-                                </div>
-                                <Button onClick={() => setIsAvatarModalOpen(false)} variant="secondary" className="w-full">Закрыть</Button>
-                            </div>
-                        </div>
-                    )}
-
-                    {isFrameModalOpen && (
-                        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80">
-                            <div className="bg-slate-900 p-5 rounded-xl border border-slate-700">
-                                <h3 className="text-xl font-bold mb-3">Магазин Рамок</h3>
-                                <div className="space-y-2 mb-4">
-                                    <button onClick={() => { update(ref(db, `users/${currentUser}`), { frame: 'frame-gold' }); setIsFrameModalOpen(false); }} className="w-full p-2 bg-slate-800 rounded frame-gold text-yellow-500">Золотая</button>
-                                    <button onClick={() => { update(ref(db, `users/${currentUser}`), { frame: 'frame-rainbow' }); setIsFrameModalOpen(false); }} className="w-full p-2 bg-slate-800 rounded frame-rainbow">Радужная</button>
-                                    <button onClick={() => { update(ref(db, `users/${currentUser}`), { frame: '' }); setIsFrameModalOpen(false); }} className="w-full p-2 bg-slate-800 rounded">Снять рамку</button>
-                                </div>
-                                <Button onClick={() => setIsFrameModalOpen(false)} variant="secondary" className="w-full">Закрыть</Button>
-                            </div>
-                        </div>
-                    )}
-                    
-                    {/* Main UI Structure - Simplified for Demo */}
-                    <div className="w-full md:w-[320px] bg-slate-900 border-r border-slate-800 flex flex-col">
-                        <div className="p-3 border-b border-slate-800 flex justify-between items-center">
-                            <div className="flex items-center gap-2">
+                    {/* Sidebar */}
+                    <div className={`w-full md:w-80 bg-slate-900 border-r border-slate-800 flex flex-col ${activeChat ? 'mobile-sidebar-hidden' : 'mobile-sidebar-visible'}`}>
+                        {/* Header */}
+                        <div className="p-4 border-b border-slate-800 flex items-center justify-between">
+                            <div className="flex items-center gap-3">
                                 <div className="nft-container">
-                                    <div className={`w-10 h-10 rounded-full bg-slate-700 flex items-center justify-center text-xl ${userFrame}`}>
-                                        {userAvatar || currentUser[0].toUpperCase()}
-                                    </div>
-                                    {/* Equipped NFTs Orbital */}
-                                    <div className="nft-orbital">
-                                        {userNFTs.filter(n => n.isEquipped).map((nft, i, arr) => {
-                                            const def = ALL_NFTS.find(d => d.id === nft.id);
-                                            if(!def) return null;
-                                            const angle = (i / arr.length) * 360;
-                                            return (
-                                                <div key={nft.instanceId} className="nft-item" style={{ transform: `rotate(${angle}deg) translateX(30px) rotate(-${angle}deg)` }}>
-                                                    {def.emoji}
-                                                </div>
-                                            );
-                                        })}
-                                    </div>
-                                </div>
-                                <div>
-                                    <div className="font-bold">{currentUser}</div>
-                                    <div className="text-xs text-yellow-500">{userCoins.toFixed(2)} coins</div>
-                                </div>
-                            </div>
-                            <div className="flex gap-1">
-                                <button onClick={() => setIsNFTMarketOpen(true)} className="p-2 hover:bg-slate-800 rounded-lg text-yellow-500"><TrendingUp size={20}/></button>
-                                <button onClick={() => setIsSettingsOpen(true)} className="p-2 hover:bg-slate-800 rounded-lg"><SettingsIcon size={20}/></button>
-                            </div>
-                        </div>
-                        <div className="flex-1 p-4 text-center text-slate-500 flex flex-col items-center justify-center">
-                            <p>Выберите чат (В разработке)</p>
-                            <p className="text-xs mt-2">Весь функционал настроек и магазина работает!</p>
-                        </div>
-                    </div>
-                    <div className="hidden md:flex flex-1 bg-slate-950 items-center justify-center text-slate-600">
-                        DolbaebSMS Desktop
-                    </div>
-                </div>
-            );
-        };
-
-        const root = createRoot(document.getElementById('root'));
-        root.render(<App />);
-    </script>
-</body>
-</html>
+                                    <div className
