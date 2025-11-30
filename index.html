@@ -397,7 +397,7 @@
             );
         };
 
-        // 2. NFT Market Modal with Enhanced Features - ИСПРАВЛЕННЫЙ
+        // 2. NFT Market Modal with Enhanced Features
         const NFTMarketModal = ({ isOpen, onClose, currentUser, userCoins, onCoinsUpdate, userNFTs, onNFTUpdate }) => {
             const [selectedNFT, setSelectedNFT] = useState(null);
             const [isLoading, setIsLoading] = useState(false);
@@ -416,48 +416,60 @@
                 { id: 'robot', name: 'Робот', emoji: '🤖', basePrice: 800, description: 'Технологичный робот', rarity: 'common', element: 'tech', power: 15, pattern: 'pattern-grid' },
                 { id: 'panda', name: 'Панда', emoji: '🐼', basePrice: 900, description: 'Милая панда', rarity: 'common', element: 'nature', power: 12, pattern: 'pattern-circles' },
                 { id: 'fox', name: 'Лиса', emoji: '🦊', basePrice: 1100, description: 'Хитрая лиса', rarity: 'common', element: 'nature', power: 18, pattern: 'pattern-dots' },
-                { id: 'cat', name: 'Кот', emoji: '🐱', basePrice: 700, description: 'Милый котенок', rarity: 'common', element: 'nature', power: 8, pattern: 'pattern-stars' },
-                { id: 'dog', name: 'Собака', emoji: '🐶', basePrice: 750, description: 'Верный пес', rarity: 'common', element: 'nature', power: 9, pattern: 'pattern-lines' },
+                { id: 'cat', name: 'Кот', emoji: '🐱', basePrice: 700, description: 'Ловкий кот', rarity: 'common', element: 'nature', power: 14, pattern: 'pattern-lines' },
+                { id: 'dog', name: 'Собака', emoji: '🐶', basePrice: 750, description: 'Верный пес', rarity: 'common', element: 'nature', power: 16, pattern: 'pattern-waves' },
+                { id: 'rabbit', name: 'Кролик', emoji: '🐰', basePrice: 850, description: 'Быстрый кролик', rarity: 'common', element: 'nature', power: 13, pattern: 'pattern-stars' },
+                { id: 'bear', name: 'Медведь', emoji: '🐻', basePrice: 950, description: 'Сильный медведь', rarity: 'common', element: 'nature', power: 20, pattern: 'pattern-hexagon' },
                 
                 // Rare NFTs
                 { id: 'alien', name: 'Пришелец', emoji: '👽', basePrice: 1200, description: 'Инопланетный гость', rarity: 'rare', element: 'cosmic', power: 25, pattern: 'pattern-stars' },
                 { id: 'tiger', name: 'Тигр', emoji: '🐯', basePrice: 1300, description: 'Сильный тигр', rarity: 'rare', element: 'nature', power: 30, pattern: 'pattern-lines' },
                 { id: 'lion', name: 'Лев', emoji: '🦁', basePrice: 1400, description: 'Царь зверей', rarity: 'rare', element: 'nature', power: 35, pattern: 'pattern-grid' },
                 { id: 'eagle', name: 'Орёл', emoji: '🦅', basePrice: 1600, description: 'Гордый орёл', rarity: 'rare', element: 'air', power: 28, pattern: 'pattern-hexagon' },
-                { id: 'wolf', name: 'Волк', emoji: '🐺', basePrice: 1500, description: 'Дикий волк', rarity: 'rare', element: 'nature', power: 32, pattern: 'pattern-waves' },
-                { id: 'bear', name: 'Медведь', emoji: '🐻', basePrice: 1700, description: 'Сильный медведь', rarity: 'rare', element: 'nature', power: 38, pattern: 'pattern-diamonds' },
+                { id: 'shark', name: 'Акула', emoji: '🦈', basePrice: 1500, description: 'Морской хищник', rarity: 'rare', element: 'water', power: 32, pattern: 'pattern-waves' },
+                { id: 'wolf', name: 'Волк', emoji: '🐺', basePrice: 1350, description: 'Дикий волк', rarity: 'rare', element: 'nature', power: 29, pattern: 'pattern-diamonds' },
+                { id: 'elephant', name: 'Слон', emoji: '🐘', basePrice: 1700, description: 'Могучий слон', rarity: 'rare', element: 'earth', power: 38, pattern: 'pattern-circles' },
+                { id: 'octopus', name: 'Осьминог', emoji: '🐙', basePrice: 1450, description: 'Умный осьминог', rarity: 'rare', element: 'water', power: 27, pattern: 'pattern-dots' },
                 
                 // Epic NFTs
                 { id: 'dragon', name: 'Дракон', emoji: '🐉', basePrice: 1800, description: 'Могущественный дракон', rarity: 'epic', element: 'fire', power: 50, pattern: 'pattern-diamonds' },
                 { id: 'dinosaur', name: 'Динозавр', emoji: '🦖', basePrice: 2000, description: 'Древний ящер', rarity: 'epic', element: 'earth', power: 45, pattern: 'pattern-waves' },
                 { id: 'phoenix', name: 'Феникс', emoji: '🦚', basePrice: 2200, description: 'Огненная птица', rarity: 'epic', element: 'fire', power: 55, pattern: 'pattern-stars' },
                 { id: 'whale', name: 'Кит', emoji: '🐋', basePrice: 2400, description: 'Могучий кит', rarity: 'epic', element: 'water', power: 48, pattern: 'pattern-circles' },
-                { id: 'shark', name: 'Акула', emoji: '🦈', basePrice: 2600, description: 'Морской хищник', rarity: 'epic', element: 'water', power: 52, pattern: 'pattern-grid' },
-                { id: 'elephant', name: 'Слон', emoji: '🐘', basePrice: 2800, description: 'Мудрый слон', rarity: 'epic', element: 'earth', power: 46, pattern: 'pattern-hexagon' },
+                { id: 'griffin', name: 'Грифон', emoji: '🦅🦁', basePrice: 2600, description: 'Мифический грифон', rarity: 'epic', element: 'air', power: 58, pattern: 'pattern-grid' },
+                { id: 'kraken', name: 'Кракен', emoji: '🐙🌊', basePrice: 2800, description: 'Морское чудовище', rarity: 'epic', element: 'water', power: 52, pattern: 'pattern-waves' },
+                { id: 'minotaur', name: 'Минотавр', emoji: '🐂👤', basePrice: 2500, description: 'Лабиринтный страж', rarity: 'epic', element: 'earth', power: 47, pattern: 'pattern-lines' },
+                { id: 'pegasus', name: 'Пегас', emoji: '🦄🪽', basePrice: 2700, description: 'Крылатый конь', rarity: 'epic', element: 'air', power: 53, pattern: 'pattern-stars' },
                 
                 // Legendary NFTs
                 { id: 'unicorn', name: 'Единорог', emoji: '🦄', basePrice: 3000, description: 'Волшебный единорог', rarity: 'legendary', element: 'magic', power: 80, pattern: 'pattern-diamonds' },
                 { id: 'spaceship', name: 'Корабль', emoji: '🚀', basePrice: 3500, description: 'Космический корабль', rarity: 'legendary', element: 'cosmic', power: 75, pattern: 'pattern-stars' },
                 { id: 'comet', name: 'Комета', emoji: '☄️', basePrice: 4000, description: 'Небесная комета', rarity: 'legendary', element: 'cosmic', power: 85, pattern: 'pattern-lines' },
                 { id: 'treasure', name: 'Сокровище', emoji: '💎', basePrice: 5000, description: 'Драгоценный клад', rarity: 'legendary', element: 'gold', power: 90, pattern: 'pattern-grid' },
-                { id: 'crown', name: 'Корона', emoji: '👑', basePrice: 4500, description: 'Королевская корона', rarity: 'legendary', element: 'royal', power: 88, pattern: 'pattern-diamonds' },
-                { id: 'thunder', name: 'Гром', emoji: '⚡', basePrice: 4200, description: 'Сила молнии', rarity: 'legendary', element: 'storm', power: 82, pattern: 'pattern-waves' },
-
+                { id: 'leviathan', name: 'Левиафан', emoji: '🐉🌊', basePrice: 4500, description: 'Морской змей', rarity: 'legendary', element: 'water', power: 88, pattern: 'pattern-waves' },
+                { id: 'behemoth', name: 'Бегемот', emoji: '🐘🔥', basePrice: 4200, description: 'Земной гигант', rarity: 'legendary', element: 'earth', power: 82, pattern: 'pattern-circles' },
+                { id: 'ziz', name: 'Зиз', emoji: '🦅☁️', basePrice: 3800, description: 'Небесная птица', rarity: 'legendary', element: 'air', power: 78, pattern: 'pattern-stars' },
+                { id: 'sphinx', name: 'Сфинкс', emoji: '🦁🧠', basePrice: 4700, description: 'Загадочный сфинкс', rarity: 'legendary', element: 'earth', power: 86, pattern: 'pattern-diamonds' },
+                
                 // Mythic NFTs
                 { id: 'rainbow_dragon', name: 'Радужный Дракон', emoji: '🌈🐉', basePrice: 8000, description: 'Легендарный радужный дракон', rarity: 'mythic', element: 'rainbow', power: 150, pattern: 'pattern-diamonds' },
                 { id: 'cosmic_phoenix', name: 'Космический Феникс', emoji: '🌌🦚', basePrice: 10000, description: 'Бессмертный космический феникс', rarity: 'mythic', element: 'cosmic', power: 180, pattern: 'pattern-stars' },
                 { id: 'time_wizard', name: 'Маг Времени', emoji: '⏳🧙', basePrice: 12000, description: 'Повелитель времени и пространства', rarity: 'mythic', element: 'time', power: 200, pattern: 'pattern-waves' },
                 { id: 'infinity_guardian', name: 'Страж Бесконечности', emoji: '∞🛡️', basePrice: 15000, description: 'Защитник вселенной', rarity: 'mythic', element: 'infinity', power: 250, pattern: 'pattern-hexagon' },
-                { id: 'void_walker', name: 'Ходок Бездны', emoji: '🌑👤', basePrice: 13000, description: 'Путник между мирами', rarity: 'mythic', element: 'void', power: 220, pattern: 'pattern-grid' },
-                { id: 'sun_god', name: 'Бог Солнца', emoji: '☀️👑', basePrice: 14000, description: 'Повелитель света', rarity: 'mythic', element: 'light', power: 240, pattern: 'pattern-stars' },
+                { id: 'void_walker', name: 'Ходок Бездны', emoji: '🌑👤', basePrice: 11000, description: 'Путник между мирами', rarity: 'mythic', element: 'void', power: 190, pattern: 'pattern-grid' },
+                { id: 'dream_weaver', name: 'Ткач Снов', emoji: '💭🕸️', basePrice: 13000, description: 'Создатель миров снов', rarity: 'mythic', element: 'dream', power: 210, pattern: 'pattern-stars' },
+                { id: 'star_forger', name: 'Кузнец Звезд', emoji: '⭐🔨', basePrice: 14000, description: 'Создатель новых звезд', rarity: 'mythic', element: 'cosmic', power: 230, pattern: 'pattern-diamonds' },
+                { id: 'ocean_king', name: 'Царь Океана', emoji: '🌊👑', basePrice: 9000, description: 'Повелитель всех морей', rarity: 'mythic', element: 'water', power: 170, pattern: 'pattern-waves' },
 
                 // Divine NFTs
                 { id: 'eternal_dragon', name: 'Вечный Дракон', emoji: '♾️🐲', basePrice: 20000, description: 'Дракон вечности', rarity: 'divine', element: 'infinity', power: 300, pattern: 'pattern-stars' },
                 { id: 'celestial_phoenix', name: 'Небесный Феникс', emoji: '🌠🦅', basePrice: 25000, description: 'Божественная птица', rarity: 'divine', element: 'celestial', power: 350, pattern: 'pattern-diamonds' },
+                { id: 'void_walker_divine', name: 'Божественный Ходок', emoji: '🌌👤', basePrice: 30000, description: 'Бог пустоты', rarity: 'divine', element: 'void', power: 400, pattern: 'pattern-grid' },
                 { id: 'creation_god', name: 'Бог Творения', emoji: '✨👑', basePrice: 50000, description: 'Создатель вселенной', rarity: 'divine', element: 'creation', power: 500, pattern: 'pattern-lines' },
-                { id: 'universe_heart', name: 'Сердце Вселенной', emoji: '💖🌌', basePrice: 40000, description: 'Источник жизни', rarity: 'divine', element: 'life', power: 450, pattern: 'pattern-hexagon' },
-                { id: 'dimension_ruler', name: 'Правитель Измерений', emoji: '🌀👑', basePrice: 35000, description: 'Властелин реальностей', rarity: 'divine', element: 'dimension', power: 420, pattern: 'pattern-grid' },
-                { id: 'eternity_guardian', name: 'Хранитель Вечности', emoji: '⌛🛡️', basePrice: 30000, description: 'Защитник времени', rarity: 'divine', element: 'time', power: 380, pattern: 'pattern-waves' }
+                { id: 'destiny_weaver', name: 'Ткач Судьбы', emoji: '🧵⚖️', basePrice: 35000, description: 'Прядёт нити судьбы', rarity: 'divine', element: 'fate', power: 380, pattern: 'pattern-waves' },
+                { id: 'primordial_titan', name: 'Первозданный Титан', emoji: '🗿🌋', basePrice: 40000, description: 'Существо из начала времен', rarity: 'divine', element: 'primordial', power: 450, pattern: 'pattern-circles' },
+                { id: 'cosmic_balance', name: 'Космический Баланс', emoji: '⚖️🌌', basePrice: 45000, description: 'Хранитель равновесия', rarity: 'divine', element: 'balance', power: 480, pattern: 'pattern-stars' },
+                { id: 'infinity_heart', name: 'Сердце Бесконечности', emoji: '💖∞', basePrice: 55000, description: 'Источник всей жизни', rarity: 'divine', element: 'life', power: 520, pattern: 'pattern-diamonds' }
             ];
 
             // Загрузка текущих цен NFT и рыночных предложений
@@ -483,14 +495,14 @@
                 });
             }, []);
 
-            // Функция для изменения цен NFT (имитация биржи) - ИСПРАВЛЕННАЯ
+            // Функция для изменения цен NFT (имитация биржи)
             useEffect(() => {
                 const interval = setInterval(() => {
                     const newPrices = { ...nftPrices };
                     nfts.forEach(nft => {
                         const currentPrice = newPrices[nft.id] || nft.basePrice;
-                        // Случайное изменение цены от -5% до +10%
-                        const change = (Math.random() * 0.15 - 0.05);
+                        // Случайное изменение цены от -10% до +15%
+                        const change = (Math.random() * 0.25 - 0.1);
                         const newPrice = Math.max(nft.basePrice * 0.5, currentPrice * (1 + change));
                         newPrices[nft.id] = Math.round(newPrice);
                     });
@@ -684,7 +696,6 @@
                 setIsLoading(false);
             };
 
-            // ИСПРАВЛЕННАЯ ФУНКЦИЯ ПРОДАЖИ NFT
             const handleSellNFT = async (nft, price) => {
                 if (price <= 0) {
                     alert('Укажите корректную цену');
@@ -729,21 +740,20 @@
                 setIsLoading(false);
             };
 
-            // ИСПРАВЛЕННАЯ ФУНКЦИЯ ПОДАРКА NFT
-            const handleGiftNFT = async (nft, recipient) => {
-                if (!recipient.trim() || !nft) {
+            const handleGiftNFT = async () => {
+                if (!giftRecipient.trim() || !giftNFT) {
                     alert('Выберите NFT и укажите получателя');
                     return;
                 }
 
-                if (recipient === currentUser) {
+                if (giftRecipient === currentUser) {
                     alert('Нельзя подарить NFT самому себе');
                     return;
                 }
 
                 setIsLoading(true);
                 try {
-                    const recipientRef = ref(db, `users/${recipient}`);
+                    const recipientRef = ref(db, `users/${giftRecipient}`);
                     const snapshot = await get(recipientRef);
                     
                     if (!snapshot.exists()) {
@@ -756,14 +766,14 @@
                     const recipientNFTs = recipientData.nfts || [];
 
                     // Удаляем NFT у отправителя
-                    const newSenderNFTs = userNFTs.filter(userNft => userNft.id !== nft.id);
+                    const newSenderNFTs = userNFTs.filter(nft => nft.id !== giftNFT.id);
                     await update(ref(db, `users/${currentUser}`), { 
                         nfts: newSenderNFTs
                     });
 
                     // Добавляем NFT получателю
                     const newRecipientNFTs = [...recipientNFTs, { 
-                        id: nft.id, 
+                        id: giftNFT.id, 
                         gifted: true, 
                         from: currentUser, 
                         giftedAt: Date.now(),
@@ -775,21 +785,21 @@
                     });
 
                     // Создаем сообщение о подарке
-                    const chatId = [currentUser, recipient].sort().join('_');
+                    const chatId = [currentUser, giftRecipient].sort().join('_');
                     const messageRef = push(ref(db, `messages/${chatId}`));
                     await set(messageRef, {
                         sender: currentUser,
-                        text: `Подарил вам NFT: ${nft.name} ${nft.emoji}`,
+                        text: `Подарил вам NFT: ${giftNFT.name} ${giftNFT.emoji}`,
                         timestamp: Date.now(),
                         type: 'nft_gift',
-                        nftData: nft,
+                        nftData: giftNFT,
                         deleted: false
                     });
 
                     onNFTUpdate(newSenderNFTs);
                     setGiftNFT(null);
                     setGiftRecipient('');
-                    alert(`NFT "${nft.name}" успешно подарен пользователю ${recipient}!`);
+                    alert(`NFT "${giftNFT.name}" успешно подарен пользователю ${giftRecipient}!`);
                 } catch (error) {
                     console.error('NFT gift error:', error);
                     alert('Ошибка при отправке NFT в подарок');
@@ -808,7 +818,7 @@
                         <p className="text-xs text-slate-500 mt-1">Ваши коины: <span className="text-yellow-500 font-bold">{userCoins.toFixed(3)}</span></p>
                     </div>
                     
-                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 max-h-[60vh] overflow-y-auto">
                         {nfts.map((nft) => {
                             const userNFT = userNFTs.find(userNft => userNft.id === nft.id);
                             const isPurchased = !!userNFT;
@@ -877,7 +887,7 @@
                                 </div>
                             </div>
 
-                            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 max-h-[60vh] overflow-y-auto">
                                 {userNFTs.map((userNft) => {
                                     const nft = nfts.find(n => n.id === userNft.id);
                                     if (!nft) return null;
@@ -948,10 +958,7 @@
                                                             Продать
                                                         </Button>
                                                         <Button 
-                                                            onClick={() => {
-                                                                setGiftNFT(nft);
-                                                                setActiveTab('gift');
-                                                            }}
+                                                            onClick={() => setGiftNFT(nft)}
                                                             variant="primary"
                                                             className="flex-1 text-xs"
                                                         >
@@ -981,7 +988,7 @@
                     </div>
 
                     {marketNFTs.length > 0 ? (
-                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 max-h-[60vh] overflow-y-auto">
                             {marketNFTs.map((marketItem) => {
                                 const nft = marketItem.nftData;
                                 const wear = getWearLevel(marketItem.listedAt);
@@ -1049,7 +1056,7 @@
                                     className="w-full bg-slate-700 border border-slate-600 rounded-xl px-3 py-2 text-white focus:border-indigo-500 outline-none text-sm" 
                                 />
                                 <Button 
-                                    onClick={() => handleGiftNFT(giftNFT, giftRecipient)}
+                                    onClick={handleGiftNFT}
                                     isLoading={isLoading}
                                     disabled={!giftRecipient.trim()}
                                     variant="gold"
@@ -1058,11 +1065,7 @@
                                     Подарить NFT
                                 </Button>
                                 <Button 
-                                    onClick={() => {
-                                        setGiftNFT(null);
-                                        setGiftRecipient('');
-                                        setActiveTab('my_nfts');
-                                    }}
+                                    onClick={() => setGiftNFT(null)}
                                     variant="secondary"
                                     className="w-full"
                                 >
@@ -1087,7 +1090,7 @@
                 const wear = userNFT ? getWearLevel(userNFT.purchasedAt) : { name: 'Идеальное' };
 
                 return (
-                    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 bg-black/60 backdrop-blur-sm animate-fade-in">
+                    <div className="fixed inset-0 z-[100] flex items-center justify-center p-3 bg-black/60 backdrop-blur-sm animate-fade-in">
                         <div className="w-full max-w-md bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl overflow-hidden">
                             <div className="p-3 border-b border-slate-800 flex items-center justify-between">
                                 <h3 className="text-lg font-bold text-white">Продажа NFT</h3>
@@ -1152,13 +1155,7 @@
                                 {['market', 'my_nfts', 'marketplace', 'gift'].map(tab => (
                                     <button 
                                         key={tab} 
-                                        onClick={() => {
-                                            setActiveTab(tab);
-                                            if (tab !== 'gift') {
-                                                setGiftNFT(null);
-                                                setGiftRecipient('');
-                                            }
-                                        }} 
+                                        onClick={() => setActiveTab(tab)} 
                                         className={`flex-1 py-3 text-xs font-medium transition-colors min-h-[44px] whitespace-nowrap px-2 ${
                                             activeTab === tab ? 'text-indigo-400 border-b-2 border-indigo-400' : 'text-slate-400'
                                         }`}
@@ -2019,7 +2016,7 @@
             );
         };
 
-        // 8. Name Color Modal - ИСПРАВЛЕННЫЙ
+        // 8. Name Color Modal
         const NameColorModal = ({ isOpen, onClose, currentUser, userCoins, onColorChange, purchasedColors }) => {
             const [selectedColor, setSelectedColor] = useState('');
             const [isLoading, setIsLoading] = useState(false);
@@ -2055,14 +2052,13 @@
                             nameColor: color.id,
                             purchasedColors: newPurchasedColors
                         });
-                        onColorChange(color.id);
                     } else {
                         await update(ref(db, `users/${currentUser}`), { 
                             nameColor: color.id
                         });
-                        onColorChange(color.id);
                     }
                     setSelectedColor(color.id);
+                    onColorChange(color.id);
                     onClose();
                 } catch (error) {
                     console.error('Color change error:', error);
@@ -2072,7 +2068,7 @@
             };
 
             return (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-3 bg-black/60 backdrop-blur-sm animate-fade-in safe-area-top safe-area-bottom">
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-3 bg-black/60 backdrop-blur-sm animate-fade-in safe-area-top safe-area-bottom">
                     <div className="w-full max-w-2xl bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[95vh]">
                         <div className="p-3 border-b border-slate-800 flex items-center justify-between bg-slate-900 shrink-0">
                             <h2 className="text-lg font-bold text-white flex items-center gap-2"><Palette size={18} className="text-yellow-500" /> Цвет имени</h2>
@@ -2136,7 +2132,7 @@
             );
         };
 
-        // 9. Status Modal - ИСПРАВЛЕННЫЙ
+        // 9. Status Modal
         const StatusModal = ({ isOpen, onClose, currentUser, userCoins, onStatusChange, purchasedStatuses }) => {
             const [selectedStatus, setSelectedStatus] = useState('');
             const [customStatus, setCustomStatus] = useState('');
@@ -2183,15 +2179,14 @@
                             statusEmoji: status.emoji,
                             purchasedStatuses: newPurchasedStatuses
                         });
-                        onStatusChange(status.text, status.emoji);
                     } else {
                         await update(ref(db, `users/${currentUser}`), { 
                             status: status.text,
                             statusEmoji: status.emoji
                         });
-                        onStatusChange(status.text, status.emoji);
                     }
                     setSelectedStatus(status.id);
+                    onStatusChange(status.text, status.emoji);
                     onClose();
                 } catch (error) {
                     console.error('Status change error:', error);
@@ -2201,7 +2196,7 @@
             };
 
             const handleCustomStatus = async () => {
-                if (!customStatus.trim() || (userCoins < 50 && currentUser !== 'kayivi')) {
+                if (!customStatus.trim() || userCoins < 50 && currentUser !== 'kayivi') {
                     alert('Введите статус и убедитесь, что у вас достаточно коинов (50)');
                     return;
                 }
@@ -2214,14 +2209,13 @@
                             status: customStatus,
                             statusEmoji: '💬'
                         });
-                        onStatusChange(customStatus, '💬');
                     } else {
                         await update(ref(db, `users/${currentUser}`), { 
                             status: customStatus,
                             statusEmoji: '💬'
                         });
-                        onStatusChange(customStatus, '💬');
                     }
+                    onStatusChange(customStatus, '💬');
                     onClose();
                 } catch (error) {
                     console.error('Custom status error:', error);
@@ -2231,7 +2225,7 @@
             };
 
             return (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-3 bg-black/60 backdrop-blur-sm animate-fade-in safe-area-top safe-area-bottom">
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-3 bg-black/60 backdrop-blur-sm animate-fade-in safe-area-top safe-area-bottom">
                     <div className="w-full max-w-md bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[95vh]">
                         <div className="p-3 border-b border-slate-800 flex items-center justify-between bg-slate-900 shrink-0">
                             <h2 className="text-lg font-bold text-white flex items-center gap-2"><Edit3 size={18} className="text-yellow-500" /> Статус</h2>
@@ -2310,7 +2304,7 @@
             );
         };
 
-        // 10. Avatar Modal - ИСПРАВЛЕННЫЙ
+        // 10. Avatar Modal
         const AvatarModal = ({ isOpen, onClose, currentUser, userCoins, onAvatarChange, purchasedAvatars }) => {
             const [selectedAvatar, setSelectedAvatar] = useState('');
             const [isLoading, setIsLoading] = useState(false);
@@ -2367,14 +2361,13 @@
                             avatar: avatar.emoji,
                             purchasedAvatars: newPurchasedAvatars
                         });
-                        onAvatarChange(avatar.emoji);
                     } else {
                         await update(ref(db, `users/${currentUser}`), { 
                             avatar: avatar.emoji
                         });
-                        onAvatarChange(avatar.emoji);
                     }
                     setSelectedAvatar(avatar.emoji);
+                    onAvatarChange(avatar.emoji);
                     onClose();
                 } catch (error) {
                     console.error('Avatar change error:', error);
@@ -2384,7 +2377,7 @@
             };
 
             return (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-3 bg-black/60 backdrop-blur-sm animate-fade-in safe-area-top safe-area-bottom">
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-3 bg-black/60 backdrop-blur-sm animate-fade-in safe-area-top safe-area-bottom">
                     <div className="w-full max-w-4xl bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[95vh]">
                         <div className="p-3 border-b border-slate-800 flex items-center justify-between bg-slate-900 shrink-0">
                             <h2 className="text-lg font-bold text-white flex items-center gap-2"><UserIcon size={18} className="text-yellow-500" /> Магазин аватарок</h2>
@@ -2443,7 +2436,7 @@
             );
         };
 
-        // 11. Frame Modal - ИСПРАВЛЕННЫЙ
+        // 11. Frame Modal
         const FrameModal = ({ isOpen, onClose, currentUser, userCoins, onFrameChange, userFrame, purchasedFrames }) => {
             const [selectedFrame, setSelectedFrame] = useState('');
             const [isLoading, setIsLoading] = useState(false);
@@ -2482,14 +2475,13 @@
                             frame: frame.id,
                             purchasedFrames: newPurchasedFrames
                         });
-                        onFrameChange(frame.id);
                     } else {
                         await update(ref(db, `users/${currentUser}`), { 
                             frame: frame.id
                         });
-                        onFrameChange(frame.id);
                     }
                     setSelectedFrame(frame.id);
+                    onFrameChange(frame.id);
                     onClose();
                 } catch (error) {
                     console.error('Frame change error:', error);
@@ -2499,7 +2491,7 @@
             };
 
             return (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-3 bg-black/60 backdrop-blur-sm animate-fade-in safe-area-top safe-area-bottom">
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-3 bg-black/60 backdrop-blur-sm animate-fade-in safe-area-top safe-area-bottom">
                     <div className="w-full max-w-2xl bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[95vh]">
                         <div className="p-3 border-b border-slate-800 flex items-center justify-between bg-slate-900 shrink-0">
                             <h2 className="text-lg font-bold text-white flex items-center gap-2"><ImageIcon size={18} className="text-yellow-500" /> Магазин рамок</h2>
@@ -2559,7 +2551,7 @@
             );
         };
 
-        // 12. Settings Modal - ИСПРАВЛЕННЫЙ
+        // 12. Settings Modal
         const SettingsModal = ({ isOpen, onClose, currentUser, onLogout, userCoins, onCoinsUpdate, userAvatar, userFrame, userNameColor, userStatus, userStatusEmoji, onAvatarChange, onFrameChange, onColorChange, onStatusChange, purchasedAvatars, purchasedFrames, purchasedColors, purchasedStatuses }) => {
             const [activeTab, setActiveTab] = useState('profile');
             const [oldPassword, setOldPassword] = useState('');
@@ -3216,7 +3208,7 @@
                             <div className="text-yellow-300/80 text-[10px] mt-0.5">+{coinsPerClick.toFixed(3)} за клик</div>
                             <div className="text-yellow-300/70 text-[10px]">Уровень: {clickerLevel}</div>
                         </div>
-                    </button>
+                    </div>
                 </div>
             );
         };
@@ -3913,15 +3905,7 @@
                                                     { id: 'eagle', emoji: '🦅' },
                                                     { id: 'whale', emoji: '🐋' },
                                                     { id: 'lion', emoji: '🦁' },
-                                                    { id: 'fox', emoji: '🦊' },
-                                                    { id: 'cat', emoji: '🐱' },
-                                                    { id: 'dog', emoji: '🐶' },
-                                                    { id: 'wolf', emoji: '🐺' },
-                                                    { id: 'bear', emoji: '🐻' },
-                                                    { id: 'shark', emoji: '🦈' },
-                                                    { id: 'elephant', emoji: '🐘' },
-                                                    { id: 'crown', emoji: '👑' },
-                                                    { id: 'thunder', emoji: '⚡' }
+                                                    { id: 'fox', emoji: '🦊' }
                                                 ];
                                                 const nftData = nftsData.find(n => n.id === nft.id);
                                                 if (!nftData) return null;
@@ -4059,15 +4043,7 @@
                                                             { id: 'eagle', emoji: '🦅' },
                                                             { id: 'whale', emoji: '🐋' },
                                                             { id: 'lion', emoji: '🦁' },
-                                                            { id: 'fox', emoji: '🦊' },
-                                                            { id: 'cat', emoji: '🐱' },
-                                                            { id: 'dog', emoji: '🐶' },
-                                                            { id: 'wolf', emoji: '🐺' },
-                                                            { id: 'bear', emoji: '🐻' },
-                                                            { id: 'shark', emoji: '🦈' },
-                                                            { id: 'elephant', emoji: '🐘' },
-                                                            { id: 'crown', emoji: '👑' },
-                                                            { id: 'thunder', emoji: '⚡' }
+                                                            { id: 'fox', emoji: '🦊' }
                                                         ];
                                                         const nftData = nftsData.find(n => n.id === nft.id);
                                                         if (!nftData) return null;
@@ -4132,15 +4108,7 @@
                                                                 { id: 'eagle', emoji: '🦅' },
                                                                 { id: 'whale', emoji: '🐋' },
                                                                 { id: 'lion', emoji: '🦁' },
-                                                                { id: 'fox', emoji: '🦊' },
-                                                                { id: 'cat', emoji: '🐱' },
-                                                                { id: 'dog', emoji: '🐶' },
-                                                                { id: 'wolf', emoji: '🐺' },
-                                                                { id: 'bear', emoji: '🐻' },
-                                                                { id: 'shark', emoji: '🦈' },
-                                                                { id: 'elephant', emoji: '🐘' },
-                                                                { id: 'crown', emoji: '👑' },
-                                                                { id: 'thunder', emoji: '⚡' }
+                                                                { id: 'fox', emoji: '🦊' }
                                                             ];
                                                             const nftData = nftsData.find(n => n.id === nft.id);
                                                             if (!nftData) return null;
@@ -4222,15 +4190,7 @@
                                                     { id: 'eagle', emoji: '🦅' },
                                                     { id: 'whale', emoji: '🐋' },
                                                     { id: 'lion', emoji: '🦁' },
-                                                    { id: 'fox', emoji: '🦊' },
-                                                    { id: 'cat', emoji: '🐱' },
-                                                    { id: 'dog', emoji: '🐶' },
-                                                    { id: 'wolf', emoji: '🐺' },
-                                                    { id: 'bear', emoji: '🐻' },
-                                                    { id: 'shark', emoji: '🦈' },
-                                                    { id: 'elephant', emoji: '🐘' },
-                                                    { id: 'crown', emoji: '👑' },
-                                                    { id: 'thunder', emoji: '⚡' }
+                                                    { id: 'fox', emoji: '🦊' }
                                                 ];
                                                 const nftData = nftsData.find(n => n.id === nft.id);
                                                 if (!nftData) return null;
