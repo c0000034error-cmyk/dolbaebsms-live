@@ -19,11 +19,19 @@
               'fade-in': 'fadeIn 0.3s ease-out',
               'slide-up': 'slideUp 0.3s ease-out',
               'pulse-gold': 'pulseGold 2s infinite',
+              'float': 'float 3s ease-in-out infinite',
+              'gift-float': 'giftFloat 2s ease-in-out',
             },
             keyframes: {
               fadeIn: { '0%': { opacity: '0' }, '100%': { opacity: '1' } },
               slideUp: { '0%': { transform: 'translateY(10px)', opacity: '0' }, '100%': { transform: 'translateY(0)', opacity: '1' } },
-              pulseGold: { '0%, 100%': { transform: 'scale(1)', opacity: '1' }, '50%': { transform: 'scale(1.05)', opacity: '0.8' } }
+              pulseGold: { '0%, 100%': { transform: 'scale(1)', opacity: '1' }, '50%': { transform: 'scale(1.05)', opacity: '0.8' } },
+              float: { '0%, 100%': { transform: 'translateY(0)' }, '50%': { transform: 'translateY(-10px)' } },
+              giftFloat: { 
+                '0%': { transform: 'translateY(100px) scale(0.5)', opacity: '0' },
+                '50%': { transform: 'translateY(-20px) scale(1.2)', opacity: '1' },
+                '100%': { transform: 'translateY(0) scale(1)', opacity: '1' }
+              }
             }
           }
         }
@@ -186,11 +194,6 @@
         100% { transform: rotate(360deg) translateX(40px) rotate(-360deg); }
       }
 
-      @keyframes float {
-        0%, 100% { transform: translateY(0); }
-        50% { transform: translateY(-5px); }
-      }
-
       /* Casino animations */
       @keyframes spin {
         0% { transform: rotate(0deg); }
@@ -232,6 +235,18 @@
         animation: win 0.5s ease-in-out 3;
       }
 
+      /* NFT Gift Animation */
+      .nft-gift-message {
+        animation: giftFloat 2s ease-in-out;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 16px;
+        padding: 12px;
+        margin: 8px 0;
+        text-align: center;
+        border: 2px solid gold;
+        box-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+      }
+
       /* Responsive text sizes */
       @media (max-width: 380px) {
         .text-responsive-sm {
@@ -241,6 +256,26 @@
           font-size: 0.75rem;
         }
       }
+
+      /* Settings grid for mobile */
+      .settings-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+        gap: 8px;
+      }
+
+      @media (max-width: 480px) {
+        .settings-grid {
+          grid-template-columns: repeat(2, 1fr);
+        }
+      }
+
+      /* NFT rarity colors */
+      .nft-common { border: 2px solid #6b7280; }
+      .nft-rare { border: 2px solid #3b82f6; background: linear-gradient(135deg, #1e40af20, #3b82f620); }
+      .nft-epic { border: 2px solid #8b5cf6; background: linear-gradient(135deg, #7c3aed20, #8b5cf620); }
+      .nft-legendary { border: 2px solid #f59e0b; background: linear-gradient(135deg, #d9770620, #f59e0b20); }
+      .nft-mythic { border: 2px solid #ef4444; background: linear-gradient(135deg, #dc262620, #ef444420); }
     </style>
 
     <!-- Import Map -->
@@ -263,7 +298,7 @@
     <script type="text/babel" data-type="module">
         import React, { useState, useEffect, useRef } from 'react';
         import { createRoot } from 'react-dom/client';
-        import { Search, Send, Image as ImageIcon, Mic, X, ChevronLeft, Video, Settings as SettingsIcon, Menu, Trash2, Smile, MoreVertical, Lock, LogOut, User as UserIcon, Loader2, Coins, Zap, Crown, Palette, Edit3, Dice5, Trophy, Gift, Bot, TrendingUp, Send as SendIcon, Info, Clock } from 'lucide-react';
+        import { Search, Send, Image as ImageIcon, Mic, X, ChevronLeft, Video, Settings as SettingsIcon, Menu, Trash2, Smile, MoreVertical, Lock, LogOut, User as UserIcon, Loader2, Coins, Zap, Crown, Palette, Edit3, Dice5, Trophy, Gift, Bot, TrendingUp, Send as SendIcon, Info, Clock, Star, Sparkles, ShoppingCart, Users, ArrowLeftRight } from 'lucide-react';
         import { format } from 'date-fns';
         import { initializeApp } from 'firebase/app';
         import { getDatabase, ref, onValue, set, update, push, off, query, orderByChild, startAt, endAt, remove, get } from 'firebase/database';
@@ -308,45 +343,99 @@
         const NFTMarketModal = ({ isOpen, onClose, currentUser, userCoins, onCoinsUpdate, userNFTs, onNFTUpdate }) => {
             const [selectedNFT, setSelectedNFT] = useState(null);
             const [isLoading, setIsLoading] = useState(false);
-            const [activeNFT, setActiveNFT] = useState(userNFTs || []);
+            const [activeTab, setActiveTab] = useState('market');
+            const [giftRecipient, setGiftRecipient] = useState('');
+            const [giftNFT, setGiftNFT] = useState(null);
+            const [nftPrices, setNftPrices] = useState({});
 
+            // Расширенный список NFT с разными редкостями и характеристиками
             const nfts = [
-                { id: 'dragon', name: 'Дракон', emoji: '🐉', price: 1000, description: 'Могущественный дракон' },
-                { id: 'phoenix', name: 'Феникс', emoji: '🦚', price: 1500, description: 'Огненная птица' },
-                { id: 'unicorn', name: 'Единорог', emoji: '🦄', price: 2000, description: 'Волшебный единорог' },
-                { id: 'robot', name: 'Робот', emoji: '🤖', price: 800, description: 'Технологичный робот' },
-                { id: 'alien', name: 'Пришелец', emoji: '👽', price: 1200, description: 'Инопланетный гость' },
-                { id: 'ghost', name: 'Призрак', emoji: '👻', price: 600, description: 'Таинственный призрак' },
-                { id: 'dinosaur', name: 'Динозавр', emoji: '🦖', price: 1800, description: 'Древний ящер' },
-                { id: 'spaceship', name: 'Корабль', emoji: '🚀', price: 2200, description: 'Космический корабль' },
-                { id: 'comet', name: 'Комета', emoji: '☄️', price: 2500, description: 'Небесная комета' },
-                { id: 'treasure', name: 'Сокровище', emoji: '💎', price: 3000, description: 'Драгоценный клад' },
-                { id: 'panda', name: 'Панда', emoji: '🐼', price: 900, description: 'Милая панда' },
-                { id: 'tiger', name: 'Тигр', emoji: '🐯', price: 1300, description: 'Сильный тигр' },
-                { id: 'eagle', name: 'Орёл', emoji: '🦅', price: 1600, description: 'Гордый орёл' },
-                { id: 'whale', name: 'Кит', emoji: '🐋', price: 1900, description: 'Могучий кит' },
-                { id: 'lion', name: 'Лев', emoji: '🦁', price: 1400, description: 'Царь зверей' },
-                { id: 'fox', name: 'Лиса', emoji: '🦊', price: 1100, description: 'Хитрая лиса' }
+                // Common NFTs
+                { id: 'ghost', name: 'Призрак', emoji: '👻', price: 600, description: 'Таинственный призрак', rarity: 'common', element: 'shadow', power: 10 },
+                { id: 'robot', name: 'Робот', emoji: '🤖', price: 800, description: 'Технологичный робот', rarity: 'common', element: 'tech', power: 15 },
+                { id: 'panda', name: 'Панда', emoji: '🐼', price: 900, description: 'Милая панда', rarity: 'common', element: 'nature', power: 12 },
+                { id: 'fox', name: 'Лиса', emoji: '🦊', price: 1100, description: 'Хитрая лиса', rarity: 'common', element: 'nature', power: 18 },
+                
+                // Rare NFTs
+                { id: 'alien', name: 'Пришелец', emoji: '👽', price: 1200, description: 'Инопланетный гость', rarity: 'rare', element: 'cosmic', power: 25 },
+                { id: 'tiger', name: 'Тигр', emoji: '🐯', price: 1300, description: 'Сильный тигр', rarity: 'rare', element: 'nature', power: 30 },
+                { id: 'lion', name: 'Лев', emoji: '🦁', price: 1400, description: 'Царь зверей', rarity: 'rare', element: 'nature', power: 35 },
+                { id: 'eagle', name: 'Орёл', emoji: '🦅', price: 1600, description: 'Гордый орёл', rarity: 'rare', element: 'air', power: 28 },
+                
+                // Epic NFTs
+                { id: 'dragon', name: 'Дракон', emoji: '🐉', price: 1800, description: 'Могущественный дракон', rarity: 'epic', element: 'fire', power: 50 },
+                { id: 'dinosaur', name: 'Динозавр', emoji: '🦖', price: 2000, description: 'Древний ящер', rarity: 'epic', element: 'earth', power: 45 },
+                { id: 'phoenix', name: 'Феникс', emoji: '🦚', price: 2200, description: 'Огненная птица', rarity: 'epic', element: 'fire', power: 55 },
+                { id: 'whale', name: 'Кит', emoji: '🐋', price: 2400, description: 'Могучий кит', rarity: 'epic', element: 'water', power: 48 },
+                
+                // Legendary NFTs
+                { id: 'unicorn', name: 'Единорог', emoji: '🦄', price: 3000, description: 'Волшебный единорог', rarity: 'legendary', element: 'magic', power: 80 },
+                { id: 'spaceship', name: 'Корабль', emoji: '🚀', price: 3500, description: 'Космический корабль', rarity: 'legendary', element: 'cosmic', power: 75 },
+                { id: 'comet', name: 'Комета', emoji: '☄️', price: 4000, description: 'Небесная комета', rarity: 'legendary', element: 'cosmic', power: 85 },
+                { id: 'treasure', name: 'Сокровище', emoji: '💎', price: 5000, description: 'Драгоценный клад', rarity: 'legendary', element: 'gold', power: 90 },
+                
+                // Mythic NFTs
+                { id: 'rainbow_dragon', name: 'Радужный Дракон', emoji: '🌈🐉', price: 8000, description: 'Легендарный радужный дракон', rarity: 'mythic', element: 'rainbow', power: 150 },
+                { id: 'cosmic_phoenix', name: 'Космический Феникс', emoji: '🌌🦚', price: 10000, description: 'Бессмертный космический феникс', rarity: 'mythic', element: 'cosmic', power: 180 },
+                { id: 'time_wizard', name: 'Маг Времени', emoji: '⏳🧙', price: 12000, description: 'Повелитель времени и пространства', rarity: 'mythic', element: 'time', power: 200 },
+                { id: 'infinity_guardian', name: 'Страж Бесконечности', emoji: '∞🛡️', price: 15000, description: 'Защитник вселенной', rarity: 'mythic', element: 'infinity', power: 250 }
             ];
+
+            // Загрузка текущих цен NFT
+            useEffect(() => {
+                const nftPricesRef = ref(db, 'nftPrices');
+                onValue(nftPricesRef, (snapshot) => {
+                    const data = snapshot.val();
+                    if (data) {
+                        setNftPrices(data);
+                    }
+                });
+            }, []);
 
             if (!isOpen) return null;
 
+            const getCurrentPrice = (nft) => {
+                return nftPrices[nft.id] || nft.price;
+            };
+
+            const getRarityClass = (rarity) => {
+                switch(rarity) {
+                    case 'common': return 'nft-common';
+                    case 'rare': return 'nft-rare';
+                    case 'epic': return 'nft-epic';
+                    case 'legendary': return 'nft-legendary';
+                    case 'mythic': return 'nft-mythic';
+                    default: return 'nft-common';
+                }
+            };
+
+            const getRarityColor = (rarity) => {
+                switch(rarity) {
+                    case 'common': return 'text-gray-400';
+                    case 'rare': return 'text-blue-400';
+                    case 'epic': return 'text-purple-400';
+                    case 'legendary': return 'text-yellow-400';
+                    case 'mythic': return 'text-red-400';
+                    default: return 'text-gray-400';
+                }
+            };
+
             const handleBuyNFT = async (nft) => {
-                if (userCoins < nft.price) {
-                    alert(`Недостаточно коинов! Нужно ${nft.price} коинов для покупки этого NFT.`);
+                const currentPrice = getCurrentPrice(nft);
+                if (userCoins < currentPrice) {
+                    alert(`Недостаточно коинов! Нужно ${currentPrice} коинов для покупки этого NFT.`);
                     return;
                 }
 
                 setIsLoading(true);
                 try {
-                    const newNFTs = [...(activeNFT || []), nft.id];
+                    const newNFTs = [...(userNFTs || []), { id: nft.id, purchasedAt: Date.now() }];
                     await update(ref(db, `users/${currentUser}`), { 
-                        coins: userCoins - nft.price,
+                        coins: userCoins - currentPrice,
                         nfts: newNFTs
                     });
-                    onCoinsUpdate(userCoins - nft.price);
+                    onCoinsUpdate(userCoins - currentPrice);
                     onNFTUpdate(newNFTs);
-                    setActiveNFT(newNFTs);
                     setSelectedNFT(nft.id);
                     alert(`Вы успешно купили NFT "${nft.name}"!`);
                 } catch (error) {
@@ -359,12 +448,11 @@
             const handleRemoveNFT = async (nftId) => {
                 setIsLoading(true);
                 try {
-                    const newNFTs = activeNFT.filter(id => id !== nftId);
+                    const newNFTs = userNFTs.filter(nft => nft.id !== nftId);
                     await update(ref(db, `users/${currentUser}`), { 
                         nfts: newNFTs
                     });
                     onNFTUpdate(newNFTs);
-                    setActiveNFT(newNFTs);
                     alert(`NFT удален из вашего профиля!`);
                 } catch (error) {
                     console.error('NFT remove error:', error);
@@ -373,6 +461,251 @@
                 setIsLoading(false);
             };
 
+            const handleGiftNFT = async () => {
+                if (!giftRecipient.trim() || !giftNFT) {
+                    alert('Выберите NFT и укажите получателя');
+                    return;
+                }
+
+                if (giftRecipient === currentUser) {
+                    alert('Нельзя подарить NFT самому себе');
+                    return;
+                }
+
+                setIsLoading(true);
+                try {
+                    // Проверяем существование получателя
+                    const recipientRef = ref(db, `users/${giftRecipient}`);
+                    const snapshot = await get(recipientRef);
+                    
+                    if (!snapshot.exists()) {
+                        alert('Пользователь не найден');
+                        setIsLoading(false);
+                        return;
+                    }
+
+                    const recipientData = snapshot.val();
+                    const recipientNFTs = recipientData.nfts || [];
+
+                    // Удаляем NFT у отправителя
+                    const newSenderNFTs = userNFTs.filter(nft => nft.id !== giftNFT.id);
+                    await update(ref(db, `users/${currentUser}`), { 
+                        nfts: newSenderNFTs
+                    });
+
+                    // Добавляем NFT получателю
+                    const newRecipientNFTs = [...recipientNFTs, { id: giftNFT.id, gifted: true, from: currentUser, giftedAt: Date.now() }];
+                    await update(recipientRef, { 
+                        nfts: newRecipientNFTs
+                    });
+
+                    // Создаем сообщение о подарке в чате
+                    const chatId = [currentUser, giftRecipient].sort().join('_');
+                    const messageRef = push(ref(db, `messages/${chatId}`));
+                    await set(messageRef, {
+                        sender: currentUser,
+                        text: `Подарил вам NFT: ${giftNFT.name} ${giftNFT.emoji}`,
+                        timestamp: Date.now(),
+                        type: 'nft_gift',
+                        nftData: giftNFT,
+                        deleted: false
+                    });
+
+                    onNFTUpdate(newSenderNFTs);
+                    setGiftNFT(null);
+                    setGiftRecipient('');
+                    alert(`NFT "${giftNFT.name}" успешно подарен пользователю ${giftRecipient}!`);
+                } catch (error) {
+                    console.error('NFT gift error:', error);
+                    alert('Ошибка при отправке NFT в подарок');
+                }
+                setIsLoading(false);
+            };
+
+            const handleSellNFT = async (nft, price) => {
+                if (price <= 0) {
+                    alert('Укажите корректную цену');
+                    return;
+                }
+
+                setIsLoading(true);
+                try {
+                    // Добавляем NFT на рынок
+                    const marketRef = push(ref(db, 'nftMarket'));
+                    await set(marketRef, {
+                        nftId: nft.id,
+                        seller: currentUser,
+                        price: price,
+                        listedAt: Date.now(),
+                        nftData: nfts.find(item => item.id === nft.id)
+                    });
+
+                    // Удаляем NFT у продавца
+                    const newNFTs = userNFTs.filter(item => item.id !== nft.id);
+                    await update(ref(db, `users/${currentUser}`), { 
+                        nfts: newNFTs
+                    });
+
+                    onNFTUpdate(newNFTs);
+                    alert(`NFT "${nft.name}" выставлен на продажу за ${price} коинов!`);
+                } catch (error) {
+                    console.error('NFT sell error:', error);
+                    alert('Ошибка при выставлении NFT на продажу');
+                }
+                setIsLoading(false);
+            };
+
+            const renderMarketTab = () => (
+                <div className="space-y-4">
+                    <div className="text-center mb-4">
+                        <p className="text-slate-400 text-sm">Коллекционные NFT для отображения рядом с аватаркой</p>
+                        <p className="text-xs text-slate-500 mt-1">Ваши коины: <span className="text-yellow-500 font-bold">{userCoins.toFixed(3)}</span></p>
+                    </div>
+                    
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                        {nfts.map((nft) => {
+                            const isPurchased = userNFTs.some(userNft => userNft.id === nft.id);
+                            const currentPrice = getCurrentPrice(nft);
+                            
+                            if (isPurchased) return null;
+                            
+                            return (
+                                <div
+                                    key={nft.id}
+                                    className={`p-3 rounded-xl flex flex-col items-center gap-2 transition-all duration-200 min-h-[140px] ${getRarityClass(nft.rarity)}`}
+                                >
+                                    <div className="text-3xl">{nft.emoji}</div>
+                                    <div className="text-center">
+                                        <h3 className="font-medium text-white text-sm">{nft.name}</h3>
+                                        <p className="text-xs text-slate-400 mb-1">{nft.description}</p>
+                                        <div className={`text-xs ${getRarityColor(nft.rarity)}`}>
+                                            {nft.rarity.toUpperCase()} • {nft.element} • ⚡{nft.power}
+                                        </div>
+                                        <p className="text-xs text-slate-300 mt-1">
+                                            {currentPrice} коинов
+                                        </p>
+                                    </div>
+                                    <Button 
+                                        onClick={() => handleBuyNFT(nft)}
+                                        isLoading={isLoading}
+                                        disabled={userCoins < currentPrice}
+                                        variant="gold"
+                                        className="w-full text-xs mt-1"
+                                    >
+                                        Купить
+                                    </Button>
+                                </div>
+                            );
+                        })}
+                    </div>
+                </div>
+            );
+
+            const renderMyNFTsTab = () => (
+                <div className="space-y-4">
+                    {userNFTs.length > 0 ? (
+                        <>
+                            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                                {userNFTs.map((userNft) => {
+                                    const nft = nfts.find(n => n.id === userNft.id);
+                                    if (!nft) return null;
+                                    
+                                    return (
+                                        <div
+                                            key={nft.id}
+                                            className={`p-3 rounded-xl flex flex-col items-center gap-2 ${getRarityClass(nft.rarity)}`}
+                                        >
+                                            <div className="text-3xl">{nft.emoji}</div>
+                                            <div className="text-center">
+                                                <h3 className="font-medium text-white text-sm">{nft.name}</h3>
+                                                <div className={`text-xs ${getRarityColor(nft.rarity)}`}>
+                                                    {nft.rarity.toUpperCase()} • ⚡{nft.power}
+                                                </div>
+                                                {userNft.gifted && (
+                                                    <p className="text-xs text-green-400 mt-1">
+                                                        Подарок от {userNft.from}
+                                                    </p>
+                                                )}
+                                            </div>
+                                            <div className="flex gap-1 w-full">
+                                                <Button 
+                                                    onClick={() => handleRemoveNFT(nft.id)}
+                                                    isLoading={isLoading}
+                                                    variant="danger"
+                                                    className="flex-1 text-xs"
+                                                >
+                                                    Убрать
+                                                </Button>
+                                                <Button 
+                                                    onClick={() => setGiftNFT(nft)}
+                                                    variant="primary"
+                                                    className="flex-1 text-xs"
+                                                >
+                                                    Подарить
+                                                </Button>
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </>
+                    ) : (
+                        <div className="text-center text-slate-500 py-8">
+                            <p>У вас пока нет NFT</p>
+                            <p className="text-sm mt-1">Купите свои первые NFT на вкладке "Магазин"</p>
+                        </div>
+                    )}
+                </div>
+            );
+
+            const renderGiftTab = () => (
+                <div className="space-y-4">
+                    <div className="text-center">
+                        <p className="text-slate-400 text-sm">Подарите NFT другому пользователю</p>
+                    </div>
+                    
+                    {giftNFT ? (
+                        <div className="bg-slate-800 rounded-xl p-4">
+                            <div className="text-center mb-4">
+                                <div className="text-4xl mb-2">{giftNFT.emoji}</div>
+                                <h3 className="font-bold text-white">{giftNFT.name}</h3>
+                                <p className="text-slate-400 text-sm">{giftNFT.description}</p>
+                            </div>
+                            
+                            <div className="space-y-3">
+                                <input 
+                                    type="text" 
+                                    placeholder="Имя получателя" 
+                                    value={giftRecipient}
+                                    onChange={e => setGiftRecipient(e.target.value)}
+                                    className="w-full bg-slate-700 border border-slate-600 rounded-xl px-3 py-2 text-white focus:border-indigo-500 outline-none text-sm" 
+                                />
+                                <Button 
+                                    onClick={handleGiftNFT}
+                                    isLoading={isLoading}
+                                    disabled={!giftRecipient.trim()}
+                                    variant="gold"
+                                    className="w-full"
+                                >
+                                    Подарить NFT
+                                </Button>
+                                <Button 
+                                    onClick={() => setGiftNFT(null)}
+                                    variant="secondary"
+                                    className="w-full"
+                                >
+                                    Отмена
+                                </Button>
+                            </div>
+                        </div>
+                    ) : (
+                        <div className="text-center text-slate-500 py-8">
+                            <p>Выберите NFT для подарка на вкладке "Мои NFT"</p>
+                        </div>
+                    )}
+                </div>
+            );
+
             return (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-3 bg-black/60 backdrop-blur-sm animate-fade-in safe-area-top safe-area-bottom">
                     <div className="w-full max-w-4xl bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[95vh]">
@@ -380,89 +713,28 @@
                             <h2 className="text-lg font-bold text-white flex items-center gap-2"><TrendingUp size={18} className="text-yellow-500" /> NFT Магазин</h2>
                             <button onClick={onClose} className="text-slate-400 hover:text-white p-1"><X size={20} /></button>
                         </div>
+                        
+                        {/* Tabs */}
+                        <div className="flex border-b border-slate-800 bg-slate-900/50">
+                            {['market', 'my_nfts', 'gift'].map(tab => (
+                                <button 
+                                    key={tab} 
+                                    onClick={() => setActiveTab(tab)} 
+                                    className={`flex-1 py-3 text-xs font-medium transition-colors min-h-[44px] ${
+                                        activeTab === tab ? 'text-indigo-400 border-b-2 border-indigo-400' : 'text-slate-400'
+                                    }`}
+                                >
+                                    {tab === 'market' ? '🛍️ Магазин' : 
+                                     tab === 'my_nfts' ? '🎴 Мои NFT' : 
+                                     '🎁 Подарить'}
+                                </button>
+                            ))}
+                        </div>
+                        
                         <div className="p-4 overflow-y-auto custom-scrollbar flex-1">
-                            <div className="text-center mb-4">
-                                <p className="text-slate-400 text-sm">Коллекционные NFT для отображения рядом с аватаркой</p>
-                                <p className="text-xs text-slate-500 mt-1">Ваши коины: <span className="text-yellow-500 font-bold">{userCoins.toFixed(3)}</span></p>
-                            </div>
-                            
-                            {/* Active NFTs */}
-                            {activeNFT.length > 0 && (
-                                <div className="mb-6">
-                                    <h3 className="text-white font-medium mb-3 text-sm">Ваши NFT</h3>
-                                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-                                        {activeNFT.map(nftId => {
-                                            const nft = nfts.find(n => n.id === nftId);
-                                            if (!nft) return null;
-                                            
-                                            return (
-                                                <div
-                                                    key={nft.id}
-                                                    className="p-3 rounded-xl flex flex-col items-center gap-2 bg-green-500/10 border-2 border-green-500"
-                                                >
-                                                    <div className="text-3xl">{nft.emoji}</div>
-                                                    <div className="text-center">
-                                                        <h3 className="font-medium text-white text-sm">{nft.name}</h3>
-                                                        <p className="text-xs text-slate-400 mb-1">{nft.description}</p>
-                                                    </div>
-                                                    <Button 
-                                                        onClick={() => handleRemoveNFT(nft.id)}
-                                                        isLoading={isLoading}
-                                                        variant="danger"
-                                                        className="w-full text-xs mt-1"
-                                                    >
-                                                        Убрать
-                                                    </Button>
-                                                </div>
-                                            );
-                                        })}
-                                    </div>
-                                </div>
-                            )}
-                            
-                            <h3 className="text-white font-medium mb-3 text-sm">Доступные NFT</h3>
-                            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-                                {nfts.map((nft) => {
-                                    const isPurchased = activeNFT.includes(nft.id);
-                                    
-                                    if (isPurchased) return null;
-                                    
-                                    return (
-                                        <div
-                                            key={nft.id}
-                                            className={`p-3 rounded-xl flex flex-col items-center gap-2 transition-all duration-200 min-h-[140px] ${
-                                                isPurchased 
-                                                    ? 'bg-green-500/10 border-2 border-green-500' 
-                                                    : 'bg-slate-800 hover:bg-slate-700 border-2 border-slate-600 hover:border-yellow-500'
-                                            }`}
-                                        >
-                                            <div className="text-3xl">{nft.emoji}</div>
-                                            <div className="text-center">
-                                                <h3 className="font-medium text-white text-sm">{nft.name}</h3>
-                                                <p className="text-xs text-slate-400 mb-1">{nft.description}</p>
-                                                <p className="text-xs text-slate-300">
-                                                    {isPurchased ? (
-                                                        <span className="text-green-500">✓ Куплено</span>
-                                                    ) : (
-                                                        `${nft.price} коинов`
-                                                    )}
-                                                </p>
-                                            </div>
-                                            {!isPurchased && (
-                                                <Button 
-                                                    onClick={() => handleBuyNFT(nft)}
-                                                    isLoading={isLoading}
-                                                    disabled={userCoins < nft.price}
-                                                    variant="gold"
-                                                    className="w-full text-xs mt-1"
-                                                >
-                                                    Купить
-                                                </Button>
-                                            )}
-                                        </div>
-                                    );
-                                })}
-                            </div>
+                            {activeTab === 'market' && renderMarketTab()}
+                            {activeTab === 'my_nfts' && renderMyNFTsTab()}
+                            {activeTab === 'gift' && renderGiftTab()}
                         </div>
                     </div>
                 </div>
@@ -710,9 +982,9 @@
                                     </div>
                                     {user.nfts && user.nfts.length > 0 && (
                                         <div className="nft-orbital">
-                                            {user.nfts.map((nftId, index) => {
-                                                const nft = nfts.find(n => n.id === nftId);
-                                                if (!nft) return null;
+                                            {user.nfts.map((nft, index) => {
+                                                const nftData = nfts.find(n => n.id === nft.id);
+                                                if (!nftData) return null;
                                                 const angle = (index / user.nfts.length) * 360;
                                                 return (
                                                     <div 
@@ -722,7 +994,7 @@
                                                             transform: `rotate(${angle}deg) translateX(30px) rotate(-${angle}deg)`
                                                         }}
                                                     >
-                                                        {nft.emoji}
+                                                        {nftData.emoji}
                                                     </div>
                                                 );
                                             })}
@@ -789,12 +1061,12 @@
                                 <div className="mb-4">
                                     <label className="text-slate-400 text-sm mb-2 block">Коллекция NFT</label>
                                     <div className="flex flex-wrap gap-2">
-                                        {user.nfts.map(nftId => {
-                                            const nft = nfts.find(n => n.id === nftId);
-                                            if (!nft) return null;
+                                        {user.nfts.map(nft => {
+                                            const nftData = nfts.find(n => n.id === nft.id);
+                                            if (!nftData) return null;
                                             return (
-                                                <div key={nft.id} className="text-2xl" title={nft.id}>
-                                                    {nft.emoji}
+                                                <div key={nft.id} className="text-2xl" title={nftData.name}>
+                                                    {nftData.emoji}
                                                 </div>
                                             );
                                         })}
@@ -2115,7 +2387,7 @@
         };
 
         // 11. Settings Modal
-        const SettingsModal = ({ isOpen, onClose, currentUser, onLogout, userCoins, onCoinsUpdate, userAvatar, userFrame, userNameColor, userStatus, userStatusEmoji }) => {
+        const SettingsModal = ({ isOpen, onClose, currentUser, onLogout, userCoins, onCoinsUpdate, userAvatar, userFrame, userNameColor, userStatus, userStatusEmoji, onAvatarChange, onFrameChange, onColorChange, onStatusChange, purchasedAvatars, purchasedFrames, purchasedColors, purchasedStatuses }) => {
             const [activeTab, setActiveTab] = useState('profile');
             const [oldPassword, setOldPassword] = useState('');
             const [newPassword, setNewPassword] = useState('');
@@ -2296,6 +2568,23 @@
                 };
             };
 
+            const getFrameClass = (frameId) => {
+                switch(frameId) {
+                    case 'basic': return 'frame-basic';
+                    case 'silver': return 'frame-silver';
+                    case 'gold': return 'frame-gold';
+                    case 'diamond': return 'frame-diamond';
+                    case 'rainbow': return 'frame-rainbow';
+                    case 'platinum': return 'frame-platinum';
+                    case 'obsidian': return 'frame-obsidian';
+                    case 'emerald': return 'frame-emerald';
+                    case 'ruby': return 'frame-ruby';
+                    case 'sapphire': return 'frame-sapphire';
+                    case 'legendary': return 'frame-legendary';
+                    default: return '';
+                }
+            };
+
             return (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-3 bg-black/60 backdrop-blur-sm animate-fade-in safe-area-top safe-area-bottom">
                     <div className="w-full max-w-md bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[95vh]">
@@ -2303,16 +2592,19 @@
                             <h2 className="text-lg font-bold text-white flex items-center gap-2"><UserIcon size={18} className="text-indigo-500" /> Настройки</h2>
                             <button onClick={onClose} className="text-slate-400 hover:text-white p-1"><X size={20} /></button>
                         </div>
-                        <div className="flex border-b border-slate-800 bg-slate-900/50 shrink-0">
-                            {['profile', 'coins', 'security', 'danger'].map(tab => (
+                        <div className="flex border-b border-slate-800 bg-slate-900/50 shrink-0 overflow-x-auto">
+                            {['profile', 'appearance', 'coins', 'security', 'danger'].map(tab => (
                                 <button 
                                     key={tab} 
                                     onClick={() => setActiveTab(tab)} 
-                                    className={`flex-1 py-2 text-xs font-medium transition-colors capitalize min-h-[44px] ${
+                                    className={`flex-1 py-2 text-xs font-medium transition-colors capitalize min-h-[44px] whitespace-nowrap px-2 ${
                                         activeTab === tab ? 'text-indigo-400 border-b-2 border-indigo-400' : 'text-slate-400'
                                     }`}
                                 >
-                                    {tab === 'profile' ? 'Профиль' : tab === 'coins' ? 'Коинсы' : tab === 'security' ? 'Пароль' : 'Удалить'}
+                                    {tab === 'profile' ? 'Профиль' : 
+                                     tab === 'appearance' ? 'Внешность' :
+                                     tab === 'coins' ? 'Коинсы' : 
+                                     tab === 'security' ? 'Пароль' : 'Удалить'}
                                 </button>
                             ))}
                         </div>
@@ -2350,6 +2642,48 @@
                                     >
                                         Выйти
                                     </Button>
+                                </div>
+                            )}
+
+                            {activeTab === 'appearance' && (
+                                <div className="space-y-3">
+                                    <div className="settings-grid">
+                                        <Button 
+                                            onClick={() => {/* Open Avatar Modal */}}
+                                            variant="secondary"
+                                            className="flex-col h-auto py-3"
+                                            icon={<UserIcon size={16} />}
+                                        >
+                                            Аватарка
+                                        </Button>
+                                        <Button 
+                                            onClick={() => {/* Open Frame Modal */}}
+                                            variant="secondary"
+                                            className="flex-col h-auto py-3"
+                                            icon={<ImageIcon size={16} />}
+                                        >
+                                            Рамка
+                                        </Button>
+                                        <Button 
+                                            onClick={() => {/* Open Color Modal */}}
+                                            variant="secondary"
+                                            className="flex-col h-auto py-3"
+                                            icon={<Palette size={16} />}
+                                        >
+                                            Цвет имени
+                                        </Button>
+                                        <Button 
+                                            onClick={() => {/* Open Status Modal */}}
+                                            variant="secondary"
+                                            className="flex-col h-auto py-3"
+                                            icon={<Edit3 size={16} />}
+                                        >
+                                            Статус
+                                        </Button>
+                                    </div>
+                                    <div className="text-xs text-slate-400 text-center">
+                                        Настройте внешний вид вашего профиля
+                                    </div>
                                 </div>
                             )}
 
@@ -2581,6 +2915,13 @@
                     case 'photo': return <div className="relative group"><img src={message.mediaUrl} alt="Photo" className="max-w-full sm:max-w-[280px] max-h-[300px] object-cover rounded-lg" loading="lazy" /></div>;
                     case 'video': return <video controls src={message.mediaUrl} className="max-w-full sm:max-w-[280px] max-h-[300px] rounded-lg bg-black" playsInline />;
                     case 'audio': return <div className="flex items-center gap-2 min-w-[160px]"><div className={`p-1.5 rounded-full ${isOwn ? 'bg-white/20' : 'bg-indigo-500/20 text-indigo-400'}`}><Mic size={14}/></div><audio controls src={message.mediaUrl} className="h-7 w-full max-w-[160px]" /></div>;
+                    case 'nft_gift': return (
+                        <div className="nft-gift-message">
+                            <div className="text-4xl mb-2">{message.nftData?.emoji}</div>
+                            <p className="text-white font-bold">{message.text}</p>
+                            <p className="text-yellow-200 text-sm mt-1">🎁 Вам подарили NFT!</p>
+                        </div>
+                    );
                     default: return <p className="break-words whitespace-pre-wrap leading-relaxed text-[14px]">{message.text}</p>;
                 }
             };
@@ -3220,6 +3561,14 @@
                         userNameColor={userNameColor}
                         userStatus={userStatus}
                         userStatusEmoji={userStatusEmoji}
+                        onAvatarChange={setUserAvatar}
+                        onFrameChange={setUserFrame}
+                        onColorChange={setUserNameColor}
+                        onStatusChange={(status, emoji) => { setUserStatus(status); setUserStatusEmoji(emoji); }}
+                        purchasedAvatars={purchasedAvatars}
+                        purchasedFrames={purchasedFrames}
+                        purchasedColors={purchasedColors}
+                        purchasedStatuses={purchasedStatuses}
                     />
                     
                     <AvatarModal
@@ -3312,7 +3661,7 @@
                                     </button>
                                     {userNFTs && userNFTs.length > 0 && (
                                         <div className="nft-orbital">
-                                            {userNFTs.map((nftId, index) => {
+                                            {userNFTs.map((nft, index) => {
                                                 const nftsData = [
                                                     { id: 'dragon', emoji: '🐉' },
                                                     { id: 'phoenix', emoji: '🦚' },
@@ -3331,8 +3680,8 @@
                                                     { id: 'lion', emoji: '🦁' },
                                                     { id: 'fox', emoji: '🦊' }
                                                 ];
-                                                const nft = nftsData.find(n => n.id === nftId);
-                                                if (!nft) return null;
+                                                const nftData = nftsData.find(n => n.id === nft.id);
+                                                if (!nftData) return null;
                                                 const angle = (index / userNFTs.length) * 360;
                                                 return (
                                                     <div 
@@ -3342,7 +3691,7 @@
                                                             transform: `rotate(${angle}deg) translateX(20px) rotate(-${angle}deg)`
                                                         }}
                                                     >
-                                                        {nft.emoji}
+                                                        {nftData.emoji}
                                                     </div>
                                                 );
                                             })}
@@ -3447,7 +3796,7 @@
                                             </div>
                                             {u.nfts && u.nfts.length > 0 && (
                                                 <div className="nft-orbital">
-                                                    {u.nfts.map((nftId, index) => {
+                                                    {u.nfts.map((nft, index) => {
                                                         const nftsData = [
                                                             { id: 'dragon', emoji: '🐉' },
                                                             { id: 'phoenix', emoji: '🦚' },
@@ -3466,8 +3815,8 @@
                                                             { id: 'lion', emoji: '🦁' },
                                                             { id: 'fox', emoji: '🦊' }
                                                         ];
-                                                        const nft = nftsData.find(n => n.id === nftId);
-                                                        if (!nft) return null;
+                                                        const nftData = nftsData.find(n => n.id === nft.id);
+                                                        if (!nftData) return null;
                                                         const angle = (index / u.nfts.length) * 360;
                                                         return (
                                                             <div 
@@ -3477,7 +3826,7 @@
                                                                     transform: `rotate(${angle}deg) translateX(25px) rotate(-${angle}deg)`
                                                                 }}
                                                             >
-                                                                {nft.emoji}
+                                                                {nftData.emoji}
                                                             </div>
                                                         );
                                                     })}
@@ -3516,7 +3865,7 @@
                                                 </div>
                                                 {userData?.nfts && userData.nfts.length > 0 && (
                                                     <div className="nft-orbital">
-                                                        {userData.nfts.map((nftId, index) => {
+                                                        {userData.nfts.map((nft, index) => {
                                                             const nftsData = [
                                                                 { id: 'dragon', emoji: '🐉' },
                                                                 { id: 'phoenix', emoji: '🦚' },
@@ -3535,8 +3884,8 @@
                                                                 { id: 'lion', emoji: '🦁' },
                                                                 { id: 'fox', emoji: '🦊' }
                                                             ];
-                                                            const nft = nftsData.find(n => n.id === nftId);
-                                                            if (!nft) return null;
+                                                            const nftData = nftsData.find(n => n.id === nft.id);
+                                                            if (!nftData) return null;
                                                             const angle = (index / userData.nfts.length) * 360;
                                                             return (
                                                                 <div 
@@ -3546,7 +3895,7 @@
                                                                         transform: `rotate(${angle}deg) translateX(25px) rotate(-${angle}deg)`
                                                                     }}
                                                                 >
-                                                                    {nft.emoji}
+                                                                    {nftData.emoji}
                                                                 </div>
                                                             );
                                                         })}
@@ -3564,7 +3913,8 @@
                                                     {c.lastMessage.type === 'text' ? c.lastMessage.text : 
                                                      c.lastMessage.type === 'photo' ? '📷 Фото' : 
                                                      c.lastMessage.type === 'video' ? '🎥 Видео' : 
-                                                     c.lastMessage.type === 'audio' ? '🎤 Голосовое' : 'Сообщение'}
+                                                     c.lastMessage.type === 'audio' ? '🎤 Голосовое' : 
+                                                     c.lastMessage.type === 'nft_gift' ? '🎁 NFT Подарок' : 'Сообщение'}
                                                 </p>
                                             </div>
                                             <button 
@@ -3601,7 +3951,7 @@
                                     </div>
                                     {usersData[activeChatUser]?.nfts && usersData[activeChatUser].nfts.length > 0 && (
                                         <div className="nft-orbital">
-                                            {usersData[activeChatUser].nfts.map((nftId, index) => {
+                                            {usersData[activeChatUser].nfts.map((nft, index) => {
                                                 const nftsData = [
                                                     { id: 'dragon', emoji: '🐉' },
                                                     { id: 'phoenix', emoji: '🦚' },
@@ -3620,8 +3970,8 @@
                                                     { id: 'lion', emoji: '🦁' },
                                                     { id: 'fox', emoji: '🦊' }
                                                 ];
-                                                const nft = nftsData.find(n => n.id === nftId);
-                                                if (!nft) return null;
+                                                const nftData = nftsData.find(n => n.id === nft.id);
+                                                if (!nftData) return null;
                                                 const angle = (index / usersData[activeChatUser].nfts.length) * 360;
                                                 return (
                                                     <div 
@@ -3631,7 +3981,7 @@
                                                             transform: `rotate(${angle}deg) translateX(20px) rotate(-${angle}deg)`
                                                         }}
                                                     >
-                                                        {nft.emoji}
+                                                        {nftData.emoji}
                                                     </div>
                                                 );
                                             })}
