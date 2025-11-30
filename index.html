@@ -48,11 +48,10 @@
       .avatar-locked { filter: grayscale(1) brightness(0.5); position: relative; }
       .avatar-locked::after { content: "🔒"; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 20px; z-index: 10; }
       .nft-container { position: relative; display: inline-block; }
-      .nft-orbital { position: absolute; width: 80px; height: 80px; top: 50%; left: 50%; margin-top: -40px; margin-left: -40px; }
-      .nft-item { position: absolute; font-size: 20px; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; }
-      @keyframes orbit1 { 0% { transform: rotate(0deg) translateX(35px) rotate(0deg); } 100% { transform: rotate(360deg) translateX(35px) rotate(-360deg); } }
-      @keyframes orbit2 { 0% { transform: rotate(120deg) translateX(35px) rotate(-120deg); } 100% { transform: rotate(480deg) translateX(35px) rotate(-480deg); } }
-      @keyframes orbit3 { 0% { transform: rotate(240deg) translateX(35px) rotate(-240deg); } 100% { transform: rotate(600deg) translateX(35px) rotate(-600deg); } }
+      .nft-orbital { position: absolute; width: 60px; height: 60px; top: 50%; left: 50%; margin-top: -30px; margin-left: -30px; animation: orbit 10s linear infinite; z-index: 5; }
+      .nft-item { position: absolute; font-size: 20px; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; animation: float 3s ease-in-out infinite; }
+      @keyframes orbit { 0% { transform: rotate(0deg) translateX(40px) rotate(0deg); } 100% { transform: rotate(360deg) translateX(40px) rotate(-360deg); } }
+      @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
       @media (max-width: 640px) {
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
@@ -76,7 +75,7 @@
     <script type="text/babel" data-type="module">
         import React, { useState, useEffect, useRef } from 'react';
         import { createRoot } from 'react-dom/client';
-        import { Search, Send, Image as ImageIcon, Mic, X, ChevronLeft, Video, Settings as SettingsIcon, Trash2, Smile, MoreVertical, LogOut, User as UserIcon, Loader2, Coins, Crown, Palette, Edit3, Trophy, Bot, TrendingUp, Send as SendIcon, Info, Clock, Star, Zap } from 'lucide-react';
+        import { Search, Send, Image as ImageIcon, Mic, X, ChevronLeft, Video, Settings as SettingsIcon, Trash2, Smile, MoreVertical, LogOut, User as UserIcon, Loader2, Coins, Crown, Palette, Edit3, Trophy, Bot, TrendingUp, Send as SendIcon, Info, Clock, TrendingDown, Star, Zap, Shield, Skull, Crown as CrownIcon, Gem } from 'lucide-react';
         import { format } from 'date-fns';
         import { initializeApp } from 'firebase/app';
         import { getDatabase, ref, onValue, set, update, push, off, query, orderByChild, startAt, endAt, remove, get } from 'firebase/database';
@@ -127,423 +126,78 @@
             );
         };
 
-        // Avatar Modal
-        const AvatarModal = ({ isOpen, onClose, currentUser, userCoins, onAvatarChange, purchasedAvatars }) => {
-            const avatars = [
-                { emoji: '🐶', price: 50, name: 'Собака' },
-                { emoji: '🐱', price: 75, name: 'Кошка' },
-                { emoji: '🐭', price: 100, name: 'Мышь' },
-                { emoji: '🐹', price: 125, name: 'Хомяк' },
-                { emoji: '🐰', price: 150, name: 'Кролик' },
-                { emoji: '🦊', price: 175, name: 'Лиса' },
-                { emoji: '🐻', price: 200, name: 'Медведь' },
-                { emoji: '🐼', price: 225, name: 'Панда' }
-            ];
-
-            const handleAvatarSelect = async (avatar) => {
-                const isPurchased = purchasedAvatars.includes(avatar.emoji);
-                if (!isPurchased && userCoins < avatar.price && currentUser !== 'kayivi') {
-                    alert(`Нужно ${avatar.price} коинов для этой аватарки.`);
-                    return;
-                }
-                try {
-                    if (!isPurchased && currentUser !== 'kayivi') {
-                        const newPurchasedAvatars = [...purchasedAvatars, avatar.emoji];
-                        await update(ref(db, `users/${currentUser}`), { 
-                            coins: userCoins - avatar.price,
-                            avatar: avatar.emoji,
-                            purchasedAvatars: newPurchasedAvatars
-                        });
-                    } else {
-                        await update(ref(db, `users/${currentUser}`), { 
-                            avatar: avatar.emoji
-                        });
-                    }
-                    onAvatarChange(avatar.emoji);
-                    onClose();
-                } catch (error) {
-                    console.error('Avatar change error:', error);
-                    alert('Ошибка при покупке аватарки');
-                }
-            };
-
-            return (
-                <Modal isOpen={isOpen} onClose={onClose} title="🔄 Аватарка" className="max-w-2xl">
-                    <div className="text-center mb-4">
-                        <p className="text-slate-400 text-sm">Выберите аватарку</p>
-                        <p className="text-xs text-slate-500 mt-1">Баланс: <span className="text-yellow-500">{userCoins.toFixed(3)}</span></p>
-                    </div>
-                    <div className="grid grid-cols-4 gap-3">
-                        {avatars.map((avatar, i) => {
-                            const isPurchased = purchasedAvatars.includes(avatar.emoji);
-                            const canAfford = userCoins >= avatar.price || currentUser === 'kayivi';
-                            const isLocked = !isPurchased && !canAfford && currentUser !== 'kayivi';
-                            
-                            return (
-                                <button
-                                    key={i}
-                                    onClick={() => !isLocked && handleAvatarSelect(avatar)}
-                                    disabled={isLocked}
-                                    className={`p-3 rounded-xl flex flex-col items-center gap-2 transition-all ${
-                                        isLocked ? 'bg-slate-800 border-2 border-slate-700 avatar-locked' : 'bg-slate-800 hover:bg-slate-700 border-2 border-slate-600 hover:border-yellow-500'
-                                    }`}
-                                >
-                                    <div className="text-3xl">{avatar.emoji}</div>
-                                    <div className="text-center">
-                                        <h3 className="font-medium text-white text-xs">{avatar.name}</h3>
-                                        <p className="text-xs text-slate-400">
-                                            {isPurchased ? '✓ Куплено' : currentUser === 'kayivi' ? 'Бесплатно' : `${avatar.price} коинов`}
-                                        </p>
-                                    </div>
-                                </button>
-                            );
-                        })}
-                    </div>
-                </Modal>
-            );
-        };
-
-        // Frame Modal
-        const FrameModal = ({ isOpen, onClose, currentUser, userCoins, onFrameChange, userFrame, purchasedFrames }) => {
-            const frames = [
-                { id: 'none', name: 'Без рамки', price: 0, className: '' },
-                { id: 'basic', name: 'Базовая', price: 50, className: 'frame-basic' },
-                { id: 'silver', name: 'Серебряная', price: 250, className: 'frame-silver' },
-                { id: 'gold', name: 'Золотая', price: 500, className: 'frame-gold' },
-                { id: 'diamond', name: 'Алмазная', price: 1250, className: 'frame-diamond' },
-                { id: 'rainbow', name: 'Радужная', price: 2500, className: 'frame-rainbow' }
-            ];
-
-            const handleFrameSelect = async (frame) => {
-                const isPurchased = purchasedFrames.includes(frame.id);
-                if (!isPurchased && userCoins < frame.price && currentUser !== 'kayivi') {
-                    alert(`Нужно ${frame.price} коинов для этой рамки.`);
-                    return;
-                }
-                try {
-                    if (!isPurchased && currentUser !== 'kayivi') {
-                        const newPurchasedFrames = [...purchasedFrames, frame.id];
-                        await update(ref(db, `users/${currentUser}`), { 
-                            coins: userCoins - frame.price,
-                            frame: frame.id,
-                            purchasedFrames: newPurchasedFrames
-                        });
-                    } else {
-                        await update(ref(db, `users/${currentUser}`), { 
-                            frame: frame.id
-                        });
-                    }
-                    onFrameChange(frame.id);
-                    onClose();
-                } catch (error) {
-                    console.error('Frame change error:', error);
-                    alert('Ошибка при покупке рамки');
-                }
-            };
-
-            return (
-                <Modal isOpen={isOpen} onClose={onClose} title="🖼️ Рамка" className="max-w-2xl">
-                    <div className="text-center mb-4">
-                        <p className="text-slate-400 text-sm">Выберите рамку</p>
-                        <p className="text-xs text-slate-500 mt-1">Баланс: <span className="text-yellow-500">{userCoins.toFixed(3)}</span></p>
-                    </div>
-                    <div className="grid grid-cols-2 gap-3">
-                        {frames.map((frame) => {
-                            const isPurchased = purchasedFrames.includes(frame.id);
-                            const canAfford = userCoins >= frame.price || currentUser === 'kayivi';
-                            const isLocked = !isPurchased && !canAfford && currentUser !== 'kayivi' && frame.price > 0;
-                            
-                            return (
-                                <button
-                                    key={frame.id}
-                                    onClick={() => !isLocked && handleFrameSelect(frame)}
-                                    disabled={isLocked}
-                                    className={`p-3 rounded-xl flex flex-col items-center gap-2 transition-all ${
-                                        isLocked ? 'bg-slate-800 border-2 border-slate-700 avatar-locked' : 
-                                        userFrame === frame.id ? 'bg-slate-700 border-2 border-yellow-500' : 'bg-slate-800 hover:bg-slate-700 border-2 border-slate-600 hover:border-yellow-500'
-                                    }`}
-                                >
-                                    <div className={`w-12 h-12 rounded-full bg-gradient-to-tr from-indigo-600 to-purple-600 flex items-center justify-center text-white font-bold text-lg ${frame.className}`}>
-                                        {currentUser[0].toUpperCase()}
-                                    </div>
-                                    <div className="text-center">
-                                        <h3 className="font-medium text-white text-sm">{frame.name}</h3>
-                                        <p className="text-xs text-slate-400">
-                                            {frame.price === 0 ? 'Бесплатно' : 
-                                             isPurchased ? '✓ Куплено' :
-                                             currentUser === 'kayivi' ? 'Бесплатно' : `${frame.price} коинов`}
-                                        </p>
-                                    </div>
-                                </button>
-                            );
-                        })}
-                    </div>
-                </Modal>
-            );
-        };
-
-        // Name Color Modal
-        const NameColorModal = ({ isOpen, onClose, currentUser, userCoins, onColorChange, purchasedColors }) => {
-            const colors = [
-                { id: 'red', name: 'Красный', value: '#ef4444', price: 50 },
-                { id: 'orange', name: 'Оранжевый', value: '#f97316', price: 50 },
-                { id: 'yellow', name: 'Желтый', value: '#eab308', price: 50 },
-                { id: 'green', name: 'Зеленый', value: '#22c55e', price: 50 },
-                { id: 'blue', name: 'Синий', value: '#3b82f6', price: 50 },
-                { id: 'purple', name: 'Фиолетовый', value: '#a855f7', price: 50 },
-                { id: 'rainbow', name: 'Радужный', value: 'linear-gradient(45deg, #ff0000, #ff9900, #ffff00, #00ff00, #00ffff, #0000ff, #9900ff)', price: 200 }
-            ];
-
-            const handleColorSelect = async (color) => {
-                const isPurchased = purchasedColors.includes(color.id);
-                if (!isPurchased && userCoins < color.price && currentUser !== 'kayivi') {
-                    alert(`Нужно ${color.price} коинов для этого цвета.`);
-                    return;
-                }
-                try {
-                    if (!isPurchased && currentUser !== 'kayivi') {
-                        const newPurchasedColors = [...purchasedColors, color.id];
-                        await update(ref(db, `users/${currentUser}`), { 
-                            coins: userCoins - color.price,
-                            nameColor: color.id,
-                            purchasedColors: newPurchasedColors
-                        });
-                    } else {
-                        await update(ref(db, `users/${currentUser}`), { 
-                            nameColor: color.id
-                        });
-                    }
-                    onColorChange(color.id);
-                    onClose();
-                } catch (error) {
-                    console.error('Color change error:', error);
-                    alert('Ошибка при покупке цвета');
-                }
-            };
-
-            const getNameColorStyle = (colorId) => {
-                const colors = {
-                    'red': '#ef4444', 'orange': '#f97316', 'yellow': '#eab308', 'green': '#22c55e', 
-                    'blue': '#3b82f6', 'purple': '#a855f7', 'rainbow': 'linear-gradient(45deg, #ff0000, #ff9900, #ffff00, #00ff00, #00ffff, #0000ff, #9900ff)'
-                };
-                return { 
-                    color: colors[colorId] || '#ffffff',
-                    background: colorId === 'rainbow' ? colors[colorId] : 'transparent',
-                    WebkitBackgroundClip: colorId === 'rainbow' ? 'text' : 'initial',
-                    WebkitTextFillColor: colorId === 'rainbow' ? 'transparent' : 'initial'
-                };
-            };
-
-            return (
-                <Modal isOpen={isOpen} onClose={onClose} title="🎨 Цвет имени" className="max-w-2xl">
-                    <div className="text-center mb-4">
-                        <p className="text-slate-400 text-sm">Выберите цвет имени</p>
-                        <p className="text-xs text-slate-500 mt-1">Баланс: <span className="text-yellow-500">{userCoins.toFixed(3)}</span></p>
-                    </div>
-                    <div className="grid grid-cols-2 gap-3">
-                        {colors.map((color) => {
-                            const isPurchased = purchasedColors.includes(color.id);
-                            const canAfford = userCoins >= color.price || currentUser === 'kayivi';
-                            const isLocked = !isPurchased && !canAfford && currentUser !== 'kayivi';
-                            
-                            return (
-                                <button
-                                    key={color.id}
-                                    onClick={() => !isLocked && handleColorSelect(color)}
-                                    disabled={isLocked}
-                                    className={`p-3 rounded-xl flex flex-col items-center gap-2 transition-all ${
-                                        isLocked ? 'bg-slate-800 border-2 border-slate-700 avatar-locked' : 'bg-slate-800 hover:bg-slate-700 border-2 border-slate-600 hover:border-yellow-500'
-                                    }`}
-                                >
-                                    <div className="text-xl font-bold" style={getNameColorStyle(color.id)}>Имя</div>
-                                    <div className="text-center">
-                                        <h3 className="font-medium text-white text-sm">{color.name}</h3>
-                                        <p className="text-xs text-slate-400">
-                                            {color.price === 0 ? 'Бесплатно' : 
-                                             isPurchased ? '✓ Куплено' :
-                                             currentUser === 'kayivi' ? 'Бесплатно' : `${color.price} коинов`}
-                                        </p>
-                                    </div>
-                                </button>
-                            );
-                        })}
-                    </div>
-                </Modal>
-            );
-        };
-
-        // Status Modal
-        const StatusModal = ({ isOpen, onClose, currentUser, userCoins, onStatusChange, purchasedStatuses }) => {
-            const statuses = [
-                { id: 'online', text: 'В сети', emoji: '🟢', price: 0 },
-                { id: 'away', text: 'Отошел', emoji: '🟡', price: 0 },
-                { id: 'dnd', text: 'Не беспокоить', emoji: '🔴', price: 0 },
-                { id: 'working', text: 'Работаю', emoji: '💼', price: 50 },
-                { id: 'sleeping', text: 'Сплю', emoji: '😴', price: 50 },
-                { id: 'gaming', text: 'Играю', emoji: '🎮', price: 50 }
-            ];
-
-            const handleStatusSelect = async (status) => {
-                const isPurchased = purchasedStatuses.includes(status.id) || status.price === 0;
-                if (!isPurchased && userCoins < status.price && currentUser !== 'kayivi') {
-                    alert(`Нужно ${status.price} коинов для этого статуса.`);
-                    return;
-                }
-                try {
-                    if (!isPurchased && currentUser !== 'kayivi') {
-                        const newPurchasedStatuses = [...purchasedStatuses, status.id];
-                        await update(ref(db, `users/${currentUser}`), { 
-                            coins: userCoins - status.price,
-                            status: status.text,
-                            statusEmoji: status.emoji,
-                            purchasedStatuses: newPurchasedStatuses
-                        });
-                    } else {
-                        await update(ref(db, `users/${currentUser}`), { 
-                            status: status.text,
-                            statusEmoji: status.emoji
-                        });
-                    }
-                    onStatusChange(status.text, status.emoji);
-                    onClose();
-                } catch (error) {
-                    console.error('Status change error:', error);
-                    alert('Ошибка при установке статуса');
-                }
-            };
-
-            return (
-                <Modal isOpen={isOpen} onClose={onClose} title="💬 Статус">
-                    <div className="text-center mb-4">
-                        <p className="text-slate-400 text-sm">Выберите статус</p>
-                        <p className="text-xs text-slate-500 mt-1">Баланс: <span className="text-yellow-500">{userCoins.toFixed(3)}</span></p>
-                    </div>
-                    <div className="grid grid-cols-1 gap-2">
-                        {statuses.map((status) => {
-                            const isPurchased = purchasedStatuses.includes(status.id) || status.price === 0;
-                            const canAfford = userCoins >= status.price || currentUser === 'kayivi';
-                            const isLocked = !isPurchased && !canAfford && currentUser !== 'kayivi';
-                            
-                            return (
-                                <button
-                                    key={status.id}
-                                    onClick={() => !isLocked && handleStatusSelect(status)}
-                                    disabled={isLocked}
-                                    className={`p-2 rounded-xl flex items-center gap-2 text-left min-h-[44px] ${
-                                        isLocked ? 'bg-slate-800 border border-slate-700 avatar-locked' : 'bg-slate-800 hover:bg-slate-700 border border-slate-600'
-                                    }`}
-                                >
-                                    <span className="text-xl">{status.emoji}</span>
-                                    <div className="flex-1">
-                                        <div className="text-white text-sm">{status.text}</div>
-                                    </div>
-                                    <div className="text-xs text-slate-400">
-                                        {status.price === 0 ? 'Бесплатно' : 
-                                         isPurchased ? '✓' :
-                                         currentUser === 'kayivi' ? 'Бесплатно' : `${status.price} коинов`}
-                                    </div>
-                                </button>
-                            );
-                        })}
-                    </div>
-                </Modal>
-            );
-        };
-
-        // NFT Market Modal с биржей
-        const NFTMarketModal = ({ isOpen, onClose, currentUser, userCoins, onCoinsUpdate, userNFTs, onNFTUpdate }) => {
+        // NFT Market Modal
+        const NFTMarketModal = ({ isOpen, onClose, currentUser, userCoins, onCoinsUpdate, userNFTs, onNFTUpdate, usersData }) => {
             const [activeTab, setActiveTab] = useState('market');
             const [isLoading, setIsLoading] = useState(false);
             const [giftRecipient, setGiftRecipient] = useState('');
             const [giftNFT, setGiftNFT] = useState(null);
-            const [nftPrices, setNftPrices] = useState({});
-            const [topUsers, setTopUsers] = useState([]);
+            const [sellPrice, setSellPrice] = useState('');
+            const [sellNFT, setSellNFT] = useState(null);
+            const [nftMarketPrices, setNftMarketPrices] = useState({});
 
+            // Инициализация NFT с паттернами и редкостью
             const nfts = [
-                // Common
-                { id: 'ghost', name: 'Призрак', emoji: '👻', basePrice: 600, rarity: 'common', pattern: 'basic', durability: 100 },
-                { id: 'robot', name: 'Робот', emoji: '🤖', basePrice: 800, rarity: 'common', pattern: 'mechanical', durability: 100 },
-                { id: 'panda', name: 'Панда', emoji: '🐼', basePrice: 900, rarity: 'common', pattern: 'cute', durability: 100 },
-                { id: 'fox', name: 'Лиса', emoji: '🦊', basePrice: 1100, rarity: 'common', pattern: 'wild', durability: 100 },
-                
-                // Rare
-                { id: 'alien', name: 'Пришелец', emoji: '👽', basePrice: 1200, rarity: 'rare', pattern: 'cosmic', durability: 150 },
-                { id: 'tiger', name: 'Тигр', emoji: '🐯', basePrice: 1300, rarity: 'rare', pattern: 'stripes', durability: 150 },
-                { id: 'lion', name: 'Лев', emoji: '🦁', basePrice: 1400, rarity: 'rare', pattern: 'royal', durability: 150 },
-                
-                // Epic
-                { id: 'dragon', name: 'Дракон', emoji: '🐉', basePrice: 1800, rarity: 'epic', pattern: 'fire', durability: 200 },
-                { id: 'phoenix', name: 'Феникс', emoji: '🦚', basePrice: 2200, rarity: 'epic', pattern: 'rebirth', durability: 200 },
-                { id: 'unicorn', name: 'Единорог', emoji: '🦄', basePrice: 3000, rarity: 'epic', pattern: 'magic', durability: 200 },
-                
-                // Legendary
-                { id: 'spaceship', name: 'Корабль', emoji: '🚀', basePrice: 3500, rarity: 'legendary', pattern: 'futuristic', durability: 300 },
-                { id: 'comet', name: 'Комета', emoji: '☄️', basePrice: 4000, rarity: 'legendary', pattern: 'cosmic', durability: 300 },
-                { id: 'rainbow_dragon', name: 'Радужный Дракон', emoji: '🌈🐉', basePrice: 8000, rarity: 'legendary', pattern: 'rainbow', durability: 300 }
+                { id: 'ghost', name: 'Призрак', emoji: '👻', basePrice: 600, rarity: 'common', pattern: 'simple', durability: 100 },
+                { id: 'robot', name: 'Робот', emoji: '🤖', basePrice: 800, rarity: 'common', pattern: 'simple', durability: 100 },
+                { id: 'dragon', name: 'Дракон', emoji: '🐉', basePrice: 1800, rarity: 'epic', pattern: 'complex', durability: 100 },
+                { id: 'unicorn', name: 'Единорог', emoji: '🦄', basePrice: 3000, rarity: 'legendary', pattern: 'exquisite', durability: 100 },
+                { id: 'phoenix', name: 'Феникс', emoji: '🦚', basePrice: 2200, rarity: 'epic', pattern: 'complex', durability: 100 },
+                { id: 'alien', name: 'Пришелец', emoji: '👽', basePrice: 1200, rarity: 'rare', pattern: 'detailed', durability: 100 },
+                { id: 'crown', name: 'Корона', emoji: '👑', basePrice: 5000, rarity: 'legendary', pattern: 'exquisite', durability: 100 },
+                { id: 'diamond', name: 'Алмаз', emoji: '💎', basePrice: 4000, rarity: 'legendary', pattern: 'exquisite', durability: 100 },
+                { id: 'fire', name: 'Огонь', emoji: '🔥', basePrice: 1500, rarity: 'rare', pattern: 'detailed', durability: 100 },
+                { id: 'comet', name: 'Комета', emoji: '☄️', basePrice: 2500, rarity: 'epic', pattern: 'complex', durability: 100 },
+                { id: 'star', name: 'Звезда', emoji: '⭐', basePrice: 1000, rarity: 'rare', pattern: 'detailed', durability: 100 },
+                { id: 'moon', name: 'Луна', emoji: '🌙', basePrice: 900, rarity: 'common', pattern: 'simple', durability: 100 },
+                { id: 'sun', name: 'Солнце', emoji: '☀️', basePrice: 2000, rarity: 'epic', pattern: 'complex', durability: 100 },
+                { id: 'planet', name: 'Планета', emoji: '🪐', basePrice: 2800, rarity: 'epic', pattern: 'complex', durability: 100 },
+                { id: 'rocket', name: 'Ракета', emoji: '🚀', basePrice: 1700, rarity: 'rare', pattern: 'detailed', durability: 100 },
+                { id: 'rainbow', name: 'Радуга', emoji: '🌈', basePrice: 3500, rarity: 'legendary', pattern: 'exquisite', durability: 100 },
+                { id: 'thunder', name: 'Гром', emoji: '⚡', basePrice: 1900, rarity: 'rare', pattern: 'detailed', durability: 100 },
+                { id: 'snowflake', name: 'Снежинка', emoji: '❄️', basePrice: 800, rarity: 'common', pattern: 'simple', durability: 100 },
+                { id: 'flower', name: 'Цветок', emoji: '🌸', basePrice: 700, rarity: 'common', pattern: 'simple', durability: 100 },
+                { id: 'tree', name: 'Дерево', emoji: '🌳', basePrice: 750, rarity: 'common', pattern: 'simple', durability: 100 }
             ];
 
-            // Загрузка цен и топа
+            // Загрузка рыночных цен NFT
             useEffect(() => {
-                const nftPricesRef = ref(db, 'nftPrices');
-                onValue(nftPricesRef, (snapshot) => {
-                    const data = snapshot.val();
-                    if (data) setNftPrices(data);
-                });
-
-                // Загрузка топа пользователей
-                const usersRef = ref(db, 'users');
-                onValue(usersRef, (snapshot) => {
-                    const data = snapshot.val();
-                    if (data) {
-                        const usersArray = Object.values(data)
-                            .filter(user => user.coins > 0)
-                            .sort((a, b) => (b.coins || 0) - (a.coins || 0))
-                            .slice(0, 10);
-                        setTopUsers(usersArray);
-                    }
-                });
-            }, []);
-
-            // Обновление цен NFT (имитация биржи)
-            useEffect(() => {
-                const interval = setInterval(() => {
-                    const newPrices = {};
-                    nfts.forEach(nft => {
-                        const currentPrice = nftPrices[nft.id] || nft.basePrice;
-                        // Случайное изменение цены от -10% до +15%
-                        const change = (Math.random() * 0.25 - 0.1);
-                        const newPrice = Math.max(nft.basePrice * 0.5, currentPrice * (1 + change));
-                        newPrices[nft.id] = Math.round(newPrice);
+                if (isOpen) {
+                    const nftPricesRef = ref(db, 'nftMarketPrices');
+                    const unsubscribe = onValue(nftPricesRef, (snapshot) => {
+                        const data = snapshot.val() || {};
+                        setNftMarketPrices(data);
                     });
-                    set(ref(db, 'nftPrices'), newPrices);
-                }, 30000); // Обновление каждые 30 секунд
+                    return () => off(nftPricesRef);
+                }
+            }, [isOpen]);
 
-                return () => clearInterval(interval);
-            }, [nftPrices]);
-
+            // Функция для получения текущей цены NFT с учетом рыночных колебаний
             const getCurrentPrice = (nft) => {
-                return nftPrices[nft.id] || nft.basePrice;
+                const marketData = nftMarketPrices[nft.id] || { currentPrice: nft.basePrice, volatility: 0.1 };
+                return marketData.currentPrice || nft.basePrice;
             };
 
-            const getPriceChange = (nft) => {
-                const currentPrice = getCurrentPrice(nft);
-                const change = ((currentPrice - nft.basePrice) / nft.basePrice) * 100;
-                return change;
+            // Функция для расчета износа NFT
+            const getDurabilityPercentage = (userNft) => {
+                return userNft.durability || 100;
             };
 
+            // Покупка NFT
             const handleBuyNFT = async (nft) => {
                 const currentPrice = getCurrentPrice(nft);
                 if (userCoins < currentPrice) {
-                    alert(`Недостаточно коинов! Нужно ${currentPrice} коинов.`);
+                    alert(`Недостаточно коинов! Нужно ${currentPrice.toFixed(3)} коинов.`);
                     return;
                 }
                 setIsLoading(true);
                 try {
                     const newNFTs = [...(userNFTs || []), { 
                         id: nft.id, 
-                        purchasedAt: Date.now(),
+                        purchasedAt: Date.now(), 
                         hidden: false,
-                        durability: nft.durability
+                        durability: 100,
+                        purchasePrice: currentPrice
                     }];
                     await update(ref(db, `users/${currentUser}`), { 
                         coins: userCoins - currentPrice,
@@ -551,7 +205,7 @@
                     });
                     onCoinsUpdate(userCoins - currentPrice);
                     onNFTUpdate(newNFTs);
-                    alert(`Вы купили NFT "${nft.name}"!`);
+                    alert(`Вы купили NFT "${nft.name}" за ${currentPrice.toFixed(3)} коинов!`);
                 } catch (error) {
                     console.error('NFT purchase error:', error);
                     alert('Ошибка при покупке NFT');
@@ -559,6 +213,7 @@
                 setIsLoading(false);
             };
 
+            // Удаление NFT из профиля
             const handleRemoveNFT = async (nftId) => {
                 if (!confirm('Убрать NFT из профиля?')) return;
                 setIsLoading(true);
@@ -577,6 +232,7 @@
                 setIsLoading(false);
             };
 
+            // Восстановление NFT в профиле
             const handleRestoreNFT = async (nftId) => {
                 setIsLoading(true);
                 try {
@@ -594,40 +250,176 @@
                 setIsLoading(false);
             };
 
+            // Подарок NFT
+            const handleGiftNFT = async () => {
+                if (!giftRecipient.trim() || !giftNFT) {
+                    alert('Выберите NFT и укажите получателя');
+                    return;
+                }
+                if (giftRecipient === currentUser) {
+                    alert('Нельзя подарить NFT самому себе');
+                    return;
+                }
+                setIsLoading(true);
+                try {
+                    const recipientRef = ref(db, `users/${giftRecipient}`);
+                    const snapshot = await get(recipientRef);
+                    if (!snapshot.exists()) {
+                        alert('Пользователь не найден');
+                        setIsLoading(false);
+                        return;
+                    }
+                    const recipientData = snapshot.val();
+                    const recipientNFTs = recipientData.nfts || [];
+                    const newSenderNFTs = userNFTs.filter(nft => nft.id !== giftNFT.id);
+                    const newRecipientNFTs = [...recipientNFTs, { 
+                        id: giftNFT.id, 
+                        gifted: true, 
+                        from: currentUser, 
+                        giftedAt: Date.now(), 
+                        hidden: false,
+                        durability: giftNFT.durability || 100
+                    }];
+                    await update(ref(db, `users/${currentUser}`), { nfts: newSenderNFTs });
+                    await update(recipientRef, { nfts: newRecipientNFTs });
+                    const chatId = [currentUser, giftRecipient].sort().join('_');
+                    const messageRef = push(ref(db, `messages/${chatId}`));
+                    await set(messageRef, {
+                        sender: currentUser,
+                        text: `Подарил вам NFT: ${giftNFT.name} ${giftNFT.emoji}`,
+                        timestamp: Date.now(),
+                        type: 'nft_gift',
+                        nftData: giftNFT,
+                        deleted: false
+                    });
+                    onNFTUpdate(newSenderNFTs);
+                    setGiftNFT(null);
+                    setGiftRecipient('');
+                    alert(`NFT "${giftNFT.name}" подарен!`);
+                } catch (error) {
+                    console.error('NFT gift error:', error);
+                    alert('Ошибка при отправке NFT');
+                }
+                setIsLoading(false);
+            };
+
+            // Продажа NFT на рынке
+            const handleSellNFT = async () => {
+                if (!sellPrice || parseFloat(sellPrice) <= 0) {
+                    alert('Укажите корректную цену продажи');
+                    return;
+                }
+                setIsLoading(true);
+                try {
+                    const nftToSell = userNFTs.find(nft => nft.id === sellNFT.id);
+                    if (!nftToSell) return;
+                    
+                    // Создаем запись о продаже на рынке
+                    const marketListingRef = push(ref(db, 'nftMarketListings'));
+                    await set(marketListingRef, {
+                        nftId: sellNFT.id,
+                        seller: currentUser,
+                        price: parseFloat(sellPrice),
+                        listedAt: Date.now(),
+                        durability: nftToSell.durability || 100
+                    });
+                    
+                    // Убираем NFT у продавца
+                    const newNFTs = userNFTs.filter(nft => nft.id !== sellNFT.id);
+                    await update(ref(db, `users/${currentUser}`), { nfts: newNFTs });
+                    
+                    onNFTUpdate(newNFTs);
+                    setSellNFT(null);
+                    setSellPrice('');
+                    alert(`NFT "${sellNFT.name}" выставлен на продажу за ${parseFloat(sellPrice).toFixed(3)} коинов!`);
+                } catch (error) {
+                    console.error('NFT sell error:', error);
+                    alert('Ошибка при выставлении NFT на продажу');
+                }
+                setIsLoading(false);
+            };
+
+            // Покупка NFT с рынка
+            const handleBuyFromMarket = async (listing) => {
+                const nft = nfts.find(n => n.id === listing.nftId);
+                if (!nft) return;
+                
+                if (userCoins < listing.price) {
+                    alert(`Недостаточно коинов! Нужно ${listing.price.toFixed(3)} коинов.`);
+                    return;
+                }
+                
+                if (listing.seller === currentUser) {
+                    alert('Нельзя купить свой же NFT');
+                    return;
+                }
+                
+                setIsLoading(true);
+                try {
+                    // Добавляем NFT покупателю
+                    const newNFTs = [...(userNFTs || []), { 
+                        id: nft.id, 
+                        purchasedAt: Date.now(), 
+                        hidden: false,
+                        durability: listing.durability,
+                        purchasedFromMarket: true,
+                        originalSeller: listing.seller
+                    }];
+                    
+                    // Переводим коины продавцу
+                    const sellerRef = ref(db, `users/${listing.seller}`);
+                    const sellerSnapshot = await get(sellerRef);
+                    if (sellerSnapshot.exists()) {
+                        const sellerData = sellerSnapshot.val();
+                        await update(sellerRef, { 
+                            coins: (sellerData.coins || 0) + listing.price 
+                        });
+                    }
+                    
+                    // Списываем коины у покупателя
+                    await update(ref(db, `users/${currentUser}`), { 
+                        coins: userCoins - listing.price,
+                        nfts: newNFTs
+                    });
+                    
+                    // Удаляем запись с рынка
+                    await remove(ref(db, `nftMarketListings/${listing.id}`));
+                    
+                    onCoinsUpdate(userCoins - listing.price);
+                    onNFTUpdate(newNFTs);
+                    alert(`Вы купили NFT "${nft.name}" за ${listing.price.toFixed(3)} коинов!`);
+                } catch (error) {
+                    console.error('Market purchase error:', error);
+                    alert('Ошибка при покупке NFT с рынка');
+                }
+                setIsLoading(false);
+            };
+
+            // Рендер вкладки магазина
             const renderMarketTab = () => (
                 <div className="space-y-4">
                     <div className="text-center mb-4">
-                        <p className="text-slate-400 text-sm">NFT с изменяющимися ценами</p>
+                        <p className="text-slate-400 text-sm">Коллекционные NFT</p>
                         <p className="text-xs text-slate-500 mt-1">Баланс: <span className="text-yellow-500 font-bold">{userCoins.toFixed(3)}</span></p>
                     </div>
-                    <div className="grid grid-cols-2 gap-3">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                         {nfts.map((nft) => {
-                            const userNFT = userNFTs.find(userNft => userNft.id === nft.id);
-                            const isPurchased = !!userNFT;
-                            const currentPrice = getCurrentPrice(nft);
-                            const priceChange = getPriceChange(nft);
-                            
+                            const isPurchased = userNFTs.some(userNft => userNft.id === nft.id);
                             if (isPurchased) return null;
-                            
+                            const currentPrice = getCurrentPrice(nft);
+                            const priceChange = ((currentPrice - nft.basePrice) / nft.basePrice * 100).toFixed(1);
                             return (
                                 <div key={nft.id} className="p-3 rounded-xl flex flex-col items-center gap-2 bg-slate-800 border border-slate-700">
                                     <div className="text-3xl">{nft.emoji}</div>
                                     <div className="text-center">
                                         <h3 className="font-medium text-white text-sm">{nft.name}</h3>
-                                        <p className="text-xs text-slate-400">{nft.rarity}</p>
-                                        <p className="text-xs text-slate-400">Паттерн: {nft.pattern}</p>
-                                        <p className="text-xs text-slate-300 mt-1">{currentPrice} коинов</p>
+                                        <p className="text-xs text-slate-300 mt-1">{currentPrice.toFixed(3)} коинов</p>
                                         <p className={`text-xs ${priceChange >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-                                            {priceChange >= 0 ? '↗' : '↘'} {Math.abs(priceChange).toFixed(1)}%
+                                            {priceChange >= 0 ? '+' : ''}{priceChange}%
                                         </p>
+                                        <p className="text-xs text-slate-500 capitalize">{nft.rarity} • {nft.pattern}</p>
                                     </div>
-                                    <Button 
-                                        onClick={() => handleBuyNFT(nft)}
-                                        isLoading={isLoading}
-                                        disabled={userCoins < currentPrice}
-                                        variant="gold"
-                                        className="w-full text-xs"
-                                    >
+                                    <Button onClick={() => handleBuyNFT(nft)} isLoading={isLoading} disabled={userCoins < currentPrice} variant="gold" className="w-full text-xs">
                                         Купить
                                     </Button>
                                 </div>
@@ -637,28 +429,31 @@
                 </div>
             );
 
+            // Рендер вкладки моих NFT
             const renderMyNFTsTab = () => (
                 <div className="space-y-4">
                     {userNFTs.length > 0 ? (
-                        <div className="grid grid-cols-2 gap-3">
+                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                             {userNFTs.map((userNft) => {
                                 const nft = nfts.find(n => n.id === userNft.id);
                                 if (!nft) return null;
+                                const durability = getDurabilityPercentage(userNft);
                                 const currentPrice = getCurrentPrice(nft);
-                                const purchasePrice = userNft.purchasePrice || nft.basePrice;
-                                const profit = currentPrice - purchasePrice;
-                                
                                 return (
                                     <div key={nft.id} className={`p-3 rounded-xl flex flex-col items-center gap-2 bg-slate-800 border border-slate-700 ${userNft.hidden ? 'opacity-50' : ''}`}>
                                         <div className="text-3xl">{nft.emoji}</div>
                                         <div className="text-center">
                                             <h3 className="font-medium text-white text-sm">{nft.name}</h3>
-                                            <p className="text-xs text-slate-400">Прочность: {userNft.durability || nft.durability}</p>
-                                            <p className="text-xs text-slate-300">Текущая цена: {currentPrice}</p>
-                                            <p className={`text-xs ${profit >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-                                                Прибыль: {profit >= 0 ? '+' : ''}{profit}
-                                            </p>
+                                            {userNft.gifted && <p className="text-xs text-green-400 mt-1">Подарок от {userNft.from}</p>}
                                             {userNft.hidden && <p className="text-xs text-yellow-400 mt-1">Скрыт</p>}
+                                            <p className="text-xs text-slate-300 mt-1">Текущая цена: {currentPrice.toFixed(3)}</p>
+                                            <div className="w-full bg-slate-700 rounded-full h-1.5 mt-1">
+                                                <div 
+                                                    className={`h-1.5 rounded-full ${durability > 70 ? 'bg-green-500' : durability > 30 ? 'bg-yellow-500' : 'bg-red-500'}`}
+                                                    style={{ width: `${durability}%` }}
+                                                ></div>
+                                            </div>
+                                            <p className="text-xs text-slate-400">Износ: {durability}%</p>
                                         </div>
                                         <div className="flex gap-1 w-full">
                                             {userNft.hidden ? (
@@ -666,9 +461,14 @@
                                                     Восстановить
                                                 </Button>
                                             ) : (
-                                                <Button onClick={() => handleRemoveNFT(nft.id)} isLoading={isLoading} variant="danger" className="flex-1 text-xs">
-                                                    Убрать
-                                                </Button>
+                                                <>
+                                                    <Button onClick={() => handleRemoveNFT(nft.id)} isLoading={isLoading} variant="danger" className="flex-1 text-xs">
+                                                        Убрать
+                                                    </Button>
+                                                    <Button onClick={() => setSellNFT(nft)} variant="gold" className="flex-1 text-xs">
+                                                        Продать
+                                                    </Button>
+                                                </>
                                             )}
                                         </div>
                                     </div>
@@ -678,54 +478,344 @@
                     ) : (
                         <div className="text-center text-slate-500 py-8">
                             <p>У вас пока нет NFT</p>
+                            <p className="text-sm mt-1">Купите NFT в магазине</p>
                         </div>
                     )}
                 </div>
             );
 
-            const renderTopTab = () => (
-                <div className="space-y-3">
-                    <div className="text-center mb-4">
-                        <p className="text-slate-400 text-sm">Топ 10 пользователей</p>
-                    </div>
-                    {topUsers.map((user, index) => (
-                        <div key={user.username} className="flex items-center justify-between p-3 bg-slate-800 rounded-xl">
-                            <div className="flex items-center gap-3">
-                                <div className="flex items-center justify-center w-8 h-8 bg-indigo-600 rounded-full text-white font-bold">
-                                    {user.avatar || user.username[0].toUpperCase()}
-                                </div>
-                                <div>
-                                    <div className="text-white text-sm font-medium">{user.username}</div>
-                                    <div className="text-slate-400 text-xs">{user.nfts?.length || 0} NFT</div>
-                                </div>
+            // Рендер вкладки подарков
+            const renderGiftTab = () => (
+                <div className="space-y-4">
+                    {giftNFT ? (
+                        <div className="bg-slate-800 rounded-xl p-4">
+                            <div className="text-center mb-4">
+                                <div className="text-4xl mb-2">{giftNFT.emoji}</div>
+                                <h3 className="font-bold text-white">{giftNFT.name}</h3>
                             </div>
-                            <div className="text-right">
-                                <div className="text-yellow-500 font-bold">{user.coins?.toFixed(3) || '0'}</div>
-                                <div className="text-slate-400 text-xs">коинов</div>
+                            <div className="space-y-3">
+                                <input type="text" placeholder="Имя получателя" value={giftRecipient} onChange={e => setGiftRecipient(e.target.value)} className="w-full bg-slate-700 border border-slate-600 rounded-xl px-3 py-2 text-white focus:border-indigo-500 outline-none text-sm" />
+                                <Button onClick={handleGiftNFT} isLoading={isLoading} disabled={!giftRecipient.trim()} variant="gold" className="w-full">Подарить NFT</Button>
+                                <Button onClick={() => setGiftNFT(null)} variant="secondary" className="w-full">Отмена</Button>
                             </div>
                         </div>
-                    ))}
+                    ) : (
+                        <div className="text-center text-slate-500 py-8">
+                            <p>Выберите NFT для подарка</p>
+                        </div>
+                    )}
                 </div>
             );
 
+            // Рендер вкладки продажи
+            const renderSellTab = () => (
+                <div className="space-y-4">
+                    {sellNFT ? (
+                        <div className="bg-slate-800 rounded-xl p-4">
+                            <div className="text-center mb-4">
+                                <div className="text-4xl mb-2">{sellNFT.emoji}</div>
+                                <h3 className="font-bold text-white">{sellNFT.name}</h3>
+                                <p className="text-slate-400 text-sm">Текущая рыночная цена: {getCurrentPrice(sellNFT).toFixed(3)} коинов</p>
+                            </div>
+                            <div className="space-y-3">
+                                <input type="number" step="0.001" placeholder="Цена продажи" value={sellPrice} onChange={e => setSellPrice(e.target.value)} className="w-full bg-slate-700 border border-slate-600 rounded-xl px-3 py-2 text-white focus:border-indigo-500 outline-none text-sm" />
+                                <Button onClick={handleSellNFT} isLoading={isLoading} disabled={!sellPrice || parseFloat(sellPrice) <= 0} variant="gold" className="w-full">Выставить на продажу</Button>
+                                <Button onClick={() => setSellNFT(null)} variant="secondary" className="w-full">Отмена</Button>
+                            </div>
+                        </div>
+                    ) : (
+                        <div className="text-center text-slate-500 py-8">
+                            <p>Выберите NFT для продажи</p>
+                        </div>
+                    )}
+                </div>
+            );
+
+            // Рендер вкладки рынка
+            const renderMarketplaceTab = () => {
+                const [marketListings, setMarketListings] = useState([]);
+                
+                useEffect(() => {
+                    if (isOpen) {
+                        const marketListingsRef = ref(db, 'nftMarketListings');
+                        const unsubscribe = onValue(marketListingsRef, (snapshot) => {
+                            const data = snapshot.val() || {};
+                            const listings = Object.entries(data).map(([id, listing]) => ({ id, ...listing }));
+                            setMarketListings(listings);
+                        });
+                        return () => off(marketListingsRef);
+                    }
+                }, [isOpen]);
+                
+                return (
+                    <div className="space-y-4">
+                        <div className="text-center mb-4">
+                            <p className="text-slate-400 text-sm">NFT от других игроков</p>
+                        </div>
+                        {marketListings.length > 0 ? (
+                            <div className="grid grid-cols-1 gap-3">
+                                {marketListings.map((listing) => {
+                                    const nft = nfts.find(n => n.id === listing.nftId);
+                                    if (!nft) return null;
+                                    return (
+                                        <div key={listing.id} className="p-3 rounded-xl flex items-center gap-3 bg-slate-800 border border-slate-700">
+                                            <div className="text-3xl">{nft.emoji}</div>
+                                            <div className="flex-1">
+                                                <h3 className="font-medium text-white text-sm">{nft.name}</h3>
+                                                <p className="text-xs text-slate-300">Продавец: {listing.seller}</p>
+                                                <p className="text-xs text-slate-400">Износ: {listing.durability}%</p>
+                                            </div>
+                                            <div className="text-right">
+                                                <p className="text-yellow-500 font-bold">{listing.price.toFixed(3)}</p>
+                                                <Button onClick={() => handleBuyFromMarket(listing)} isLoading={isLoading} disabled={userCoins < listing.price || listing.seller === currentUser} variant="gold" className="mt-1 text-xs">
+                                                    Купить
+                                                </Button>
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        ) : (
+                            <div className="text-center text-slate-500 py-8">
+                                <p>На рынке пока нет NFT</p>
+                            </div>
+                        )}
+                    </div>
+                );
+            };
+
+            // Рендер вкладки топа
+            const renderTopTab = () => {
+                // Сбор данных для топа
+                const topUsersByCoins = Object.entries(usersData)
+                    .filter(([username]) => username !== currentUser)
+                    .map(([username, data]) => ({
+                        username,
+                        coins: data.coins || 0,
+                        nfts: data.nfts || []
+                    }))
+                    .sort((a, b) => b.coins - a.coins)
+                    .slice(0, 10);
+
+                const topUsersByNFTs = Object.entries(usersData)
+                    .filter(([username]) => username !== currentUser)
+                    .map(([username, data]) => ({
+                        username,
+                        nftCount: (data.nfts || []).length,
+                        nfts: data.nfts || []
+                    }))
+                    .sort((a, b) => b.nftCount - a.nftCount)
+                    .slice(0, 10);
+
+                return (
+                    <div className="space-y-6">
+                        <div>
+                            <h3 className="text-white font-medium mb-3 flex items-center gap-2"><TrendingUp size={16} /> Топ по балансу</h3>
+                            <div className="space-y-2">
+                                {topUsersByCoins.map((user, index) => (
+                                    <div key={user.username} className="flex items-center justify-between p-2 bg-slate-800 rounded-lg">
+                                        <div className="flex items-center gap-2">
+                                            <span className={`w-6 h-6 flex items-center justify-center rounded-full text-xs font-bold ${index === 0 ? 'bg-yellow-500 text-white' : index === 1 ? 'bg-gray-400 text-white' : index === 2 ? 'bg-orange-600 text-white' : 'bg-slate-700 text-slate-300'}`}>
+                                                {index + 1}
+                                            </span>
+                                            <span className="text-white text-sm">{user.username}</span>
+                                        </div>
+                                        <span className="text-yellow-500 font-medium">{user.coins.toFixed(3)}</span>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <h3 className="text-white font-medium mb-3 flex items-center gap-2"><CrownIcon size={16} /> Топ по NFT</h3>
+                            <div className="space-y-2">
+                                {topUsersByNFTs.map((user, index) => (
+                                    <div key={user.username} className="flex items-center justify-between p-2 bg-slate-800 rounded-lg">
+                                        <div className="flex items-center gap-2">
+                                            <span className={`w-6 h-6 flex items-center justify-center rounded-full text-xs font-bold ${index === 0 ? 'bg-yellow-500 text-white' : index === 1 ? 'bg-gray-400 text-white' : index === 2 ? 'bg-orange-600 text-white' : 'bg-slate-700 text-slate-300'}`}>
+                                                {index + 1}
+                                            </span>
+                                            <span className="text-white text-sm">{user.username}</span>
+                                        </div>
+                                        <span className="text-purple-500 font-medium">{user.nftCount} NFT</span>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+                );
+            };
+
             return (
-                <Modal isOpen={isOpen} onClose={onClose} title="📈 NFT Биржа" className="max-w-4xl">
-                    <div className="flex border-b border-slate-800 bg-slate-900/50">
-                        {['market', 'my_nfts', 'top'].map(tab => (
-                            <button key={tab} onClick={() => setActiveTab(tab)} className={`flex-1 py-3 text-xs font-medium min-h-[44px] ${activeTab === tab ? 'text-indigo-400 border-b-2 border-indigo-400' : 'text-slate-400'}`}>
-                                {tab === 'market' ? '🛍️ Магазин' : tab === 'my_nfts' ? '🎴 Мои NFT' : '🏆 Топ'}
+                <Modal isOpen={isOpen} onClose={onClose} title="🎴 NFT Магазин" className="max-w-4xl">
+                    <div className="flex border-b border-slate-800 bg-slate-900/50 overflow-x-auto">
+                        {['market', 'my_nfts', 'gift', 'sell', 'marketplace', 'top'].map(tab => (
+                            <button key={tab} onClick={() => setActiveTab(tab)} className={`flex-1 py-3 text-xs font-medium min-h-[44px] whitespace-nowrap ${activeTab === tab ? 'text-indigo-400 border-b-2 border-indigo-400' : 'text-slate-400'}`}>
+                                {tab === 'market' ? '🛍️ Магазин' : 
+                                 tab === 'my_nfts' ? '🎴 Мои NFT' : 
+                                 tab === 'gift' ? '🎁 Подарить' :
+                                 tab === 'sell' ? '💰 Продать' :
+                                 tab === 'marketplace' ? '🏪 Рынок' :
+                                 '🏆 Топ'}
                             </button>
                         ))}
                     </div>
                     {activeTab === 'market' && renderMarketTab()}
                     {activeTab === 'my_nfts' && renderMyNFTsTab()}
+                    {activeTab === 'gift' && renderGiftTab()}
+                    {activeTab === 'sell' && renderSellTab()}
+                    {activeTab === 'marketplace' && renderMarketplaceTab()}
                     {activeTab === 'top' && renderTopTab()}
                 </Modal>
             );
         };
 
+        // Transfer Coins Modal
+        const TransferCoinsModal = ({ isOpen, onClose, currentUser, userCoins, onCoinsUpdate }) => {
+            const [recipient, setRecipient] = useState('');
+            const [amount, setAmount] = useState('');
+            const [isLoading, setIsLoading] = useState(false);
+
+            const handleTransfer = async () => {
+                if (!recipient.trim()) { alert('Введите имя получателя'); return; }
+                const transferAmount = parseFloat(amount);
+                if (isNaN(transferAmount) || transferAmount <= 0) { alert('Введите корректную сумму'); return; }
+                if (transferAmount > userCoins) { alert('Недостаточно коинов'); return; }
+                if (recipient === currentUser) { alert('Нельзя отправить коины самому себе'); return; }
+
+                setIsLoading(true);
+                try {
+                    const recipientRef = ref(db, `users/${recipient}`);
+                    const snapshot = await get(recipientRef);
+                    if (!snapshot.exists()) { alert('Пользователь не найден'); setIsLoading(false); return; }
+                    const recipientData = snapshot.val();
+                    const recipientCoins = recipientData.coins || 0;
+                    await update(ref(db, `users/${currentUser}`), { coins: userCoins - transferAmount });
+                    await update(recipientRef, { coins: recipientCoins + transferAmount });
+                    const transactionRef = push(ref(db, 'transactions'));
+                    await set(transactionRef, { from: currentUser, to: recipient, amount: transferAmount, timestamp: Date.now() });
+                    onCoinsUpdate(userCoins - transferAmount);
+                    setRecipient(''); setAmount('');
+                    alert(`Успешно отправлено ${transferAmount.toFixed(3)} коинов!`);
+                } catch (error) {
+                    console.error('Transfer error:', error);
+                    alert('Ошибка при переводе');
+                }
+                setIsLoading(false);
+            };
+
+            return (
+                <Modal isOpen={isOpen} onClose={onClose} title="💸 Перевод коинов">
+                    <div className="text-center mb-4">
+                        <p className="text-slate-400 text-sm">Перевод коинов другим пользователям</p>
+                        <p className="text-xs text-slate-500 mt-1">Баланс: <span className="text-yellow-500 font-bold">{userCoins.toFixed(3)}</span></p>
+                    </div>
+                    <div className="space-y-3">
+                        <div>
+                            <label className="text-slate-400 text-sm mb-1 block">Получатель</label>
+                            <input type="text" placeholder="Имя пользователя" value={recipient} onChange={e => setRecipient(e.target.value)} className="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white focus:border-indigo-500 outline-none text-sm" />
+                        </div>
+                        <div>
+                            <label className="text-slate-400 text-sm mb-1 block">Сумма</label>
+                            <input type="number" step="0.001" placeholder="Количество коинов" value={amount} onChange={e => setAmount(e.target.value)} className="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white focus:border-indigo-500 outline-none text-sm" />
+                        </div>
+                        <Button onClick={handleTransfer} isLoading={isLoading} disabled={!recipient.trim() || !amount || parseFloat(amount) <= 0} variant="gold" className="w-full text-sm">Отправить</Button>
+                    </div>
+                </Modal>
+            );
+        };
+
+        // Casino Modal
+        const CasinoModal = ({ isOpen, onClose, currentUser, userCoins, onCoinsUpdate }) => {
+            const [activeGame, setActiveGame] = useState('slots');
+            const [betAmount, setBetAmount] = useState(1);
+            const [isSpinning, setIsSpinning] = useState(false);
+            const [result, setResult] = useState(null);
+            const [slots, setSlots] = useState(['🍒', '🍋', '🍊']);
+
+            const spinSlots = async () => {
+                if (isSpinning || betAmount > userCoins || betAmount <= 0) return;
+                setIsSpinning(true);
+                setResult(null);
+                const newCoins = userCoins - betAmount;
+                await update(ref(db, `users/${currentUser}`), { coins: newCoins });
+                onCoinsUpdate(newCoins);
+
+                let spinCount = 0;
+                const spinInterval = setInterval(() => {
+                    setSlots([
+                        ['🍒', '🍋', '🍊', '🍇', '🍉', '⭐', '7️⃣'][Math.floor(Math.random() * 7)],
+                        ['🍒', '🍋', '🍊', '🍇', '🍉', '⭐', '7️⃣'][Math.floor(Math.random() * 7)],
+                        ['🍒', '🍋', '🍊', '🍇', '🍉', '⭐', '7️⃣'][Math.floor(Math.random() * 7)]
+                    ]);
+                    spinCount++;
+                    if (spinCount >= 20) {
+                        clearInterval(spinInterval);
+                        const finalSlots = [
+                            ['🍒', '🍋', '🍊', '🍇', '🍉', '⭐', '7️⃣'][Math.floor(Math.random() * 7)],
+                            ['🍒', '🍋', '🍊', '🍇', '🍉', '⭐', '7️⃣'][Math.floor(Math.random() * 7)],
+                            ['🍒', '🍋', '🍊', '🍇', '🍉', '⭐', '7️⃣'][Math.floor(Math.random() * 7)]
+                        ];
+                        if (Math.random() < 0.6) {
+                            if (Math.random() < 0.7) finalSlots[1] = finalSlots[0];
+                            if (Math.random() < 0.4) finalSlots[2] = finalSlots[0];
+                        }
+                        setSlots(finalSlots);
+                        let winMultiplier = 0;
+                        if (finalSlots[0] === finalSlots[1] && finalSlots[1] === finalSlots[2]) {
+                            winMultiplier = finalSlots[0] === '7️⃣' ? 5 : finalSlots[0] === '⭐' ? 3 : 2.5;
+                        } else if (finalSlots[0] === finalSlots[1] || finalSlots[1] === finalSlots[2]) {
+                            winMultiplier = 1.8;
+                        }
+                        const winAmount = betAmount * winMultiplier;
+                        if (winAmount > 0) {
+                            const finalCoins = newCoins + winAmount;
+                            update(ref(db, `users/${currentUser}`), { coins: finalCoins });
+                            onCoinsUpdate(finalCoins);
+                        }
+                        setResult({ win: winAmount > 0, amount: winAmount });
+                        setIsSpinning(false);
+                    }
+                }, 100);
+            };
+
+            return (
+                <Modal isOpen={isOpen} onClose={onClose} title="🎰 Казино">
+                    <div className="text-center mb-4">
+                        <div className="text-xl font-bold text-yellow-500">{userCoins.toFixed(3)} коинов</div>
+                    </div>
+                    <div className="grid grid-cols-3 gap-1 mb-4">
+                        {['slots', 'dice', 'coin'].map(game => (
+                            <button key={game} onClick={() => setActiveGame(game)} className={`p-2 rounded-lg text-center text-xs min-h-[44px] ${activeGame === game ? 'bg-indigo-600 text-white' : 'bg-slate-800 text-slate-300'}`}>
+                                {game === 'slots' ? '🎰 Слоты' : game === 'dice' ? '🎲 Кости' : '🪙 Монетка'}
+                            </button>
+                        ))}
+                    </div>
+                    {activeGame === 'slots' && (
+                        <div className="space-y-3">
+                            <div className="slot-machine bg-slate-800 border border-slate-700 rounded-xl p-3">
+                                <div className="flex justify-between">
+                                    {slots.map((slot, i) => <div key={i} className={`slot-reel flex-1 ${isSpinning ? 'spinning' : ''}`}>{slot}</div>)}
+                                </div>
+                            </div>
+                            <div className="mb-4">
+                                <label className="text-slate-400 text-sm mb-1 block">Ставка: {betAmount.toFixed(3)} коинов</label>
+                                <input type="range" min="0.1" max={Math.min(userCoins, 100)} step="0.1" value={betAmount} onChange={e => setBetAmount(parseFloat(e.target.value))} className="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer" disabled={isSpinning} />
+                            </div>
+                            <Button onClick={spinSlots} isLoading={isSpinning} disabled={userCoins < betAmount} variant="gold" className="w-full text-sm">
+                                {isSpinning ? 'Крутим...' : `Крутить за ${betAmount.toFixed(3)}`}
+                            </Button>
+                            {result && <div className={`text-center p-2 rounded-lg text-sm ${result.win ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'}`}>
+                                {result.win ? `🎉 Выиграли ${result.amount.toFixed(3)} коинов!` : '😢 Попробуйте еще раз!'}
+                            </div>}
+                        </div>
+                    )}
+                </Modal>
+            );
+        };
+
         // Settings Modal
-        const SettingsModal = ({ isOpen, onClose, currentUser, onLogout, userCoins, userAvatar, userFrame, userNameColor, userStatus, userStatusEmoji, onAvatarChange, onFrameChange, onColorChange, onStatusChange, purchasedAvatars, purchasedFrames, purchasedColors, purchasedStatuses }) => {
+        const SettingsModal = ({ isOpen, onClose, currentUser, onLogout, userCoins, userAvatar, userFrame, userNameColor, userStatus, userStatusEmoji, onAvatarChange, onFrameChange, onColorChange, onStatusChange }) => {
             const [activeTab, setActiveTab] = useState('profile');
             const [isAvatarModalOpen, setIsAvatarModalOpen] = useState(false);
             const [isFrameModalOpen, setIsFrameModalOpen] = useState(false);
@@ -733,64 +823,71 @@
             const [isStatusModalOpen, setIsStatusModalOpen] = useState(false);
 
             const getNameColorStyle = (colorId) => {
-                const colors = { 
-                    'red': '#ef4444', 'orange': '#f97316', 'yellow': '#eab308', 'green': '#22c55e', 
-                    'blue': '#3b82f6', 'purple': '#a855f7', 'rainbow': 'linear-gradient(45deg, #ff0000, #ff9900, #ffff00, #00ff00, #00ffff, #0000ff, #9900ff)' 
-                };
-                return { 
-                    color: colors[colorId] || '#ffffff',
-                    background: colorId === 'rainbow' ? colors[colorId] : 'transparent',
-                    WebkitBackgroundClip: colorId === 'rainbow' ? 'text' : 'initial',
-                    WebkitTextFillColor: colorId === 'rainbow' ? 'transparent' : 'initial'
-                };
+                const colors = { 'red': '#ef4444', 'orange': '#f97316', 'yellow': '#eab308', 'green': '#22c55e', 'blue': '#3b82f6', 'purple': '#a855f7', 'rainbow': 'linear-gradient(45deg, #ff0000, #ff9900, #ffff00, #00ff00, #00ffff, #0000ff, #9900ff)' };
+                return { color: colors[colorId] || '#ffffff', background: colorId === 'rainbow' ? colors[colorId] : 'transparent', WebkitBackgroundClip: colorId === 'rainbow' ? 'text' : 'initial', WebkitTextFillColor: colorId === 'rainbow' ? 'transparent' : 'initial' };
             };
 
             const getFrameClass = (frameId) => {
-                const frames = { 
-                    'basic': 'frame-basic', 'silver': 'frame-silver', 'gold': 'frame-gold', 
-                    'diamond': 'frame-diamond', 'rainbow': 'frame-rainbow' 
-                };
+                const frames = { 'basic': 'frame-basic', 'silver': 'frame-silver', 'gold': 'frame-gold', 'diamond': 'frame-diamond', 'rainbow': 'frame-rainbow' };
                 return frames[frameId] || '';
             };
 
             return (
                 <>
-                    <AvatarModal
-                        isOpen={isAvatarModalOpen}
-                        onClose={() => setIsAvatarModalOpen(false)}
-                        currentUser={currentUser}
-                        userCoins={userCoins}
-                        onAvatarChange={onAvatarChange}
-                        purchasedAvatars={purchasedAvatars}
-                    />
-                    
-                    <FrameModal
-                        isOpen={isFrameModalOpen}
-                        onClose={() => setIsFrameModalOpen(false)}
-                        currentUser={currentUser}
-                        userCoins={userCoins}
-                        onFrameChange={onFrameChange}
-                        userFrame={userFrame}
-                        purchasedFrames={purchasedFrames}
-                    />
+                    <Modal isOpen={isAvatarModalOpen} onClose={() => setIsAvatarModalOpen(false)} title="🔄 Аватарка">
+                        <div className="text-center mb-4">
+                            <p className="text-slate-400 text-sm">Выберите аватарку</p>
+                        </div>
+                        <div className="grid grid-cols-4 gap-3">
+                            {['🐶', '🐱', '🐭', '🐹', '🐰', '🦊', '🐻', '🐼'].map((emoji, i) => (
+                                <button key={i} onClick={() => { onAvatarChange(emoji); setIsAvatarModalOpen(false); }} className="p-3 rounded-xl bg-slate-800 hover:bg-slate-700 border-2 border-slate-600 hover:border-yellow-500 text-3xl">
+                                    {emoji}
+                                </button>
+                            ))}
+                        </div>
+                    </Modal>
 
-                    <NameColorModal
-                        isOpen={isNameColorModalOpen}
-                        onClose={() => setIsNameColorModalOpen(false)}
-                        currentUser={currentUser}
-                        userCoins={userCoins}
-                        onColorChange={onColorChange}
-                        purchasedColors={purchasedColors}
-                    />
+                    <Modal isOpen={isFrameModalOpen} onClose={() => setIsFrameModalOpen(false)} title="🖼️ Рамка">
+                        <div className="text-center mb-4">
+                            <p className="text-slate-400 text-sm">Выберите рамку</p>
+                        </div>
+                        <div className="grid grid-cols-2 gap-3">
+                            {['none', 'basic', 'silver', 'gold'].map(frame => (
+                                <button key={frame} onClick={() => { onFrameChange(frame); setIsFrameModalOpen(false); }} className={`p-3 rounded-xl flex flex-col items-center gap-2 ${userFrame === frame ? 'bg-slate-700 border-2 border-yellow-500' : 'bg-slate-800 hover:bg-slate-700 border-2 border-slate-600'}`}>
+                                    <div className={`w-12 h-12 rounded-full bg-gradient-to-tr from-indigo-600 to-purple-600 flex items-center justify-center text-white font-bold text-lg ${getFrameClass(frame)}`}>
+                                        {currentUser[0].toUpperCase()}
+                                    </div>
+                                    <div className="text-white text-sm">{frame === 'none' ? 'Без рамки' : frame === 'basic' ? 'Базовая' : frame === 'silver' ? 'Серебряная' : 'Золотая'}</div>
+                                </button>
+                            ))}
+                        </div>
+                    </Modal>
 
-                    <StatusModal
-                        isOpen={isStatusModalOpen}
-                        onClose={() => setIsStatusModalOpen(false)}
-                        currentUser={currentUser}
-                        userCoins={userCoins}
-                        onStatusChange={onStatusChange}
-                        purchasedStatuses={purchasedStatuses}
-                    />
+                    <Modal isOpen={isNameColorModalOpen} onClose={() => setIsNameColorModalOpen(false)} title="🎨 Цвет имени">
+                        <div className="text-center mb-4">
+                            <p className="text-slate-400 text-sm">Выберите цвет имени</p>
+                        </div>
+                        <div className="grid grid-cols-3 gap-3">
+                            {['red', 'blue', 'green', 'yellow', 'purple', 'rainbow'].map(color => (
+                                <button key={color} onClick={() => { onColorChange(color); setIsNameColorModalOpen(false); }} className="p-3 rounded-xl bg-slate-800 hover:bg-slate-700 border-2 border-slate-600 hover:border-yellow-500">
+                                    <div className="text-white text-sm" style={getNameColorStyle(color)}>Имя</div>
+                                </button>
+                            ))}
+                        </div>
+                    </Modal>
+
+                    <Modal isOpen={isStatusModalOpen} onClose={() => setIsStatusModalOpen(false)} title="💬 Статус">
+                        <div className="text-center mb-4">
+                            <p className="text-slate-400 text-sm">Выберите статус</p>
+                        </div>
+                        <div className="grid grid-cols-1 gap-2">
+                            {['В сети', 'Отошел', 'Не беспокоить', 'Работаю', 'Отдыхаю'].map(status => (
+                                <button key={status} onClick={() => { onStatusChange(status, '💬'); setIsStatusModalOpen(false); }} className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-600 text-white text-sm text-left">
+                                    {status}
+                                </button>
+                            ))}
+                        </div>
+                    </Modal>
 
                     <Modal isOpen={isOpen} onClose={onClose} title="⚙️ Настройки">
                         <div className="flex border-b border-slate-800 bg-slate-900/50 overflow-x-auto">
@@ -835,66 +932,768 @@
             );
         };
 
-        // Остальные компоненты (Clicker, AutoClicker, MessageBubble) остаются без изменений
-        // ... (добавь их из предыдущего кода)
+        // Message Bubble
+        const MessageBubble = ({ message, isOwn, chatId, messageId, currentUser }) => {
+            const [showActions, setShowActions] = useState(false);
+            const containerRef = useRef(null);
 
-        // Main App Component
-        const App = () => {
-            // Состояния и логика приложения
-            const [currentUser, setCurrentUser] = useState(() => localStorage.getItem('dolbaeb_user'));
-            const [isLoginView, setIsLoginView] = useState(true);
-            const [usernameInput, setUsernameInput] = useState('');
-            const [passwordInput, setPasswordInput] = useState('');
-            // ... остальные состояния
+            useEffect(() => {
+                const handleClickOutside = (event) => {
+                    if (containerRef.current && !containerRef.current.contains(event.target)) {
+                        setShowActions(false);
+                    }
+                };
+                if (showActions) document.addEventListener('mousedown', handleClickOutside);
+                return () => document.removeEventListener('mousedown', handleClickOutside);
+            }, [showActions]);
 
-            // Функция для рендеринга NFT вокруг аватара
-            const renderNFTOrbital = (nfts) => {
-                const visibleNFTs = nfts.filter(nft => !nft.hidden).slice(0, 3); // Максимум 3 NFT
-                
-                return (
-                    <div className="nft-orbital">
-                        {visibleNFTs.map((nft, index) => {
-                            const nftData = [
-                                { id: 'ghost', emoji: '👻' }, { id: 'robot', emoji: '🤖' }, { id: 'panda', emoji: '🐼' },
-                                { id: 'fox', emoji: '🦊' }, { id: 'alien', emoji: '👽' }, { id: 'tiger', emoji: '🐯' },
-                                { id: 'lion', emoji: '🦁' }, { id: 'dragon', emoji: '🐉' }, { id: 'phoenix', emoji: '🦚' },
-                                { id: 'unicorn', emoji: '🦄' }, { id: 'spaceship', emoji: '🚀' }, { id: 'comet', emoji: '☄️' },
-                                { id: 'rainbow_dragon', emoji: '🌈🐉' }
-                            ].find(n => n.id === nft.id);
-                            
-                            if (!nftData) return null;
-                            
-                            // Равномерное распределение 3 NFT по кругу
-                            const angle = (index / Math.max(visibleNFTs.length, 1)) * 360;
-                            const animation = `orbit${index + 1}`;
-                            
-                            return (
-                                <div 
-                                    key={nft.id}
-                                    className="nft-item"
-                                    style={{ 
-                                        animation: `${animation} 8s linear infinite`,
-                                        transform: `rotate(${angle}deg) translateX(35px) rotate(-${angle}deg)`
-                                    }}
-                                >
-                                    {nftData.emoji}
-                                </div>
-                            );
-                        })}
-                    </div>
-                );
+            const handleDelete = async () => {
+                if (confirm('Удалить сообщение?')) {
+                    try {
+                        await update(ref(db, `messages/${chatId}/${messageId}`), { deleted: true });
+                    } catch (error) {
+                        console.error('Delete error:', error);
+                    }
+                }
+                setShowActions(false);
             };
 
-            // Остальная логика приложения...
-            
+            if (message.deleted) return null;
+
             return (
-                <div>
-                    {/* Интерфейс приложения */}
-                    {/* Добавь вызов renderNFTOrbital там, где нужно отобразить NFT вокруг аватара */}
+                <div className={`group flex mb-3 ${isOwn ? 'justify-end' : 'justify-start'}`} ref={containerRef}>
+                    <div className={`relative max-w-[85%] rounded-2xl px-3 py-2 ${isOwn ? 'bg-indigo-600 text-white rounded-br-none' : 'bg-slate-800 text-slate-100 rounded-bl-none border border-slate-700'}`}>
+                        <button onClick={() => setShowActions(!showActions)} className={`absolute -top-2 ${isOwn ? 'left-0' : 'right-0'} p-1 rounded-full bg-slate-800 border border-slate-700 text-slate-400 z-10 hover:text-white`}><MoreVertical size={12} /></button>
+                        {showActions && isOwn && (
+                            <div className={`absolute -top-12 ${isOwn ? 'right-0' : 'left-0'} bg-slate-900 border border-slate-700 rounded-xl shadow-2xl z-50 flex items-center p-1 gap-1`}>
+                                <button onClick={handleDelete} className="p-1.5 rounded-lg hover:bg-red-500/20 text-red-400"><Trash2 size={16} /></button>
+                            </div>
+                        )}
+                        <p className="break-words whitespace-pre-wrap text-[14px]">{message.text}</p>
+                        <div className={`flex items-center justify-end gap-1 mt-1 text-[9px] ${isOwn ? 'text-indigo-200' : 'text-slate-500'}`}>
+                            <span>{format(message.timestamp, 'HH:mm')}</span>
+                        </div>
+                    </div>
                 </div>
             );
         };
 
+        // Clicker Component
+        const Clicker = ({ userCoins, onCoinClick, currentUser, clickerLevel }) => {
+            const coinsPerClick = 0.001 + (clickerLevel * 0.004);
+            return (
+                <button onClick={onCoinClick} className="w-full bg-gradient-to-br from-yellow-500 to-orange-500 text-white p-4 rounded-2xl shadow-2xl shadow-yellow-500/25 transition-all duration-200 active:scale-95 border-2 border-yellow-400/50">
+                    <div className="text-center">
+                        <Coins size={36} className="mx-auto mb-1" />
+                        <div className="text-xl font-bold mb-1">{userCoins.toFixed(3)}</div>
+                        <div className="text-yellow-200 text-xs">Кликни для заработка!</div>
+                        <div className="text-yellow-300/80 text-[10px]">+{coinsPerClick.toFixed(3)} за клик</div>
+                    </div>
+                </button>
+            );
+        };
+
+        // Auto Clicker
+        const AutoClicker = ({ userCoins, onCoinsUpdate, currentUser, clickerLevel }) => {
+            const [autoClickerActive, setAutoClickerActive] = useState(false);
+            const nextUpgradeCost = 10 + (clickerLevel * 5);
+            const coinsPerClick = 0.001 + (clickerLevel * 0.004);
+
+            const handleToggleAutoClicker = async () => {
+                if (autoClickerActive) {
+                    setAutoClickerActive(false);
+                    return;
+                }
+                if (userCoins < 10) {
+                    alert('Нужно 10 коинов для покупки робота.');
+                    return;
+                }
+                try {
+                    await update(ref(db, `users/${currentUser}`), { 
+                        coins: userCoins - 10,
+                        autoClickerActive: true
+                    });
+                    onCoinsUpdate(userCoins - 10);
+                    setAutoClickerActive(true);
+                } catch (error) {
+                    console.error('Auto clicker activation error:', error);
+                }
+            };
+
+            const handleUpgradeClicker = async () => {
+                if (userCoins < nextUpgradeCost) {
+                    alert(`Нужно ${nextUpgradeCost} коинов для улучшения.`);
+                    return;
+                }
+                try {
+                    await update(ref(db, `users/${currentUser}`), { 
+                        coins: userCoins - nextUpgradeCost,
+                        clickerLevel: clickerLevel + 1
+                    });
+                    onCoinsUpdate(userCoins - nextUpgradeCost);
+                } catch (error) {
+                    console.error('Clicker upgrade error:', error);
+                }
+            };
+
+            return (
+                <div className="bg-slate-800 border border-slate-700 rounded-xl p-3 mt-3">
+                    <div className="flex items-center justify-between mb-2">
+                        <h3 className="text-white font-medium text-sm"><Bot size={16} className="inline mr-2 text-green-500" />Автокликер</h3>
+                        <div className={`text-xs px-2 py-1 rounded-full ${autoClickerActive ? 'bg-green-500/20 text-green-400' : 'bg-slate-700 text-slate-400'}`}>
+                            {autoClickerActive ? 'Активен' : 'Неактивен'}
+                        </div>
+                    </div>
+                    <div className="text-xs text-slate-400 mb-3">
+                        <div>Уровень: {clickerLevel}</div>
+                        <div>Доход за клик: +{coinsPerClick.toFixed(3)}</div>
+                    </div>
+                    <div className="flex gap-2">
+                        <Button onClick={handleToggleAutoClicker} variant={autoClickerActive ? "danger" : "primary"} className="flex-1 text-xs" disabled={!autoClickerActive && userCoins < 10}>
+                            {autoClickerActive ? 'Остановить' : 'Купить за 10'}
+                        </Button>
+                        <Button onClick={handleUpgradeClicker} variant="gold" className="flex-1 text-xs" disabled={userCoins < nextUpgradeCost}>
+                            Улучшить ({nextUpgradeCost})
+                        </Button>
+                    </div>
+                </div>
+            );
+        };
+
+        // NFT Orbital Display
+        const NFTOrbitalDisplay = ({ userNFTs }) => {
+            // Берем только первые 3 NFT, которые не скрыты
+            const activeNFTs = userNFTs
+                .filter(nft => !nft.hidden)
+                .slice(0, 3);
+            
+            if (activeNFTs.length === 0) return null;
+
+            // Создаем равномерное распределение по орбите
+            const orbitalItems = activeNFTs.map((userNft, index) => {
+                const angle = (index / activeNFTs.length) * 360;
+                const radius = 60; // радиус орбиты
+                const x = Math.cos(angle * Math.PI / 180) * radius;
+                const y = Math.sin(angle * Math.PI / 180) * radius;
+                
+                return {
+                    ...userNft,
+                    style: {
+                        transform: `translate(${x}px, ${y}px)`,
+                        animationDelay: `${index * 0.5}s`
+                    }
+                };
+            });
+
+            return (
+                <div className="nft-container">
+                    <div className="nft-orbital">
+                        {orbitalItems.map((item, index) => (
+                            <div 
+                                key={index} 
+                                className="nft-item"
+                                style={item.style}
+                                title={item.id}
+                            >
+                                {item.emoji}
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            );
+        };
+
+        // Main App
+        const App = () => {
+            const [currentUser, setCurrentUser] = useState(() => localStorage.getItem('dolbaeb_user'));
+            const [isLoginView, setIsLoginView] = useState(true);
+            const [usernameInput, setUsernameInput] = useState('');
+            const [passwordInput, setPasswordInput] = useState('');
+            const [authError, setAuthError] = useState('');
+            const [chats, setChats] = useState([]);
+            const [activeChatUser, setActiveChatUser] = useState(null);
+            const [messages, setMessages] = useState([]);
+            const [messageInput, setMessageInput] = useState('');
+            const [searchQuery, setSearchQuery] = useState('');
+            const [searchResults, setSearchResults] = useState([]);
+            const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+            const [isNFTMarketOpen, setIsNFTMarketOpen] = useState(false);
+            const [isTransferCoinsOpen, setIsTransferCoinsOpen] = useState(false);
+            const [isCasinoModalOpen, setIsCasinoModalOpen] = useState(false);
+            const [userCoins, setUserCoins] = useState(0);
+            const [userAvatar, setUserAvatar] = useState('');
+            const [userFrame, setUserFrame] = useState('');
+            const [userNameColor, setUserNameColor] = useState('');
+            const [userStatus, setUserStatus] = useState('');
+            const [userStatusEmoji, setUserStatusEmoji] = useState('');
+            const [userNFTs, setUserNFTs] = useState([]);
+            const [clickerLevel, setClickerLevel] = useState(0);
+            const [usersData, setUsersData] = useState({});
+            const messagesEndRef = useRef(null);
+
+            // Валидация имени пользователя
+            const validateUsername = (username) => {
+                if (!username || username.length < 3) {
+                    return 'Имя пользователя должно быть не менее 3 символов';
+                }
+                if (!/^[a-z0-9]+$/.test(username)) {
+                    return 'Имя пользователя должно содержать только строчные латинские буквы и цифры';
+                }
+                if (username !== username.toLowerCase()) {
+                    return 'Имя пользователя должно быть в нижнем регистре';
+                }
+                return null;
+            };
+
+            // Обработчик входа/регистрации
+            const handleAuth = async () => {
+                const validationError = validateUsername(usernameInput);
+                if (validationError) {
+                    setAuthError(validationError);
+                    return;
+                }
+
+                try {
+                    const userRef = ref(db, `users/${usernameInput}`);
+                    const snapshot = await get(userRef);
+                    
+                    if (snapshot.exists()) {
+                        // Вход
+                        const userData = snapshot.val();
+                        if (userData.password !== passwordInput) {
+                            setAuthError('Неверный пароль');
+                            return;
+                        }
+                    } else {
+                        // Регистрация
+                        if (!passwordInput) {
+                            setAuthError('Введите пароль');
+                            return;
+                        }
+                        await set(userRef, {
+                            password: passwordInput,
+                            coins: 10,
+                            createdAt: Date.now(),
+                            avatar: '',
+                            frame: '',
+                            nameColor: '',
+                            status: 'В сети',
+                            statusEmoji: '💬',
+                            nfts: [],
+                            clickerLevel: 0,
+                            autoClickerActive: false
+                        });
+                    }
+                    
+                    localStorage.setItem('dolbaeb_user', usernameInput);
+                    setCurrentUser(usernameInput);
+                    setAuthError('');
+                } catch (error) {
+                    console.error('Auth error:', error);
+                    setAuthError('Ошибка авторизации');
+                }
+            };
+
+            // Загрузка данных пользователя
+            useEffect(() => {
+                if (currentUser) {
+                    const userRef = ref(db, `users/${currentUser}`);
+                    const unsubscribe = onValue(userRef, (snapshot) => {
+                        const data = snapshot.val();
+                        if (data) {
+                            setUserCoins(data.coins || 0);
+                            setUserAvatar(data.avatar || '');
+                            setUserFrame(data.frame || '');
+                            setUserNameColor(data.nameColor || '');
+                            setUserStatus(data.status || '');
+                            setUserStatusEmoji(data.statusEmoji || '');
+                            setUserNFTs(data.nfts || []);
+                            setClickerLevel(data.clickerLevel || 0);
+                        }
+                    });
+                    return () => off(userRef);
+                }
+            }, [currentUser]);
+
+            // Загрузка данных всех пользователей
+            useEffect(() => {
+                if (currentUser) {
+                    const usersRef = ref(db, 'users');
+                    const unsubscribe = onValue(usersRef, (snapshot) => {
+                        setUsersData(snapshot.val() || {});
+                    });
+                    return () => off(usersRef);
+                }
+            }, [currentUser]);
+
+            // Загрузка чатов
+            useEffect(() => {
+                if (currentUser) {
+                    const messagesRef = ref(db, 'messages');
+                    const unsubscribe = onValue(messagesRef, (snapshot) => {
+                        const data = snapshot.val();
+                        if (!data) { setChats([]); return; }
+                        const newChats = new Map();
+                        Object.entries(data).forEach(([chatId, chatMessages]) => {
+                            const usersInChat = chatId.split('_');
+                            if (usersInChat.includes(currentUser)) {
+                                const otherUser = usersInChat.find(user => user !== currentUser);
+                                if (chatMessages && Object.keys(chatMessages).length > 0) {
+                                    const messagesList = Object.values(chatMessages).filter(m => m && !m.deleted).sort((a, b) => b.timestamp - a.timestamp);
+                                    if (messagesList.length > 0) {
+                                        newChats.set(otherUser, { user: otherUser, lastMessage: messagesList[0], timestamp: messagesList[0].timestamp });
+                                    }
+                                }
+                            }
+                        });
+                        setChats(Array.from(newChats.values()).sort((a, b) => b.timestamp - a.timestamp));
+                    });
+                    return () => off(messagesRef);
+                }
+            }, [currentUser]);
+
+            // Загрузка сообщений активного чата
+            useEffect(() => {
+                if (currentUser && activeChatUser) {
+                    const chatId = [currentUser, activeChatUser].sort().join('_');
+                    const chatRef = ref(db, `messages/${chatId}`);
+                    const unsubscribe = onValue(chatRef, (snapshot) => {
+                        const data = snapshot.val();
+                        if (!data) { setMessages([]); return; }
+                        const messagesArray = Object.entries(data).map(([id, message]) => ({ id, ...message })).filter(msg => !msg.deleted).sort((a, b) => a.timestamp - b.timestamp);
+                        setMessages(messagesArray);
+                    });
+                    return () => off(chatRef);
+                }
+            }, [currentUser, activeChatUser]);
+
+            // Автопрокрутка к новым сообщениям
+            useEffect(() => {
+                messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+            }, [messages]);
+
+            // Поиск пользователей
+            useEffect(() => {
+                if (searchQuery.trim()) {
+                    const results = Object.keys(usersData)
+                        .filter(username => 
+                            username !== currentUser && 
+                            username.toLowerCase().includes(searchQuery.toLowerCase())
+                        )
+                        .slice(0, 10);
+                    setSearchResults(results);
+                } else {
+                    setSearchResults([]);
+                }
+            }, [searchQuery, usersData, currentUser]);
+
+            // Обработчик отправки сообщения
+            const handleSendMessage = async () => {
+                if (!messageInput.trim() || !activeChatUser) return;
+                
+                const chatId = [currentUser, activeChatUser].sort().join('_');
+                const messageRef = push(ref(db, `messages/${chatId}`));
+                
+                try {
+                    await set(messageRef, {
+                        sender: currentUser,
+                        text: messageInput.trim(),
+                        timestamp: Date.now(),
+                        deleted: false
+                    });
+                    setMessageInput('');
+                } catch (error) {
+                    console.error('Send message error:', error);
+                }
+            };
+
+            // Обработчик клика по монетам
+            const handleCoinClick = async () => {
+                const coinsPerClick = 0.001 + (clickerLevel * 0.004);
+                const newCoins = userCoins + coinsPerClick;
+                try {
+                    await update(ref(db, `users/${currentUser}`), { coins: newCoins });
+                    setUserCoins(newCoins);
+                } catch (error) {
+                    console.error('Coin click error:', error);
+                }
+            };
+
+            // Обработчик выхода
+            const handleLogout = () => {
+                localStorage.removeItem('dolbaeb_user');
+                setCurrentUser(null);
+                setIsLoginView(true);
+                setUsernameInput('');
+                setPasswordInput('');
+            };
+
+            // Обработчики обновления настроек
+            const handleAvatarChange = async (avatar) => {
+                try {
+                    await update(ref(db, `users/${currentUser}`), { avatar });
+                    setUserAvatar(avatar);
+                } catch (error) {
+                    console.error('Avatar update error:', error);
+                }
+            };
+
+            const handleFrameChange = async (frame) => {
+                try {
+                    await update(ref(db, `users/${currentUser}`), { frame });
+                    setUserFrame(frame);
+                } catch (error) {
+                    console.error('Frame update error:', error);
+                }
+            };
+
+            const handleColorChange = async (color) => {
+                try {
+                    await update(ref(db, `users/${currentUser}`), { nameColor: color });
+                    setUserNameColor(color);
+                } catch (error) {
+                    console.error('Color update error:', error);
+                }
+            };
+
+            const handleStatusChange = async (status, emoji) => {
+                try {
+                    await update(ref(db, `users/${currentUser}`), { 
+                        status, 
+                        statusEmoji: emoji 
+                    });
+                    setUserStatus(status);
+                    setUserStatusEmoji(emoji);
+                } catch (error) {
+                    console.error('Status update error:', error);
+                }
+            };
+
+            // Экран входа
+            if (!currentUser) {
+                return (
+                    <div className="min-h-screen bg-gradient-to-br from-slate-900 to-slate-800 flex items-center justify-center p-4 safe-area-top safe-area-bottom">
+                        <div className="w-full max-w-md bg-slate-800 border border-slate-700 rounded-2xl p-6 shadow-2xl">
+                            <div className="text-center mb-6">
+                                <h1 className="text-3xl font-bold text-white mb-2">DolbaebSMS</h1>
+                                <p className="text-slate-400">Войдите или зарегистрируйтесь</p>
+                            </div>
+                            
+                            <div className="space-y-4">
+                                <div>
+                                    <label className="text-slate-400 text-sm mb-1 block">Имя пользователя</label>
+                                    <input 
+                                        type="text" 
+                                        value={usernameInput}
+                                        onChange={(e) => setUsernameInput(e.target.value.toLowerCase())}
+                                        placeholder="только строчные латинские буквы и цифры"
+                                        className="w-full bg-slate-700 border border-slate-600 rounded-xl px-3 py-2 text-white focus:border-indigo-500 outline-none text-sm"
+                                    />
+                                </div>
+                                
+                                <div>
+                                    <label className="text-slate-400 text-sm mb-1 block">Пароль</label>
+                                    <input 
+                                        type="password" 
+                                        value={passwordInput}
+                                        onChange={(e) => setPasswordInput(e.target.value)}
+                                        placeholder="введите пароль"
+                                        className="w-full bg-slate-700 border border-slate-600 rounded-xl px-3 py-2 text-white focus:border-indigo-500 outline-none text-sm"
+                                    />
+                                </div>
+                                
+                                {authError && (
+                                    <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-3">
+                                        <p className="text-red-400 text-sm text-center">{authError}</p>
+                                    </div>
+                                )}
+                                
+                                <Button 
+                                    onClick={handleAuth} 
+                                    className="w-full"
+                                    disabled={!usernameInput.trim()}
+                                >
+                                    {usersData[usernameInput] ? 'Войти' : 'Зарегистрироваться'}
+                                </Button>
+                                
+                                <p className="text-slate-500 text-xs text-center">
+                                    {usersData[usernameInput] 
+                                        ? 'Уже есть аккаунт? Войдите' 
+                                        : 'Новый пользователь? Будет создан аккаунт'}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                );
+            }
+
+            // Основной интерфейс
+            return (
+                <div className="h-screen flex flex-col bg-slate-900 safe-area-top safe-area-bottom">
+                    {/* Header */}
+                    <div className="bg-slate-800 border-b border-slate-700 p-3 flex items-center justify-between shrink-0">
+                        <div className="flex items-center gap-3">
+                            <div className="relative">
+                                <div className={`w-10 h-10 rounded-full bg-gradient-to-tr from-indigo-600 to-purple-600 flex items-center justify-center text-white font-bold text-lg ${userFrame === 'basic' ? 'frame-basic' : userFrame === 'silver' ? 'frame-silver' : userFrame === 'gold' ? 'frame-gold' : userFrame === 'diamond' ? 'frame-diamond' : userFrame === 'rainbow' ? 'frame-rainbow' : ''}`}>
+                                    {userAvatar || currentUser[0].toUpperCase()}
+                                </div>
+                                <NFTOrbitalDisplay userNFTs={userNFTs} />
+                            </div>
+                            <div>
+                                <h1 className="font-bold text-white" style={
+                                    userNameColor === 'red' ? {color: '#ef4444'} :
+                                    userNameColor === 'orange' ? {color: '#f97316'} :
+                                    userNameColor === 'yellow' ? {color: '#eab308'} :
+                                    userNameColor === 'green' ? {color: '#22c55e'} :
+                                    userNameColor === 'blue' ? {color: '#3b82f6'} :
+                                    userNameColor === 'purple' ? {color: '#a855f7'} :
+                                    userNameColor === 'rainbow' ? {background: 'linear-gradient(45deg, #ff0000, #ff9900, #ffff00, #00ff00, #00ffff, #0000ff, #9900ff)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent'} : {}
+                                }>
+                                    {currentUser}
+                                </h1>
+                                <p className="text-slate-400 text-xs">{userStatusEmoji} {userStatus}</p>
+                            </div>
+                        </div>
+                        
+                        <div className="flex items-center gap-2">
+                            <button onClick={() => setIsNFTMarketOpen(true)} className="p-2 text-yellow-500 hover:bg-yellow-500/10 rounded-xl transition-colors">
+                                <Coins size={20} />
+                            </button>
+                            <button onClick={() => setIsSettingsOpen(true)} className="p-2 text-slate-400 hover:text-white hover:bg-slate-700 rounded-xl transition-colors">
+                                <SettingsIcon size={20} />
+                            </button>
+                        </div>
+                    </div>
+
+                    {/* Main Content */}
+                    <div className="flex-1 flex overflow-hidden">
+                        {/* Sidebar */}
+                        <div className="w-80 bg-slate-800 border-r border-slate-700 flex flex-col shrink-0">
+                            {/* Clicker Section */}
+                            <div className="p-3 border-b border-slate-700">
+                                <Clicker 
+                                    userCoins={userCoins}
+                                    onCoinClick={handleCoinClick}
+                                    currentUser={currentUser}
+                                    clickerLevel={clickerLevel}
+                                />
+                                <AutoClicker
+                                    userCoins={userCoins}
+                                    onCoinsUpdate={setUserCoins}
+                                    currentUser={currentUser}
+                                    clickerLevel={clickerLevel}
+                                />
+                            </div>
+
+                            {/* Actions */}
+                            <div className="p-3 border-b border-slate-700 grid grid-cols-2 gap-2">
+                                <Button onClick={() => setIsNFTMarketOpen(true)} variant="secondary" className="text-xs" icon={<Coins size={14} />}>
+                                    NFT Магазин
+                                </Button>
+                                <Button onClick={() => setIsTransferCoinsOpen(true)} variant="secondary" className="text-xs" icon={<Send size={14} />}>
+                                    Перевод
+                                </Button>
+                                <Button onClick={() => setIsCasinoModalOpen(true)} variant="secondary" className="text-xs" icon={<Trophy size={14} />}>
+                                    Казино
+                                </Button>
+                                <Button onClick={() => setIsSettingsOpen(true)} variant="secondary" className="text-xs" icon={<SettingsIcon size={14} />}>
+                                    Настройки
+                                </Button>
+                            </div>
+
+                            {/* Search */}
+                            <div className="p-3 border-b border-slate-700">
+                                <div className="relative">
+                                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400" size={16} />
+                                    <input
+                                        type="text"
+                                        placeholder="Поиск пользователей..."
+                                        value={searchQuery}
+                                        onChange={(e) => setSearchQuery(e.target.value)}
+                                        className="w-full bg-slate-700 border border-slate-600 rounded-xl pl-9 pr-3 py-2 text-white text-sm focus:border-indigo-500 outline-none"
+                                    />
+                                </div>
+                            </div>
+
+                            {/* Chats List */}
+                            <div className="flex-1 overflow-y-auto no-scrollbar">
+                                {searchQuery ? (
+                                    // Search Results
+                                    <div className="p-2">
+                                        {searchResults.map(username => (
+                                            <button
+                                                key={username}
+                                                onClick={() => {
+                                                    setActiveChatUser(username);
+                                                    setSearchQuery('');
+                                                    setSearchResults([]);
+                                                }}
+                                                className="w-full p-3 rounded-xl flex items-center gap-3 hover:bg-slate-700 transition-colors text-left"
+                                            >
+                                                <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-indigo-600 to-purple-600 flex items-center justify-center text-white font-bold">
+                                                    {usersData[username]?.avatar || username[0].toUpperCase()}
+                                                </div>
+                                                <div>
+                                                    <div className="text-white font-medium">{username}</div>
+                                                    <div className="text-slate-400 text-xs">{usersData[username]?.status || 'В сети'}</div>
+                                                </div>
+                                            </button>
+                                        ))}
+                                        {searchResults.length === 0 && searchQuery.trim() && (
+                                            <div className="text-center text-slate-500 py-4">
+                                                Пользователи не найдены
+                                            </div>
+                                        )}
+                                    </div>
+                                ) : (
+                                    // Chats
+                                    <div className="p-2">
+                                        {chats.map(chat => (
+                                            <button
+                                                key={chat.user}
+                                                onClick={() => setActiveChatUser(chat.user)}
+                                                className={`w-full p-3 rounded-xl flex items-center gap-3 hover:bg-slate-700 transition-colors text-left mb-2 ${activeChatUser === chat.user ? 'bg-slate-700' : ''}`}
+                                            >
+                                                <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-indigo-600 to-purple-600 flex items-center justify-center text-white font-bold">
+                                                    {usersData[chat.user]?.avatar || chat.user[0].toUpperCase()}
+                                                </div>
+                                                <div className="flex-1 min-w-0">
+                                                    <div className="text-white font-medium truncate">{chat.user}</div>
+                                                    <div className="text-slate-400 text-xs truncate">
+                                                        {chat.lastMessage.sender === currentUser ? 'Вы: ' : ''}
+                                                        {chat.lastMessage.text}
+                                                    </div>
+                                                </div>
+                                                <div className="text-slate-500 text-xs">
+                                                    {format(chat.lastMessage.timestamp, 'HH:mm')}
+                                                </div>
+                                            </button>
+                                        ))}
+                                        {chats.length === 0 && (
+                                            <div className="text-center text-slate-500 py-8">
+                                                <p>Нет сообщений</p>
+                                                <p className="text-sm mt-1">Начните общение с кем-нибудь</p>
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* Chat Area */}
+                        <div className="flex-1 flex flex-col bg-slate-900">
+                            {activeChatUser ? (
+                                <>
+                                    {/* Chat Header */}
+                                    <div className="bg-slate-800 border-b border-slate-700 p-3 flex items-center gap-3 shrink-0">
+                                        <button 
+                                            onClick={() => setActiveChatUser(null)}
+                                            className="p-1 text-slate-400 hover:text-white lg:hidden"
+                                        >
+                                            <ChevronLeft size={20} />
+                                        </button>
+                                        <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-indigo-600 to-purple-600 flex items-center justify-center text-white font-bold text-sm">
+                                            {usersData[activeChatUser]?.avatar || activeChatUser[0].toUpperCase()}
+                                        </div>
+                                        <div>
+                                            <div className="text-white font-medium">{activeChatUser}</div>
+                                            <div className="text-slate-400 text-xs">{usersData[activeChatUser]?.status || 'В сети'}</div>
+                                        </div>
+                                    </div>
+
+                                    {/* Messages */}
+                                    <div className="flex-1 overflow-y-auto p-4 space-y-1 no-scrollbar">
+                                        {messages.map(message => (
+                                            <MessageBubble
+                                                key={message.id}
+                                                message={message}
+                                                isOwn={message.sender === currentUser}
+                                                chatId={[currentUser, activeChatUser].sort().join('_')}
+                                                messageId={message.id}
+                                                currentUser={currentUser}
+                                            />
+                                        ))}
+                                        <div ref={messagesEndRef} />
+                                    </div>
+
+                                    {/* Message Input */}
+                                    <div className="bg-slate-800 border-t border-slate-700 p-3 shrink-0">
+                                        <div className="flex gap-2">
+                                            <input
+                                                type="text"
+                                                placeholder="Введите сообщение..."
+                                                value={messageInput}
+                                                onChange={(e) => setMessageInput(e.target.value)}
+                                                onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
+                                                className="flex-1 bg-slate-700 border border-slate-600 rounded-xl px-3 py-2 text-white text-sm focus:border-indigo-500 outline-none"
+                                            />
+                                            <Button onClick={handleSendMessage} disabled={!messageInput.trim()}>
+                                                <Send size={16} />
+                                            </Button>
+                                        </div>
+                                    </div>
+                                </>
+                            ) : (
+                                // Empty State
+                                <div className="flex-1 flex items-center justify-center">
+                                    <div className="text-center text-slate-500">
+                                        <MessageCircle className="mx-auto mb-2" size={48} />
+                                        <p>Выберите чат чтобы начать общение</p>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* Modals */}
+                    <SettingsModal
+                        isOpen={isSettingsOpen}
+                        onClose={() => setIsSettingsOpen(false)}
+                        currentUser={currentUser}
+                        onLogout={handleLogout}
+                        userCoins={userCoins}
+                        userAvatar={userAvatar}
+                        userFrame={userFrame}
+                        userNameColor={userNameColor}
+                        userStatus={userStatus}
+                        userStatusEmoji={userStatusEmoji}
+                        onAvatarChange={handleAvatarChange}
+                        onFrameChange={handleFrameChange}
+                        onColorChange={handleColorChange}
+                        onStatusChange={handleStatusChange}
+                    />
+
+                    <NFTMarketModal
+                        isOpen={isNFTMarketOpen}
+                        onClose={() => setIsNFTMarketOpen(false)}
+                        currentUser={currentUser}
+                        userCoins={userCoins}
+                        onCoinsUpdate={setUserCoins}
+                        userNFTs={userNFTs}
+                        onNFTUpdate={setUserNFTs}
+                        usersData={usersData}
+                    />
+
+                    <TransferCoinsModal
+                        isOpen={isTransferCoinsOpen}
+                        onClose={() => setIsTransferCoinsOpen(false)}
+                        currentUser={currentUser}
+                        userCoins={userCoins}
+                        onCoinsUpdate={setUserCoins}
+                    />
+
+                    <CasinoModal
+                        isOpen={isCasinoModalOpen}
+                        onClose={() => setIsCasinoModalOpen(false)}
+                        currentUser={currentUser}
+                        userCoins={userCoins}
+                        onCoinsUpdate={setUserCoins}
+                    />
+                </div>
+            );
+        };
+
+        // Инициализация приложения
         const root = createRoot(document.getElementById('root'));
         root.render(<App />);
     </script>
