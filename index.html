@@ -60,14 +60,17 @@
     </style>
 
     <script type="importmap">
-{"imports": {
-  "react": "https://esm.sh/react@18.2.0",
-  "react-dom/client": "https://esm.sh/react-dom@18.2.0/client",
-  "lucide-react": "https://esm.sh/lucide-react@0.263.1?deps=react@18.2.0",
-  "date-fns": "https://esm.sh/date-fns@2.30.0",
-  "firebase/app": "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js",
-  "firebase/database": "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js"
-}}</script>
+{
+  "imports": {
+    "react": "https://esm.sh/react@18.2.0",
+    "react-dom/client": "https://esm.sh/react-dom@18.2.0/client",
+    "lucide-react": "https://esm.sh/lucide-react@0.263.1?deps=react@18.2.0",
+    "date-fns": "https://esm.sh/date-fns@2.30.0",
+    "firebase/app": "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js",
+    "firebase/database": "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js"
+  }
+}
+</script>
 </head>
 <body>
     <div id="root"></div>
@@ -75,13 +78,13 @@
     <script type="text/babel" data-type="module">
         import React, { useState, useEffect, useRef } from 'react';
         import { createRoot } from 'react-dom/client';
-        import { Search, Send, Image as ImageIcon, Mic, X, ChevronLeft, Video, Settings as SettingsIcon, Trash2, Smile, MoreVertical, LogOut, User as UserIcon, Loader2, Coins, Crown, Palette, Edit3, Trophy, Bot, TrendingUp, Send as SendIcon, Info, Clock, TrendingDown, Star, Zap, Shield, Skull, Crown as CrownIcon, Gem } from 'lucide-react';
+        import { Search, Send, Image as ImageIcon, Mic, X, ChevronLeft, Video, Settings as SettingsIcon, Trash2, Smile, MoreVertical, LogOut, User as UserIcon, Loader2, Coins, Crown, Palette, Edit3, Trophy, Bot, TrendingUp, Send as SendIcon, Info, Clock, MessageCircle } from 'lucide-react';
         import { format } from 'date-fns';
         import { initializeApp } from 'firebase/app';
         import { getDatabase, ref, onValue, set, update, push, off, query, orderByChild, startAt, endAt, remove, get } from 'firebase/database';
 
         // Firebase config
-        const app = initializeApp({
+        const firebaseConfig = {
             apiKey: "AIzaSyA35T6z2FYS6m9IEJ9x7evxCphgpLhgMX4",
             authDomain: "dolbaebsms-live.firebaseapp.com",
             databaseURL: "https://dolbaebsms-live-default-rtdb.firebaseio.com",
@@ -89,7 +92,9 @@
             storageBucket: "dolbaebsms-live.firebasestorage.app",
             messagingSenderId: "912825721862",
             appId: "1:912825721862:web:b92d7f7f553ca4536c0f87"
-        });
+        };
+
+        const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
 
         // Components
@@ -134,78 +139,31 @@
             const [giftNFT, setGiftNFT] = useState(null);
             const [sellPrice, setSellPrice] = useState('');
             const [sellNFT, setSellNFT] = useState(null);
-            const [nftMarketPrices, setNftMarketPrices] = useState({});
 
-            // Инициализация NFT с паттернами и редкостью
             const nfts = [
-                { id: 'ghost', name: 'Призрак', emoji: '👻', basePrice: 600, rarity: 'common', pattern: 'simple', durability: 100 },
-                { id: 'robot', name: 'Робот', emoji: '🤖', basePrice: 800, rarity: 'common', pattern: 'simple', durability: 100 },
-                { id: 'dragon', name: 'Дракон', emoji: '🐉', basePrice: 1800, rarity: 'epic', pattern: 'complex', durability: 100 },
-                { id: 'unicorn', name: 'Единорог', emoji: '🦄', basePrice: 3000, rarity: 'legendary', pattern: 'exquisite', durability: 100 },
-                { id: 'phoenix', name: 'Феникс', emoji: '🦚', basePrice: 2200, rarity: 'epic', pattern: 'complex', durability: 100 },
-                { id: 'alien', name: 'Пришелец', emoji: '👽', basePrice: 1200, rarity: 'rare', pattern: 'detailed', durability: 100 },
-                { id: 'crown', name: 'Корона', emoji: '👑', basePrice: 5000, rarity: 'legendary', pattern: 'exquisite', durability: 100 },
-                { id: 'diamond', name: 'Алмаз', emoji: '💎', basePrice: 4000, rarity: 'legendary', pattern: 'exquisite', durability: 100 },
-                { id: 'fire', name: 'Огонь', emoji: '🔥', basePrice: 1500, rarity: 'rare', pattern: 'detailed', durability: 100 },
-                { id: 'comet', name: 'Комета', emoji: '☄️', basePrice: 2500, rarity: 'epic', pattern: 'complex', durability: 100 },
-                { id: 'star', name: 'Звезда', emoji: '⭐', basePrice: 1000, rarity: 'rare', pattern: 'detailed', durability: 100 },
-                { id: 'moon', name: 'Луна', emoji: '🌙', basePrice: 900, rarity: 'common', pattern: 'simple', durability: 100 },
-                { id: 'sun', name: 'Солнце', emoji: '☀️', basePrice: 2000, rarity: 'epic', pattern: 'complex', durability: 100 },
-                { id: 'planet', name: 'Планета', emoji: '🪐', basePrice: 2800, rarity: 'epic', pattern: 'complex', durability: 100 },
-                { id: 'rocket', name: 'Ракета', emoji: '🚀', basePrice: 1700, rarity: 'rare', pattern: 'detailed', durability: 100 },
-                { id: 'rainbow', name: 'Радуга', emoji: '🌈', basePrice: 3500, rarity: 'legendary', pattern: 'exquisite', durability: 100 },
-                { id: 'thunder', name: 'Гром', emoji: '⚡', basePrice: 1900, rarity: 'rare', pattern: 'detailed', durability: 100 },
-                { id: 'snowflake', name: 'Снежинка', emoji: '❄️', basePrice: 800, rarity: 'common', pattern: 'simple', durability: 100 },
-                { id: 'flower', name: 'Цветок', emoji: '🌸', basePrice: 700, rarity: 'common', pattern: 'simple', durability: 100 },
-                { id: 'tree', name: 'Дерево', emoji: '🌳', basePrice: 750, rarity: 'common', pattern: 'simple', durability: 100 }
+                { id: 'ghost', name: 'Призрак', emoji: '👻', price: 600, rarity: 'common' },
+                { id: 'robot', name: 'Робот', emoji: '🤖', price: 800, rarity: 'common' },
+                { id: 'dragon', name: 'Дракон', emoji: '🐉', price: 1800, rarity: 'epic' },
+                { id: 'unicorn', name: 'Единорог', emoji: '🦄', price: 3000, rarity: 'legendary' },
+                { id: 'phoenix', name: 'Феникс', emoji: '🦚', price: 2200, rarity: 'epic' },
+                { id: 'alien', name: 'Пришелец', emoji: '👽', price: 1200, rarity: 'rare' }
             ];
 
-            // Загрузка рыночных цен NFT
-            useEffect(() => {
-                if (isOpen) {
-                    const nftPricesRef = ref(db, 'nftMarketPrices');
-                    const unsubscribe = onValue(nftPricesRef, (snapshot) => {
-                        const data = snapshot.val() || {};
-                        setNftMarketPrices(data);
-                    });
-                    return () => off(nftPricesRef);
-                }
-            }, [isOpen]);
-
-            // Функция для получения текущей цены NFT с учетом рыночных колебаний
-            const getCurrentPrice = (nft) => {
-                const marketData = nftMarketPrices[nft.id] || { currentPrice: nft.basePrice, volatility: 0.1 };
-                return marketData.currentPrice || nft.basePrice;
-            };
-
-            // Функция для расчета износа NFT
-            const getDurabilityPercentage = (userNft) => {
-                return userNft.durability || 100;
-            };
-
-            // Покупка NFT
             const handleBuyNFT = async (nft) => {
-                const currentPrice = getCurrentPrice(nft);
-                if (userCoins < currentPrice) {
-                    alert(`Недостаточно коинов! Нужно ${currentPrice.toFixed(3)} коинов.`);
+                if (userCoins < nft.price) {
+                    alert(`Недостаточно коинов! Нужно ${nft.price} коинов.`);
                     return;
                 }
                 setIsLoading(true);
                 try {
-                    const newNFTs = [...(userNFTs || []), { 
-                        id: nft.id, 
-                        purchasedAt: Date.now(), 
-                        hidden: false,
-                        durability: 100,
-                        purchasePrice: currentPrice
-                    }];
+                    const newNFTs = [...(userNFTs || []), { id: nft.id, purchasedAt: Date.now(), hidden: false }];
                     await update(ref(db, `users/${currentUser}`), { 
-                        coins: userCoins - currentPrice,
+                        coins: userCoins - nft.price,
                         nfts: newNFTs
                     });
-                    onCoinsUpdate(userCoins - currentPrice);
+                    onCoinsUpdate(userCoins - nft.price);
                     onNFTUpdate(newNFTs);
-                    alert(`Вы купили NFT "${nft.name}" за ${currentPrice.toFixed(3)} коинов!`);
+                    alert(`Вы купили NFT "${nft.name}"!`);
                 } catch (error) {
                     console.error('NFT purchase error:', error);
                     alert('Ошибка при покупке NFT');
@@ -213,7 +171,6 @@
                 setIsLoading(false);
             };
 
-            // Удаление NFT из профиля
             const handleRemoveNFT = async (nftId) => {
                 if (!confirm('Убрать NFT из профиля?')) return;
                 setIsLoading(true);
@@ -232,7 +189,6 @@
                 setIsLoading(false);
             };
 
-            // Восстановление NFT в профиле
             const handleRestoreNFT = async (nftId) => {
                 setIsLoading(true);
                 try {
@@ -250,7 +206,6 @@
                 setIsLoading(false);
             };
 
-            // Подарок NFT
             const handleGiftNFT = async () => {
                 if (!giftRecipient.trim() || !giftNFT) {
                     alert('Выберите NFT и укажите получателя');
@@ -273,12 +228,7 @@
                     const recipientNFTs = recipientData.nfts || [];
                     const newSenderNFTs = userNFTs.filter(nft => nft.id !== giftNFT.id);
                     const newRecipientNFTs = [...recipientNFTs, { 
-                        id: giftNFT.id, 
-                        gifted: true, 
-                        from: currentUser, 
-                        giftedAt: Date.now(), 
-                        hidden: false,
-                        durability: giftNFT.durability || 100
+                        id: giftNFT.id, gifted: true, from: currentUser, giftedAt: Date.now(), hidden: false 
                     }];
                     await update(ref(db, `users/${currentUser}`), { nfts: newSenderNFTs });
                     await update(recipientRef, { nfts: newRecipientNFTs });
@@ -303,7 +253,6 @@
                 setIsLoading(false);
             };
 
-            // Продажа NFT на рынке
             const handleSellNFT = async () => {
                 if (!sellPrice || parseFloat(sellPrice) <= 0) {
                     alert('Укажите корректную цену продажи');
@@ -311,91 +260,28 @@
                 }
                 setIsLoading(true);
                 try {
-                    const nftToSell = userNFTs.find(nft => nft.id === sellNFT.id);
-                    if (!nftToSell) return;
-                    
-                    // Создаем запись о продаже на рынке
                     const marketListingRef = push(ref(db, 'nftMarketListings'));
                     await set(marketListingRef, {
                         nftId: sellNFT.id,
                         seller: currentUser,
                         price: parseFloat(sellPrice),
-                        listedAt: Date.now(),
-                        durability: nftToSell.durability || 100
+                        listedAt: Date.now()
                     });
                     
-                    // Убираем NFT у продавца
                     const newNFTs = userNFTs.filter(nft => nft.id !== sellNFT.id);
                     await update(ref(db, `users/${currentUser}`), { nfts: newNFTs });
                     
                     onNFTUpdate(newNFTs);
                     setSellNFT(null);
                     setSellPrice('');
-                    alert(`NFT "${sellNFT.name}" выставлен на продажу за ${parseFloat(sellPrice).toFixed(3)} коинов!`);
+                    alert(`NFT "${sellNFT.name}" выставлен на продажу!`);
                 } catch (error) {
                     console.error('NFT sell error:', error);
-                    alert('Ошибка при выставлении NFT на продажу');
+                    alert('Ошибка при продаже NFT');
                 }
                 setIsLoading(false);
             };
 
-            // Покупка NFT с рынка
-            const handleBuyFromMarket = async (listing) => {
-                const nft = nfts.find(n => n.id === listing.nftId);
-                if (!nft) return;
-                
-                if (userCoins < listing.price) {
-                    alert(`Недостаточно коинов! Нужно ${listing.price.toFixed(3)} коинов.`);
-                    return;
-                }
-                
-                if (listing.seller === currentUser) {
-                    alert('Нельзя купить свой же NFT');
-                    return;
-                }
-                
-                setIsLoading(true);
-                try {
-                    // Добавляем NFT покупателю
-                    const newNFTs = [...(userNFTs || []), { 
-                        id: nft.id, 
-                        purchasedAt: Date.now(), 
-                        hidden: false,
-                        durability: listing.durability,
-                        purchasedFromMarket: true,
-                        originalSeller: listing.seller
-                    }];
-                    
-                    // Переводим коины продавцу
-                    const sellerRef = ref(db, `users/${listing.seller}`);
-                    const sellerSnapshot = await get(sellerRef);
-                    if (sellerSnapshot.exists()) {
-                        const sellerData = sellerSnapshot.val();
-                        await update(sellerRef, { 
-                            coins: (sellerData.coins || 0) + listing.price 
-                        });
-                    }
-                    
-                    // Списываем коины у покупателя
-                    await update(ref(db, `users/${currentUser}`), { 
-                        coins: userCoins - listing.price,
-                        nfts: newNFTs
-                    });
-                    
-                    // Удаляем запись с рынка
-                    await remove(ref(db, `nftMarketListings/${listing.id}`));
-                    
-                    onCoinsUpdate(userCoins - listing.price);
-                    onNFTUpdate(newNFTs);
-                    alert(`Вы купили NFT "${nft.name}" за ${listing.price.toFixed(3)} коинов!`);
-                } catch (error) {
-                    console.error('Market purchase error:', error);
-                    alert('Ошибка при покупке NFT с рынка');
-                }
-                setIsLoading(false);
-            };
-
-            // Рендер вкладки магазина
             const renderMarketTab = () => (
                 <div className="space-y-4">
                     <div className="text-center mb-4">
@@ -406,20 +292,14 @@
                         {nfts.map((nft) => {
                             const isPurchased = userNFTs.some(userNft => userNft.id === nft.id);
                             if (isPurchased) return null;
-                            const currentPrice = getCurrentPrice(nft);
-                            const priceChange = ((currentPrice - nft.basePrice) / nft.basePrice * 100).toFixed(1);
                             return (
                                 <div key={nft.id} className="p-3 rounded-xl flex flex-col items-center gap-2 bg-slate-800 border border-slate-700">
                                     <div className="text-3xl">{nft.emoji}</div>
                                     <div className="text-center">
                                         <h3 className="font-medium text-white text-sm">{nft.name}</h3>
-                                        <p className="text-xs text-slate-300 mt-1">{currentPrice.toFixed(3)} коинов</p>
-                                        <p className={`text-xs ${priceChange >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-                                            {priceChange >= 0 ? '+' : ''}{priceChange}%
-                                        </p>
-                                        <p className="text-xs text-slate-500 capitalize">{nft.rarity} • {nft.pattern}</p>
+                                        <p className="text-xs text-slate-300 mt-1">{nft.price} коинов</p>
                                     </div>
-                                    <Button onClick={() => handleBuyNFT(nft)} isLoading={isLoading} disabled={userCoins < currentPrice} variant="gold" className="w-full text-xs">
+                                    <Button onClick={() => handleBuyNFT(nft)} isLoading={isLoading} disabled={userCoins < nft.price} variant="gold" className="w-full text-xs">
                                         Купить
                                     </Button>
                                 </div>
@@ -429,7 +309,6 @@
                 </div>
             );
 
-            // Рендер вкладки моих NFT
             const renderMyNFTsTab = () => (
                 <div className="space-y-4">
                     {userNFTs.length > 0 ? (
@@ -437,8 +316,6 @@
                             {userNFTs.map((userNft) => {
                                 const nft = nfts.find(n => n.id === userNft.id);
                                 if (!nft) return null;
-                                const durability = getDurabilityPercentage(userNft);
-                                const currentPrice = getCurrentPrice(nft);
                                 return (
                                     <div key={nft.id} className={`p-3 rounded-xl flex flex-col items-center gap-2 bg-slate-800 border border-slate-700 ${userNft.hidden ? 'opacity-50' : ''}`}>
                                         <div className="text-3xl">{nft.emoji}</div>
@@ -446,14 +323,6 @@
                                             <h3 className="font-medium text-white text-sm">{nft.name}</h3>
                                             {userNft.gifted && <p className="text-xs text-green-400 mt-1">Подарок от {userNft.from}</p>}
                                             {userNft.hidden && <p className="text-xs text-yellow-400 mt-1">Скрыт</p>}
-                                            <p className="text-xs text-slate-300 mt-1">Текущая цена: {currentPrice.toFixed(3)}</p>
-                                            <div className="w-full bg-slate-700 rounded-full h-1.5 mt-1">
-                                                <div 
-                                                    className={`h-1.5 rounded-full ${durability > 70 ? 'bg-green-500' : durability > 30 ? 'bg-yellow-500' : 'bg-red-500'}`}
-                                                    style={{ width: `${durability}%` }}
-                                                ></div>
-                                            </div>
-                                            <p className="text-xs text-slate-400">Износ: {durability}%</p>
                                         </div>
                                         <div className="flex gap-1 w-full">
                                             {userNft.hidden ? (
@@ -465,8 +334,8 @@
                                                     <Button onClick={() => handleRemoveNFT(nft.id)} isLoading={isLoading} variant="danger" className="flex-1 text-xs">
                                                         Убрать
                                                     </Button>
-                                                    <Button onClick={() => setSellNFT(nft)} variant="gold" className="flex-1 text-xs">
-                                                        Продать
+                                                    <Button onClick={() => setGiftNFT(nft)} variant="primary" className="flex-1 text-xs">
+                                                        Подарить
                                                     </Button>
                                                 </>
                                             )}
@@ -484,7 +353,6 @@
                 </div>
             );
 
-            // Рендер вкладки подарков
             const renderGiftTab = () => (
                 <div className="space-y-4">
                     {giftNFT ? (
@@ -507,7 +375,6 @@
                 </div>
             );
 
-            // Рендер вкладки продажи
             const renderSellTab = () => (
                 <div className="space-y-4">
                     {sellNFT ? (
@@ -515,7 +382,6 @@
                             <div className="text-center mb-4">
                                 <div className="text-4xl mb-2">{sellNFT.emoji}</div>
                                 <h3 className="font-bold text-white">{sellNFT.name}</h3>
-                                <p className="text-slate-400 text-sm">Текущая рыночная цена: {getCurrentPrice(sellNFT).toFixed(3)} коинов</p>
                             </div>
                             <div className="space-y-3">
                                 <input type="number" step="0.001" placeholder="Цена продажи" value={sellPrice} onChange={e => setSellPrice(e.target.value)} className="w-full bg-slate-700 border border-slate-600 rounded-xl px-3 py-2 text-white focus:border-indigo-500 outline-none text-sm" />
@@ -531,132 +397,12 @@
                 </div>
             );
 
-            // Рендер вкладки рынка
-            const renderMarketplaceTab = () => {
-                const [marketListings, setMarketListings] = useState([]);
-                
-                useEffect(() => {
-                    if (isOpen) {
-                        const marketListingsRef = ref(db, 'nftMarketListings');
-                        const unsubscribe = onValue(marketListingsRef, (snapshot) => {
-                            const data = snapshot.val() || {};
-                            const listings = Object.entries(data).map(([id, listing]) => ({ id, ...listing }));
-                            setMarketListings(listings);
-                        });
-                        return () => off(marketListingsRef);
-                    }
-                }, [isOpen]);
-                
-                return (
-                    <div className="space-y-4">
-                        <div className="text-center mb-4">
-                            <p className="text-slate-400 text-sm">NFT от других игроков</p>
-                        </div>
-                        {marketListings.length > 0 ? (
-                            <div className="grid grid-cols-1 gap-3">
-                                {marketListings.map((listing) => {
-                                    const nft = nfts.find(n => n.id === listing.nftId);
-                                    if (!nft) return null;
-                                    return (
-                                        <div key={listing.id} className="p-3 rounded-xl flex items-center gap-3 bg-slate-800 border border-slate-700">
-                                            <div className="text-3xl">{nft.emoji}</div>
-                                            <div className="flex-1">
-                                                <h3 className="font-medium text-white text-sm">{nft.name}</h3>
-                                                <p className="text-xs text-slate-300">Продавец: {listing.seller}</p>
-                                                <p className="text-xs text-slate-400">Износ: {listing.durability}%</p>
-                                            </div>
-                                            <div className="text-right">
-                                                <p className="text-yellow-500 font-bold">{listing.price.toFixed(3)}</p>
-                                                <Button onClick={() => handleBuyFromMarket(listing)} isLoading={isLoading} disabled={userCoins < listing.price || listing.seller === currentUser} variant="gold" className="mt-1 text-xs">
-                                                    Купить
-                                                </Button>
-                                            </div>
-                                        </div>
-                                    );
-                                })}
-                            </div>
-                        ) : (
-                            <div className="text-center text-slate-500 py-8">
-                                <p>На рынке пока нет NFT</p>
-                            </div>
-                        )}
-                    </div>
-                );
-            };
-
-            // Рендер вкладки топа
-            const renderTopTab = () => {
-                // Сбор данных для топа
-                const topUsersByCoins = Object.entries(usersData)
-                    .filter(([username]) => username !== currentUser)
-                    .map(([username, data]) => ({
-                        username,
-                        coins: data.coins || 0,
-                        nfts: data.nfts || []
-                    }))
-                    .sort((a, b) => b.coins - a.coins)
-                    .slice(0, 10);
-
-                const topUsersByNFTs = Object.entries(usersData)
-                    .filter(([username]) => username !== currentUser)
-                    .map(([username, data]) => ({
-                        username,
-                        nftCount: (data.nfts || []).length,
-                        nfts: data.nfts || []
-                    }))
-                    .sort((a, b) => b.nftCount - a.nftCount)
-                    .slice(0, 10);
-
-                return (
-                    <div className="space-y-6">
-                        <div>
-                            <h3 className="text-white font-medium mb-3 flex items-center gap-2"><TrendingUp size={16} /> Топ по балансу</h3>
-                            <div className="space-y-2">
-                                {topUsersByCoins.map((user, index) => (
-                                    <div key={user.username} className="flex items-center justify-between p-2 bg-slate-800 rounded-lg">
-                                        <div className="flex items-center gap-2">
-                                            <span className={`w-6 h-6 flex items-center justify-center rounded-full text-xs font-bold ${index === 0 ? 'bg-yellow-500 text-white' : index === 1 ? 'bg-gray-400 text-white' : index === 2 ? 'bg-orange-600 text-white' : 'bg-slate-700 text-slate-300'}`}>
-                                                {index + 1}
-                                            </span>
-                                            <span className="text-white text-sm">{user.username}</span>
-                                        </div>
-                                        <span className="text-yellow-500 font-medium">{user.coins.toFixed(3)}</span>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                        
-                        <div>
-                            <h3 className="text-white font-medium mb-3 flex items-center gap-2"><CrownIcon size={16} /> Топ по NFT</h3>
-                            <div className="space-y-2">
-                                {topUsersByNFTs.map((user, index) => (
-                                    <div key={user.username} className="flex items-center justify-between p-2 bg-slate-800 rounded-lg">
-                                        <div className="flex items-center gap-2">
-                                            <span className={`w-6 h-6 flex items-center justify-center rounded-full text-xs font-bold ${index === 0 ? 'bg-yellow-500 text-white' : index === 1 ? 'bg-gray-400 text-white' : index === 2 ? 'bg-orange-600 text-white' : 'bg-slate-700 text-slate-300'}`}>
-                                                {index + 1}
-                                            </span>
-                                            <span className="text-white text-sm">{user.username}</span>
-                                        </div>
-                                        <span className="text-purple-500 font-medium">{user.nftCount} NFT</span>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                    </div>
-                );
-            };
-
             return (
                 <Modal isOpen={isOpen} onClose={onClose} title="🎴 NFT Магазин" className="max-w-4xl">
                     <div className="flex border-b border-slate-800 bg-slate-900/50 overflow-x-auto">
-                        {['market', 'my_nfts', 'gift', 'sell', 'marketplace', 'top'].map(tab => (
+                        {['market', 'my_nfts', 'gift', 'sell'].map(tab => (
                             <button key={tab} onClick={() => setActiveTab(tab)} className={`flex-1 py-3 text-xs font-medium min-h-[44px] whitespace-nowrap ${activeTab === tab ? 'text-indigo-400 border-b-2 border-indigo-400' : 'text-slate-400'}`}>
-                                {tab === 'market' ? '🛍️ Магазин' : 
-                                 tab === 'my_nfts' ? '🎴 Мои NFT' : 
-                                 tab === 'gift' ? '🎁 Подарить' :
-                                 tab === 'sell' ? '💰 Продать' :
-                                 tab === 'marketplace' ? '🏪 Рынок' :
-                                 '🏆 Топ'}
+                                {tab === 'market' ? '🛍️ Магазин' : tab === 'my_nfts' ? '🎴 Мои NFT' : tab === 'gift' ? '🎁 Подарить' : '💰 Продать'}
                             </button>
                         ))}
                     </div>
@@ -664,8 +410,6 @@
                     {activeTab === 'my_nfts' && renderMyNFTsTab()}
                     {activeTab === 'gift' && renderGiftTab()}
                     {activeTab === 'sell' && renderSellTab()}
-                    {activeTab === 'marketplace' && renderMarketplaceTab()}
-                    {activeTab === 'top' && renderTopTab()}
                 </Modal>
             );
         };
@@ -1062,17 +806,15 @@
 
         // NFT Orbital Display
         const NFTOrbitalDisplay = ({ userNFTs }) => {
-            // Берем только первые 3 NFT, которые не скрыты
             const activeNFTs = userNFTs
                 .filter(nft => !nft.hidden)
                 .slice(0, 3);
             
             if (activeNFTs.length === 0) return null;
 
-            // Создаем равномерное распределение по орбите
             const orbitalItems = activeNFTs.map((userNft, index) => {
                 const angle = (index / activeNFTs.length) * 360;
-                const radius = 60; // радиус орбиты
+                const radius = 60;
                 const x = Math.cos(angle * Math.PI / 180) * radius;
                 const y = Math.sin(angle * Math.PI / 180) * radius;
                 
