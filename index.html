@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    <title>DolbaebSMS - Market Update</title>
+    <title>DolbaebSMS - Casino & Clicker Update</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
       tailwind.config = {
@@ -12,15 +12,12 @@
             fontFamily: { sans: ['Inter', 'sans-serif'] },
             animation: {
               'fade-in': 'fadeIn 0.3s ease-out',
-              'slide-up': 'slideUp 0.3s ease-out',
-              'pulse-gold': 'pulseGold 2s infinite',
-              'float': 'float 3s ease-in-out infinite',
+              'bounce-click': 'bounceClick 0.1s ease-in-out',
+              'spin-slow': 'spin 3s linear infinite',
             },
             keyframes: {
               fadeIn: { '0%': { opacity: '0' }, '100%': { opacity: '1' } },
-              slideUp: { '0%': { transform: 'translateY(10px)', opacity: '0' }, '100%': { transform: 'translateY(0)', opacity: '1' } },
-              pulseGold: { '0%, 100%': { transform: 'scale(1)', opacity: '1' }, '50%': { transform: 'scale(1.05)', opacity: '0.8' } },
-              float: { '0%, 100%': { transform: 'translateY(0)' }, '50%': { transform: 'translateY(-10px)' } }
+              bounceClick: { '0%, 100%': { transform: 'scale(1)' }, '50%': { transform: 'scale(0.95)' } }
             }
           }
         }
@@ -32,30 +29,30 @@
       * { box-sizing: border-box; }
       body { background-color: #0f172a; color: #e2e8f0; height: 100vh; overflow: hidden; }
       #root { height: 100vh; overflow: hidden; }
-      ::-webkit-scrollbar { width: 5px; }
+      ::-webkit-scrollbar { width: 4px; }
       ::-webkit-scrollbar-track { background: transparent; }
       ::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
       
       .nft-container { position: relative; display: inline-block; }
       .nft-orbital { position: absolute; width: 60px; height: 60px; top: 50%; left: 50%; margin-top: -30px; margin-left: -30px; animation: orbit 10s linear infinite; pointer-events: none; z-index: 10; }
-      .nft-item { position: absolute; font-size: 16px; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; animation: float 3s ease-in-out infinite; text-shadow: 0 0 5px black; }
+      .nft-item { position: absolute; font-size: 16px; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; text-shadow: 0 0 5px black; }
       @keyframes orbit { 0% { transform: rotate(0deg) translateX(35px) rotate(0deg); } 100% { transform: rotate(360deg) translateX(35px) rotate(-360deg); } }
       
       .rarity-common { border: 1px solid #9ca3af; background: rgba(156, 163, 175, 0.1); }
       .rarity-rare { border: 1px solid #3b82f6; background: rgba(59, 130, 246, 0.1); }
       .rarity-epic { border: 1px solid #a855f7; background: rgba(168, 85, 247, 0.1); }
       .rarity-legendary { border: 1px solid #eab308; background: rgba(234, 179, 8, 0.1); box-shadow: 0 0 10px rgba(234, 179, 8, 0.2); }
-      .rarity-mythic { border: 1px solid #ef4444; background: rgba(239, 68, 68, 0.1); box-shadow: 0 0 15px rgba(239, 68, 68, 0.3); animation: pulse-red 2s infinite; }
+      .rarity-mythic { border: 1px solid #ef4444; background: rgba(239, 68, 68, 0.1); box-shadow: 0 0 15px rgba(239, 68, 68, 0.3); }
 
       .float-fn { color: #4ade80; } /* Factory New */
-      .float-mw { color: #a3e635; } /* Minimal Wear */
-      .float-ft { color: #facc15; } /* Field Tested */
-      .float-ww { color: #fb923c; } /* Well Worn */
+      .float-mw { color: #a3e635; } 
+      .float-ft { color: #facc15; } 
+      .float-ww { color: #fb923c; } 
       .float-bs { color: #f87171; } /* Battle Scarred */
 
-      @media (max-width: 640px) {
+      @media (max-width: 768px) {
         .mobile-chat-hidden { display: none; }
-        .mobile-chat-visible { display: flex; width: 100%; }
+        .mobile-chat-visible { display: flex; width: 100%; position: absolute; top: 0; left: 0; height: 100%; z-index: 20; background: #0f172a; }
         .mobile-sidebar-hidden { display: none; }
       }
     </style>
@@ -78,7 +75,7 @@
     <script type="text/babel" data-type="module">
         import React, { useState, useEffect, useRef } from 'react';
         import { createRoot } from 'react-dom/client';
-        import { Search, Send, Image as ImageIcon, Mic, X, ChevronLeft, Settings, Trash2, Smile, MoreVertical, LogOut, User, Loader2, Coins, TrendingUp, Info, ShoppingCart } from 'lucide-react';
+        import { Search, Send, Image as ImageIcon, Mic, X, ChevronLeft, Settings, Trash2, Smile, MoreVertical, LogOut, User, Loader2, Coins, TrendingUp, Info, ShoppingCart, Dice5, Zap, Bot, Trophy, Play } from 'lucide-react';
         import { format } from 'date-fns';
         import { initializeApp } from 'firebase/app';
         import { getDatabase, ref, onValue, set, update, push, off, query, orderByChild, startAt, endAt, remove, get } from 'firebase/database';
@@ -97,46 +94,17 @@
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
 
-        // --- NFT DEFINITIONS ---
+        // --- NFT DATA ---
         const NFT_ITEMS = [
-            // Common (Start ~500)
             { id: 'apple', emoji: '🍎', name: 'Яблоко', base: 500, rarity: 'common' },
             { id: 'rock', emoji: '🪨', name: 'Камень', base: 450, rarity: 'common' },
-            { id: 'wood', emoji: '🪵', name: 'Бревно', base: 480, rarity: 'common' },
-            { id: 'leaf', emoji: '🍃', name: 'Лист', base: 420, rarity: 'common' },
-            { id: 'bread', emoji: '🍞', name: 'Хлеб', base: 550, rarity: 'common' },
-            { id: 'mouse', emoji: '🐭', name: 'Мышь', base: 600, rarity: 'common' },
-            { id: 'ant', emoji: '🐜', name: 'Муравей', base: 400, rarity: 'common' },
-            
-            // Rare (Start ~1000-1500)
             { id: 'sword', emoji: '⚔️', name: 'Меч', base: 1200, rarity: 'rare' },
             { id: 'shield', emoji: '🛡️', name: 'Щит', base: 1100, rarity: 'rare' },
-            { id: 'potion', emoji: '🧪', name: 'Зелье', base: 1300, rarity: 'rare' },
-            { id: 'bow', emoji: '🏹', name: 'Лук', base: 1250, rarity: 'rare' },
-            { id: 'ring', emoji: '💍', name: 'Кольцо', base: 1500, rarity: 'rare' },
-            { id: 'ghost', emoji: '👻', name: 'Призрак', base: 1400, rarity: 'rare' },
-            { id: 'alien', emoji: '👽', name: 'Пришелец', base: 1450, rarity: 'rare' },
-            { id: 'robot', emoji: '🤖', name: 'Робот', base: 1350, rarity: 'rare' },
-            
-            // Epic (Start ~2500-4000)
             { id: 'car', emoji: '🏎️', name: 'Спорткар', base: 2800, rarity: 'epic' },
             { id: 'house', emoji: '🏠', name: 'Дом', base: 3500, rarity: 'epic' },
-            { id: 'island', emoji: '🏝️', name: 'Остров', base: 4000, rarity: 'epic' },
-            { id: 'tiger', emoji: '🐯', name: 'Тигр', base: 2600, rarity: 'epic' },
-            { id: 'dragon_egg', emoji: '🥚', name: 'Яйцо Дракона', base: 3200, rarity: 'epic' },
-            { id: 'diamond', emoji: '💎', name: 'Алмаз', base: 3000, rarity: 'epic' },
-            
-            // Legendary (Start ~8000-12000)
             { id: 'dragon', emoji: '🐉', name: 'Дракон', base: 9000, rarity: 'legendary' },
-            { id: 'unicorn', emoji: '🦄', name: 'Единорог', base: 8500, rarity: 'legendary' },
-            { id: 'rocket', emoji: '🚀', name: 'Ракета', base: 10000, rarity: 'legendary' },
             { id: 'crown', emoji: '👑', name: 'Корона', base: 12000, rarity: 'legendary' },
-            { id: 'earth', emoji: '🌍', name: 'Земля', base: 15000, rarity: 'legendary' },
-            
-            // Mythic (Start ~50000+)
-            { id: 'blackhole', emoji: '🕳️', name: 'Черная Дыра', base: 50000, rarity: 'mythic' },
-            { id: 'galaxy', emoji: '🌌', name: 'Галактика', base: 60000, rarity: 'mythic' },
-            { id: 'time', emoji: '⏳', name: 'Время', base: 75000, rarity: 'mythic' }
+            { id: 'blackhole', emoji: '🕳️', name: 'Черная Дыра', base: 50000, rarity: 'mythic' }
         ];
 
         // --- COMPONENTS ---
@@ -146,7 +114,8 @@
                 primary: "bg-indigo-600 hover:bg-indigo-500 text-white",
                 secondary: "bg-slate-700 hover:bg-slate-600 text-slate-100",
                 danger: "bg-red-500/20 text-red-500 border border-red-500/50",
-                gold: "bg-yellow-600 hover:bg-yellow-500 text-white shadow-lg shadow-yellow-500/20"
+                gold: "bg-yellow-600 hover:bg-yellow-500 text-white shadow-lg shadow-yellow-500/20",
+                green: "bg-green-600 hover:bg-green-500 text-white"
             };
             return (
                 <button className={`px-4 py-2 rounded-xl font-medium transition active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2 ${variants[variant]} ${className}`} {...props}>
@@ -155,336 +124,481 @@
             );
         };
 
+        // --- CASINO MODAL (10 Games) ---
+        const CasinoModal = ({ isOpen, onClose, userCoins, onUpdateCoins }) => {
+            const [game, setGame] = useState(null); // 'slots', 'dice', 'coin', 'roulette', 'rps', 'cards', 'guess', 'thimbles', 'wheel', 'mines'
+            const [bet, setBet] = useState(10);
+            const [result, setResult] = useState('');
+
+            if (!isOpen) return null;
+
+            const handleBet = (winMultiplier) => {
+                if (userCoins < bet) { alert('Мало денег!'); return; }
+                const isWin = winMultiplier > 0;
+                let newCoins;
+                
+                if (isWin) {
+                    const profit = Math.floor(bet * winMultiplier);
+                    newCoins = userCoins + (profit - bet); // Add profit (bet is already included in base calc usually, simpler: coins - bet + bet*mult)
+                    // Correct: coins - bet + winnings.
+                    newCoins = userCoins - bet + Math.floor(bet * winMultiplier);
+                    setResult(`Win! +${Math.floor(bet * winMultiplier)}`);
+                } else {
+                    newCoins = userCoins - bet;
+                    setResult(`Loss -${bet}`);
+                }
+                onUpdateCoins(newCoins);
+            };
+
+            const gamesList = [
+                { id: 'slots', icon: '🎰', name: 'Слоты', play: () => {
+                    const symbols = ['🍒', '🍋', '7️⃣', '💎'];
+                    const res = [0,1,2].map(() => symbols[Math.floor(Math.random()*4)]);
+                    const win = res[0] === res[1] && res[1] === res[2] ? (res[0] === '7️⃣' ? 10 : 5) : 0;
+                    handleBet(win);
+                    alert(`${res.join(' ')} ${win > 0 ? 'WIN!' : 'LOSE'}`);
+                }},
+                { id: 'dice', icon: '🎲', name: 'Кости (Hi/Lo)', play: () => {
+                    const roll = Math.floor(Math.random() * 12) + 2;
+                    const choice = confirm("Ставим на Больше 7? (ОК - Да, Отмена - Меньше 7)") ? 'hi' : 'lo';
+                    const win = (choice === 'hi' && roll > 7) || (choice === 'lo' && roll < 7) ? 2 : 0;
+                    handleBet(win);
+                    alert(`Выпало: ${roll}. ${win > 0 ? 'Победа!' : 'Проигрыш'}`);
+                }},
+                { id: 'coin', icon: '🪙', name: 'Монетка', play: () => {
+                    const flip = Math.random() > 0.5 ? 'heads' : 'tails';
+                    const choice = confirm("Орел? (Отмена - Решка)") ? 'heads' : 'tails';
+                    handleBet(flip === choice ? 1.9 : 0);
+                    alert(`Выпало: ${flip === 'heads' ? 'Орел' : 'Решка'}`);
+                }},
+                { id: 'roulette', icon: '🎡', name: 'Рулетка (Цвет)', play: () => {
+                    const n = Math.floor(Math.random() * 37);
+                    const color = n === 0 ? 'green' : (n % 2 === 0 ? 'red' : 'black');
+                    const choice = confirm("Ставим на Красное? (Отмена - Черное)") ? 'red' : 'black';
+                    handleBet(color === choice ? 2 : 0);
+                    alert(`Выпало: ${n} (${color})`);
+                }},
+                { id: 'rps', icon: '✂️', name: 'К-Н-Б', play: () => {
+                    const opts = ['k', 'n', 'b'];
+                    const bot = opts[Math.floor(Math.random()*3)];
+                    const u = prompt("k = камень, n = ножницы, b = бумага", "k");
+                    if(!opts.includes(u)) return;
+                    let m = 0;
+                    if (u === bot) m = 1; // tie return bet
+                    else if ((u === 'k' && bot === 'n') || (u === 'n' && bot === 'b') || (u === 'b' && bot === 'k')) m = 2;
+                    handleBet(m);
+                    alert(`Бот: ${bot}. ${m === 2 ? 'Win' : m === 1 ? 'Tie' : 'Lose'}`);
+                }},
+                { id: 'cards', icon: '🃏', name: 'Карты (High)', play: () => {
+                    const p = Math.floor(Math.random() * 13) + 2;
+                    const d = Math.floor(Math.random() * 13) + 2;
+                    handleBet(p > d ? 2 : 0);
+                    alert(`Ты: ${p}, Дилер: ${d}`);
+                }},
+                { id: 'guess', icon: '🔢', name: 'Число (1-5)', play: () => {
+                    const n = Math.floor(Math.random() * 5) + 1;
+                    const u = parseInt(prompt("Число от 1 до 5"));
+                    handleBet(n === u ? 5 : 0);
+                    alert(`Было: ${n}`);
+                }},
+                { id: 'thimbles', icon: '🥛', name: 'Наперстки', play: () => {
+                    const ball = Math.floor(Math.random() * 3);
+                    const u = parseInt(prompt("Где шарик? (0, 1, 2)")) || 0;
+                    handleBet(ball === u ? 2.8 : 0);
+                    alert(`Шарик был в ${ball}`);
+                }},
+                { id: 'wheel', icon: '🎪', name: 'Колесо x3', play: () => {
+                    const segs = [0, 0, 0, 1.5, 1.5, 3];
+                    const res = segs[Math.floor(Math.random()*segs.length)];
+                    handleBet(res);
+                    alert(`x${res}`);
+                }},
+                { id: 'mines', icon: '💣', name: 'Сапер (50%)', play: () => {
+                    // Simple 1 step mines
+                    handleBet(Math.random() > 0.5 ? 2 : 0);
+                    alert(result.includes('Win') ? 'Пронесло! x2' : 'БАБАХ!');
+                }}
+            ];
+
+            return (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+                    <div className="w-full max-w-2xl bg-slate-900 border border-slate-700 rounded-2xl flex flex-col max-h-[90vh]">
+                        <div className="p-4 border-b border-slate-800 flex justify-between items-center">
+                            <h2 className="text-xl font-bold text-white flex gap-2"><Trophy className="text-yellow-500"/> Казино</h2>
+                            <button onClick={onClose}><X className="text-slate-400"/></button>
+                        </div>
+                        <div className="p-4 border-b border-slate-800 flex gap-4 items-center">
+                            <div className="text-yellow-500 font-bold flex gap-1"><Coins size={16}/> {userCoins}</div>
+                            <input type="number" value={bet} onChange={e => setBet(Number(e.target.value))} className="bg-slate-800 border border-slate-700 rounded px-2 py-1 w-24 text-white" placeholder="Ставка" />
+                        </div>
+                        <div className="p-4 grid grid-cols-2 sm:grid-cols-3 gap-3 overflow-y-auto custom-scrollbar">
+                            {gamesList.map(g => (
+                                <button key={g.id} onClick={g.play} className="bg-slate-800 hover:bg-slate-700 p-4 rounded-xl flex flex-col items-center gap-2 border border-slate-700 transition active:scale-95">
+                                    <span className="text-4xl">{g.icon}</span>
+                                    <span className="font-bold text-sm">{g.name}</span>
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        // --- CLICKER & BOT ---
+        const ClickerSection = ({ user, coins, clickLevel, botExpires, onUpdate }) => {
+            const hasBot = botExpires > Date.now();
+            const clickPower = 1 + (clickLevel * 0.5);
+            const upgradeCost = Math.floor(100 * Math.pow(1.5, clickLevel));
+
+            const handleClick = () => {
+                onUpdate({ coins: coins + clickPower });
+            };
+
+            const buyUpgrade = () => {
+                if (coins >= upgradeCost) {
+                    onUpdate({ coins: coins - upgradeCost, clickLevel: clickLevel + 1 });
+                }
+            };
+
+            const buyBot = () => {
+                if (coins >= 5000) {
+                    // Set bot to expire in 30 mins
+                    onUpdate({ coins: coins - 5000, botExpires: Date.now() + 30 * 60 * 1000 });
+                }
+            };
+
+            return (
+                <div className="p-4 border-t border-slate-800 bg-slate-900/50">
+                    <h3 className="text-xs font-bold text-slate-400 mb-2 uppercase tracking-wider flex items-center gap-1"><Zap size={12}/> Майнинг</h3>
+                    
+                    <button 
+                        onClick={handleClick}
+                        className="w-full bg-gradient-to-r from-yellow-600 to-orange-600 hover:from-yellow-500 hover:to-orange-500 text-white font-bold py-3 rounded-xl shadow-lg active:scale-95 transition mb-3 flex items-center justify-center gap-2"
+                    >
+                        <Coins size={20} className="animate-bounce" />
+                        Клик (+{clickPower})
+                    </button>
+
+                    <div className="grid grid-cols-2 gap-2">
+                        <button onClick={buyUpgrade} disabled={coins < upgradeCost} className="bg-slate-800 p-2 rounded-lg text-xs text-center border border-slate-700 hover:bg-slate-700 disabled:opacity-50">
+                            <div className="font-bold text-green-400">Up lvl {clickLevel}</div>
+                            <div className="text-slate-400">{upgradeCost} 💰</div>
+                        </button>
+                        
+                        <button onClick={buyBot} disabled={coins < 5000 || hasBot} className="bg-slate-800 p-2 rounded-lg text-xs text-center border border-slate-700 hover:bg-slate-700 disabled:opacity-50">
+                            <div className="font-bold text-blue-400 flex justify-center items-center gap-1"><Bot size={12}/> {hasBot ? 'Active' : 'Bot'}</div>
+                            <div className="text-slate-400">{hasBot ? Math.ceil((botExpires - Date.now())/60000) + 'm' : '5000 💰'}</div>
+                        </button>
+                    </div>
+                </div>
+            );
+        };
+
+        // --- NFT MARKET ---
         const NFTMarket = ({ isOpen, onClose, currentUser, userCoins, userNFTs }) => {
             const [marketPrices, setMarketPrices] = useState({});
-            const [activeTab, setActiveTab] = useState('buy'); // buy, sell
-            const [isLoading, setIsLoading] = useState(false);
-
-            // Logic to fetch/update market prices
+            const [activeTab, setActiveTab] = useState('buy');
+            
             useEffect(() => {
                 if (!isOpen) return;
-                
                 const marketRef = ref(db, 'market_v2');
-                const unsub = onValue(marketRef, (snap) => {
+                onValue(marketRef, (snap) => {
                     const data = snap.val() || { prices: {}, lastUpdate: 0 };
-                    const now = Date.now();
-
-                    // If data is old (> 20 sec), update it (Client-side simulation of server logic)
-                    if (now - data.lastUpdate > 20000) {
+                    // Simulate price updates
+                    if (Date.now() - data.lastUpdate > 10000) {
                         const newPrices = {};
                         NFT_ITEMS.forEach(item => {
-                            const oldPrice = data.prices[item.id] || item.base;
-                            // Volatility: +/- 10%
-                            const change = (Math.random() - 0.5) * 0.2; 
-                            let newPrice = Math.floor(oldPrice * (1 + change));
-                            // Clamp price (min 10% of base, max 500% of base)
-                            newPrice = Math.max(Math.floor(item.base * 0.1), Math.min(Math.floor(item.base * 5), newPrice));
-                            newPrices[item.id] = newPrice;
+                            const old = data.prices[item.id] || item.base;
+                            const change = (Math.random() - 0.5) * 0.2;
+                            newPrices[item.id] = Math.floor(Math.max(item.base*0.1, old * (1+change)));
                         });
-                        update(marketRef, { prices: newPrices, lastUpdate: now });
+                        update(marketRef, { prices: newPrices, lastUpdate: Date.now() });
                     } else {
                         setMarketPrices(data.prices);
                     }
                 });
-                return () => off(marketRef);
             }, [isOpen]);
 
             if (!isOpen) return null;
 
-            const buyNFT = async (item) => {
+            const buy = async (item) => {
                 const price = marketPrices[item.id] || item.base;
-                if (userCoins < price) { alert("Недостаточно средств"); return; }
-                
-                setIsLoading(true);
-                // Create unique Item
+                if (userCoins < price) return alert('No money');
                 const newItem = {
                     id: item.id,
                     uuid: Date.now() + Math.random().toString(),
-                    float: parseFloat(Math.random().toFixed(4)), // 0.0000 - 1.0000
+                    float: parseFloat(Math.random().toFixed(4)),
                     pattern: Math.floor(Math.random() * 1000),
-                    boughtAt: price,
                     isEquipped: false
                 };
-
-                try {
-                    const newNFTList = [...(userNFTs || []), newItem];
-                    await update(ref(db, `users/${currentUser}`), {
-                        coins: userCoins - price,
-                        nfts: newNFTList
-                    });
-                    alert(`Куплено! Float: ${newItem.float}`);
-                } catch(e) { console.error(e); }
-                setIsLoading(false);
+                await update(ref(db, `users/${currentUser}`), {
+                    coins: userCoins - price,
+                    nfts: [...(userNFTs || []), newItem]
+                });
             };
 
-            const sellNFT = async (userItem) => {
-                const baseMarketPrice = marketPrices[userItem.id] || 0;
-                // Price formula: MarketPrice * (1 - 0.5 * float) 
-                // Best float (0.00) = 100% price, Worst (1.00) = 50% price
-                const sellPrice = Math.floor(baseMarketPrice * (1 - (userItem.float * 0.5)));
-
-                if(confirm(`Продать за ${sellPrice}? (Износ снизил цену на ${Math.floor(userItem.float * 50)}%)`)) {
-                    setIsLoading(true);
-                    const newNFTList = userNFTs.filter(n => n.uuid !== userItem.uuid);
-                    await update(ref(db, `users/${currentUser}`), {
-                        coins: userCoins + sellPrice,
-                        nfts: newNFTList
-                    });
-                    setIsLoading(false);
+            const sell = async (inst) => {
+                const price = marketPrices[NFT_ITEMS.find(n=>n.id===inst.id).id];
+                const sellPrice = Math.floor(price * (1 - inst.float * 0.5));
+                if (confirm(`Sell for ${sellPrice}?`)) {
+                    const newNfts = userNFTs.filter(n => n.uuid !== inst.uuid);
+                    await update(ref(db, `users/${currentUser}`), { coins: userCoins + sellPrice, nfts: newNfts });
                 }
             };
 
-            const toggleEquip = async (userItem) => {
-                const newNFTList = userNFTs.map(n => {
-                    if (n.uuid === userItem.uuid) return { ...n, isEquipped: !n.isEquipped };
-                    return n;
-                });
-                await update(ref(db, `users/${currentUser}`), { nfts: newNFTList });
+            const equip = async (inst) => {
+                const newNfts = userNFTs.map(n => n.uuid === inst.uuid ? { ...n, isEquipped: !n.isEquipped } : n);
+                await update(ref(db, `users/${currentUser}`), { nfts: newNfts });
             };
 
-            const getFloatColor = (f) => {
-                if(f < 0.07) return 'text-green-400 font-bold'; // FN
-                if(f < 0.15) return 'text-green-200'; // MW
-                if(f < 0.38) return 'text-yellow-200'; // FT
-                if(f < 0.45) return 'text-orange-300'; // WW
-                return 'text-red-400'; // BS
-            };
-
-            const getRarityClass = (r) => `rarity-${r}`;
+            const getFloatColor = (f) => f < 0.1 ? 'text-green-400' : f < 0.4 ? 'text-yellow-400' : 'text-red-400';
 
             return (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
-                    <div className="w-full max-w-4xl bg-slate-900 border border-slate-700 rounded-2xl flex flex-col max-h-[90vh]">
-                        <div className="p-4 border-b border-slate-800 flex justify-between items-center">
-                            <h2 className="text-xl font-bold text-white flex gap-2"><ShoppingCart className="text-yellow-500"/> Биржа NFT</h2>
-                            <button onClick={onClose}><X className="text-slate-400"/></button>
-                        </div>
-                        <div className="flex bg-slate-800/50">
-                            <button onClick={() => setActiveTab('buy')} className={`flex-1 p-3 ${activeTab === 'buy' ? 'text-white border-b-2 border-indigo-500' : 'text-slate-400'}`}>Купить</button>
-                            <button onClick={() => setActiveTab('sell')} className={`flex-1 p-3 ${activeTab === 'sell' ? 'text-white border-b-2 border-indigo-500' : 'text-slate-400'}`}>Инвентарь / Продать</button>
-                        </div>
-                        <div className="flex-1 overflow-y-auto p-4 custom-scrollbar bg-slate-950">
-                            {activeTab === 'buy' ? (
-                                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-                                    {NFT_ITEMS.map(item => {
-                                        const price = marketPrices[item.id] || item.base;
-                                        const diff = price - item.base;
-                                        return (
-                                            <div key={item.id} className={`p-3 rounded-xl flex flex-col items-center gap-2 ${getRarityClass(item.rarity)}`}>
-                                                <div className="text-4xl">{item.emoji}</div>
-                                                <div className="text-center">
-                                                    <div className="font-bold text-sm">{item.name}</div>
-                                                    <div className={`text-xs ${diff >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-                                                        {price} ({diff > 0 ? '+' : ''}{Math.floor((diff/item.base)*100)}%)
-                                                    </div>
-                                                </div>
-                                                <Button disabled={isLoading} onClick={() => buyNFT(item)} variant="gold" className="w-full text-xs h-8">Купить</Button>
-                                            </div>
-                                        )
-                                    })}
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur p-4">
+                    <div className="bg-slate-900 w-full max-w-4xl rounded-2xl border border-slate-700 flex flex-col max-h-[90vh]">
+                        <div className="p-4 border-b border-slate-800 flex justify-between"><h2 className="text-xl font-bold text-white">NFT Market</h2><button onClick={onClose}><X/></button></div>
+                        <div className="flex bg-slate-800"><button onClick={()=>setActiveTab('buy')} className={`flex-1 p-3 ${activeTab==='buy'?'bg-indigo-600':''}`}>Купить</button><button onClick={()=>setActiveTab('sell')} className={`flex-1 p-3 ${activeTab==='sell'?'bg-indigo-600':''}`}>Инвентарь</button></div>
+                        <div className="p-4 overflow-y-auto flex-1 grid grid-cols-2 sm:grid-cols-4 gap-3 bg-slate-950">
+                            {activeTab === 'buy' ? NFT_ITEMS.map(i => (
+                                <div key={i.id} className="bg-slate-900 p-3 rounded border border-slate-800 flex flex-col items-center">
+                                    <div className="text-3xl">{i.emoji}</div>
+                                    <div className="font-bold">{i.name}</div>
+                                    <div className="text-green-400">{marketPrices[i.id] || i.base} 💰</div>
+                                    <Button onClick={()=>buy(i)} variant="gold" className="w-full mt-2 text-xs">Buy</Button>
                                 </div>
-                            ) : (
-                                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                                    {userNFTs && userNFTs.length > 0 ? userNFTs.map(inst => {
-                                        const def = NFT_ITEMS.find(n => n.id === inst.id);
-                                        if(!def) return null;
-                                        const marketP = marketPrices[def.id] || def.base;
-                                        const value = Math.floor(marketP * (1 - (inst.float * 0.5)));
-                                        return (
-                                            <div key={inst.uuid} className={`p-3 rounded-xl flex flex-col items-center gap-1 border ${inst.isEquipped ? 'border-green-500 bg-green-500/10' : 'border-slate-700 bg-slate-900'}`}>
-                                                <div className="text-4xl">{def.emoji}</div>
-                                                <div className="font-bold text-sm">{def.name}</div>
-                                                <div className={`text-[10px] ${getFloatColor(inst.float)}`}>Float: {inst.float}</div>
-                                                <div className="text-[10px] text-slate-500">Pattern: {inst.pattern}</div>
-                                                <div className="text-xs text-yellow-500 font-mono">~{value} coins</div>
-                                                <div className="flex gap-1 w-full mt-2">
-                                                    <Button onClick={() => toggleEquip(inst)} variant="secondary" className="flex-1 text-[10px] h-7 px-0">{inst.isEquipped ? 'Снять' : 'Надеть'}</Button>
-                                                    <Button onClick={() => sellNFT(inst)} variant="danger" className="flex-1 text-[10px] h-7 px-0">Sell</Button>
-                                                </div>
-                                            </div>
-                                        )
-                                    }) : <div className="text-slate-500 text-center col-span-full">Пусто</div>}
-                                </div>
-                            )}
+                            )) : (userNFTs || []).map(i => {
+                                const def = NFT_ITEMS.find(n=>n.id===i.id);
+                                return (
+                                    <div key={i.uuid} className={`bg-slate-900 p-3 rounded border flex flex-col items-center ${i.isEquipped ? 'border-green-500' : 'border-slate-800'}`}>
+                                        <div className="text-3xl">{def.emoji}</div>
+                                        <div className="text-[10px] text-slate-400">Pat: {i.pattern}</div>
+                                        <div className={`text-[10px] ${getFloatColor(i.float)}`}>F: {i.float}</div>
+                                        <div className="flex gap-1 w-full mt-2">
+                                            <button onClick={()=>equip(i)} className="flex-1 bg-slate-700 text-[10px] rounded py-1">{i.isEquipped?'Unequip':'Equip'}</button>
+                                            <button onClick={()=>sell(i)} className="flex-1 bg-red-900 text-[10px] rounded py-1">Sell</button>
+                                        </div>
+                                    </div>
+                                )
+                            })}
                         </div>
                     </div>
                 </div>
-            );
+            )
         };
 
-        const ChatBubble = ({ msg, isMe, usersData }) => {
-            const date = new Date(msg.timestamp);
-            return (
-                <div className={`flex mb-4 ${isMe ? 'justify-end' : 'justify-start'} animate-slide-up`}>
-                    {!isMe && (
-                        <div className="nft-container mr-2 shrink-0">
-                            <div className="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center text-sm border border-slate-600">
-                                {usersData[msg.sender]?.avatar || msg.sender[0].toUpperCase()}
-                            </div>
-                            {usersData[msg.sender]?.nfts && (
-                                <div className="nft-orbital">
-                                    {usersData[msg.sender].nfts.filter(n=>n.isEquipped).map((n, i, arr) => {
-                                        const def = NFT_ITEMS.find(d => d.id === n.id);
-                                        if(!def) return null;
-                                        const angle = (i / arr.length) * 360;
-                                        return <div key={n.uuid} className="nft-item" style={{transform: `rotate(${angle}deg) translateX(25px) rotate(-${angle}deg)`}}>{def.emoji}</div>
-                                    })}
-                                </div>
-                            )}
-                        </div>
-                    )}
-                    <div className={`max-w-[75%] rounded-2xl px-4 py-2 ${isMe ? 'bg-indigo-600 text-white rounded-br-none' : 'bg-slate-800 text-slate-200 rounded-bl-none'}`}>
-                        {!isMe && <div className="text-[10px] text-slate-400 mb-1">{msg.sender}</div>}
-                        {msg.type === 'photo' ? (
-                            <img src={msg.content} className="rounded-lg max-w-full" alt="img" />
-                        ) : msg.type === 'audio' ? (
-                            <audio controls src={msg.content} className="w-[200px] h-8" />
-                        ) : (
-                            <p className="whitespace-pre-wrap break-words">{msg.content}</p>
-                        )}
-                        <div className="text-[9px] opacity-70 text-right mt-1">{format(date, 'HH:mm')}</div>
-                    </div>
-                </div>
-            );
-        };
-
+        // --- MAIN APP ---
         const App = () => {
             const [user, setUser] = useState(() => localStorage.getItem('user'));
             const [loginInput, setLoginInput] = useState('');
-            const [usersData, setUsersData] = useState({});
+            
+            // Data
+            const [userData, setUserData] = useState({ coins: 0, nfts: [], clickLevel: 0, botExpires: 0 });
+            const [allUsers, setAllUsers] = useState({});
             const [chats, setChats] = useState([]);
             const [activeChat, setActiveChat] = useState(null);
             const [messages, setMessages] = useState([]);
             const [inputText, setInputText] = useState('');
-            const [searchQuery, setSearchQuery] = useState('');
-            
+
             // Modals
-            const [isNFTMarketOpen, setNFTMarketOpen] = useState(false);
-            const [isSettingsOpen, setSettingsOpen] = useState(false);
+            const [showMarket, setShowMarket] = useState(false);
+            const [showCasino, setShowCasino] = useState(false);
 
-            // User Self Data
-            const [coins, setCoins] = useState(0);
-            const [myNFTs, setMyNFTs] = useState([]);
-
-            // Init App
+            // 1. Load User
             useEffect(() => {
-                if (user) {
-                    // Load User Data
-                    const userRef = ref(db, `users/${user}`);
-                    onValue(userRef, snap => {
-                        const d = snap.val();
-                        if (d) {
-                            setCoins(d.coins || 0);
-                            setMyNFTs(d.nfts || []);
-                        }
-                    });
-
-                    // Load All Users (for avatars/nfts display)
-                    onValue(ref(db, 'users'), snap => setUsersData(snap.val() || {}));
-
-                    // Load Chats
-                    const msgRef = ref(db, 'messages');
-                    onValue(msgRef, snap => {
-                        const allMsgs = snap.val() || {};
-                        const chatSet = new Set();
-                        
-                        Object.keys(allMsgs).forEach(key => {
-                            const participants = key.split('_');
-                            if (participants.includes(user)) {
-                                const other = participants.find(p => p !== user);
-                                chatSet.add(other);
-                            }
+                if(user) {
+                    const refUser = ref(db, `users/${user}`);
+                    onValue(refUser, s => {
+                        const d = s.val();
+                        if(d) setUserData({ 
+                            coins: d.coins||0, nfts: d.nfts||[], 
+                            clickLevel: d.clickLevel||0, botExpires: d.botExpires||0 
                         });
-                        setChats(Array.from(chatSet));
+                    });
+                    
+                    // Load all users for avatars
+                    onValue(ref(db, 'users'), s => setAllUsers(s.val()||{}));
+
+                    // Load Chat List
+                    onValue(ref(db, 'messages'), s => {
+                        const all = s.val()||{};
+                        const setC = new Set();
+                        Object.keys(all).forEach(k => {
+                            if(k.includes(user)) setC.add(k.replace(user, '').replace('_', ''));
+                        });
+                        setChats(Array.from(setC));
                     });
                 }
             }, [user]);
 
-            // Load Active Chat Messages
+            // 2. Messages
             useEffect(() => {
-                if (user && activeChat) {
-                    const chatId = [user, activeChat].sort().join('_');
-                    const chatRef = ref(db, `messages/${chatId}`);
-                    const unsub = onValue(chatRef, snap => {
-                        const msgs = snap.val();
-                        if (msgs) {
-                            setMessages(Object.values(msgs).sort((a,b) => a.timestamp - b.timestamp));
-                        } else {
-                            setMessages([]);
-                        }
+                if(user && activeChat) {
+                    const cid = [user, activeChat].sort().join('_');
+                    onValue(ref(db, `messages/${cid}`), s => {
+                        const m = s.val();
+                        setMessages(m ? Object.values(m).sort((a,b)=>a.timestamp-b.timestamp) : []);
                     });
-                    return () => off(chatRef);
                 }
             }, [user, activeChat]);
 
-            const handleLogin = () => {
-                const nick = loginInput.trim().toLowerCase().replace(/[^a-z0-9а-я]/g, '').substring(0, 20);
-                if (!nick) return alert('Никнейм некорректен');
-                
-                // Create user if not exists
-                const uRef = ref(db, `users/${nick}`);
-                get(uRef).then(snap => {
-                    if (!snap.exists()) {
-                        set(uRef, { coins: 1000, joined: Date.now() }); // Bonus start coins
-                    }
+            // 3. Bot Logic (Auto-Clicker)
+            useEffect(() => {
+                if (user && userData.botExpires > Date.now()) {
+                    const interval = setInterval(() => {
+                        // Check expire again inside
+                        if (userData.botExpires > Date.now()) {
+                            // Add logic to increment coins in DB directly safely
+                            // To keep simple, we assume local state is roughly synced or just push update
+                            // We use a transaction-like update by reading current ref
+                            const uRef = ref(db, `users/${user}`);
+                            get(uRef).then(snap => {
+                                const d = snap.val();
+                                const power = 1 + ((d.clickLevel||0) * 0.5);
+                                update(uRef, { coins: d.coins + power });
+                            });
+                        }
+                    }, 5000); // Every 5 seconds
+                    return () => clearInterval(interval);
+                }
+            }, [user, userData.botExpires]);
+
+            const login = () => {
+                const n = loginInput.trim().toLowerCase().replace(/[^a-z0-9]/g, '').substring(0,15);
+                if(!n) return;
+                const r = ref(db, `users/${n}`);
+                get(r).then(s => {
+                    if(!s.exists()) set(r, { coins: 500, clickLevel: 0, botExpires: 0 });
                 });
-                
-                localStorage.setItem('user', nick);
-                setUser(nick);
+                localStorage.setItem('user', n);
+                setUser(n);
             };
 
-            const sendMessage = (type = 'text', content = inputText) => {
-                if (!content && type === 'text') return;
-                const chatId = [user, activeChat].sort().join('_');
-                push(ref(db, `messages/${chatId}`), {
-                    sender: user,
-                    type,
-                    content,
-                    timestamp: Date.now()
-                });
+            const send = () => {
+                if(!inputText) return;
+                const cid = [user, activeChat].sort().join('_');
+                push(ref(db, `messages/${cid}`), { sender: user, content: inputText, type: 'text', timestamp: Date.now() });
                 setInputText('');
             };
 
-            const handleFileUpload = (e) => {
-                const file = e.target.files[0];
-                if (!file) return;
-                const reader = new FileReader();
-                reader.onload = (ev) => sendMessage('photo', ev.target.result);
-                reader.readAsDataURL(file);
-            };
+            const updateUserData = (updates) => update(ref(db, `users/${user}`), updates);
 
-            if (!user) {
-                return (
-                    <div className="flex h-screen items-center justify-center bg-slate-950">
-                        <div className="bg-slate-900 p-8 rounded-2xl border border-slate-700 shadow-2xl w-full max-w-sm">
-                            <h1 className="text-3xl font-bold text-center mb-2 text-white">DolbaebSMS</h1>
-                            <p className="text-center text-slate-400 mb-6 text-sm">Economy & Chats</p>
-                            <input 
-                                className="w-full bg-slate-800 border border-slate-600 rounded-xl p-3 text-white mb-4 outline-none focus:border-indigo-500"
-                                placeholder="Никнейм (только буквы/цифры)"
-                                value={loginInput}
-                                onChange={e => setLoginInput(e.target.value)}
-                            />
-                            <Button onClick={handleLogin} className="w-full">Войти</Button>
-                        </div>
+            if(!user) return (
+                <div className="h-screen flex items-center justify-center bg-slate-950 p-4">
+                    <div className="w-full max-w-sm bg-slate-900 p-6 rounded-2xl border border-slate-800">
+                        <h1 className="text-2xl font-bold text-white text-center mb-4">DolbaebSMS</h1>
+                        <input className="w-full p-3 rounded-xl bg-slate-800 text-white mb-3" placeholder="Nick (eng/num)" value={loginInput} onChange={e=>setLoginInput(e.target.value)}/>
+                        <Button onClick={login} className="w-full">Login</Button>
                     </div>
-                );
-            }
+                </div>
+            );
 
             return (
-                <div className="flex h-screen bg-slate-950 text-slate-100 overflow-hidden">
-                    <NFTMarket 
-                        isOpen={isNFTMarketOpen} 
-                        onClose={() => setNFTMarketOpen(false)}
-                        currentUser={user}
-                        userCoins={coins}
-                        userNFTs={myNFTs}
-                    />
+                <div className="flex h-screen bg-slate-950 text-white overflow-hidden">
+                    <NFTMarket isOpen={showMarket} onClose={()=>setShowMarket(false)} currentUser={user} userCoins={userData.coins} userNFTs={userData.nfts} />
+                    <CasinoModal isOpen={showCasino} onClose={()=>setShowCasino(false)} userCoins={userData.coins} onUpdateCoins={c => updateUserData({coins: c})} />
 
-                    {/* Sidebar */}
-                    <div className={`w-full md:w-80 bg-slate-900 border-r border-slate-800 flex flex-col ${activeChat ? 'mobile-sidebar-hidden' : 'mobile-sidebar-visible'}`}>
-                        {/* Header */}
-                        <div className="p-4 border-b border-slate-800 flex items-center justify-between">
-                            <div className="flex items-center gap-3">
+                    {/* SIDEBAR */}
+                    <div className={`w-full md:w-80 bg-slate-900 border-r border-slate-800 flex flex-col ${activeChat ? 'mobile-sidebar-hidden' : ''}`}>
+                        <div className="p-4 border-b border-slate-800 flex justify-between items-center">
+                            <div className="flex items-center gap-2">
                                 <div className="nft-container">
-                                    <div className
+                                    <div className="w-10 h-10 rounded-full bg-slate-700 flex items-center justify-center font-bold border border-slate-600">
+                                        {user[0].toUpperCase()}
+                                    </div>
+                                    <div className="nft-orbital">
+                                        {(userData.nfts||[]).filter(n=>n.isEquipped).map((n, i, arr) => {
+                                            const def = NFT_ITEMS.find(d=>d.id===n.id);
+                                            const deg = (i/arr.length)*360;
+                                            return <div key={n.uuid} className="nft-item" style={{transform: `rotate(${deg}deg) translateX(28px) rotate(-${deg}deg)`}}>{def.emoji}</div>
+                                        })}
+                                    </div>
+                                </div>
+                                <div>
+                                    <div className="font-bold">{user}</div>
+                                    <div className="text-xs text-yellow-500 font-mono">{Math.floor(userData.coins)} 💰</div>
+                                </div>
+                            </div>
+                            <div className="flex gap-1">
+                                <button onClick={()=>setShowCasino(true)} className="p-2 hover:bg-slate-800 rounded"><Dice5 size={20}/></button>
+                                <button onClick={()=>setShowMarket(true)} className="p-2 hover:bg-slate-800 rounded"><ShoppingCart size={20}/></button>
+                            </div>
+                        </div>
+
+                        {/* CLICKER AREA */}
+                        <ClickerSection 
+                            user={user} 
+                            coins={userData.coins} 
+                            clickLevel={userData.clickLevel} 
+                            botExpires={userData.botExpires} 
+                            onUpdate={updateUserData} 
+                        />
+
+                        {/* CHAT LIST */}
+                        <div className="flex-1 overflow-y-auto p-2">
+                            <div className="text-xs text-slate-500 uppercase px-2 mb-2">Chats</div>
+                            {chats.map(c => (
+                                <div key={c} onClick={()=>setActiveChat(c)} className="p-3 hover:bg-slate-800 rounded-xl cursor-pointer flex items-center gap-3">
+                                    <div className="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center">{c[0].toUpperCase()}</div>
+                                    <span className="font-medium">{c}</span>
+                                </div>
+                            ))}
+                            <div className="p-3 mt-2">
+                                <input placeholder="Start chat with..." className="w-full bg-slate-950 p-2 rounded text-sm" 
+                                    onKeyDown={e=>{
+                                        if(e.key==='Enter'){
+                                            const u = e.target.value.toLowerCase();
+                                            if(u && u!==user) setActiveChat(u);
+                                            e.target.value='';
+                                        }
+                                    }}
+                                />
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* CHAT WINDOW */}
+                    {activeChat ? (
+                        <div className={`flex-1 flex flex-col bg-slate-950 mobile-chat-visible`}>
+                            <div className="p-3 border-b border-slate-800 bg-slate-900/80 backdrop-blur flex items-center gap-3">
+                                <button onClick={()=>setActiveChat(null)} className="md:hidden"><ChevronLeft/></button>
+                                <div className="nft-container">
+                                    <div className="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center">{activeChat[0].toUpperCase()}</div>
+                                    <div className="nft-orbital">
+                                        {/* Show opponent NFTs */}
+                                        {(allUsers[activeChat]?.nfts||[]).filter(n=>n.isEquipped).map((n, i, arr) => {
+                                            const def = NFT_ITEMS.find(d=>d.id===n.id);
+                                            const deg = (i/arr.length)*360;
+                                            return <div key={n.uuid} className="nft-item" style={{transform: `rotate(${deg}deg) translateX(25px) rotate(-${deg}deg)`}}>{def.emoji}</div>
+                                        })}
+                                    </div>
+                                </div>
+                                <span className="font-bold">{activeChat}</span>
+                            </div>
+
+                            <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-2">
+                                {messages.map(m => (
+                                    <div key={m.timestamp} className={`flex ${m.sender===user ? 'justify-end':'justify-start'}`}>
+                                        <div className={`max-w-[70%] p-3 rounded-2xl ${m.sender===user ? 'bg-indigo-600 text-white rounded-br-none':'bg-slate-800 rounded-bl-none'}`}>
+                                            {m.content}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+
+                            <div className="p-3 bg-slate-900 border-t border-slate-800 flex gap-2">
+                                <input className="flex-1 bg-slate-800 rounded-xl px-4 outline-none" value={inputText} onChange={e=>setInputText(e.target.value)} onKeyDown={e=>e.key==='Enter'&&send()} placeholder="Message..."/>
+                                <Button onClick={send}><Send size={18}/></Button>
+                            </div>
+                        </div>
+                    ) : (
+                        <div className="hidden md:flex flex-1 items-center justify-center text-slate-600 select-none">Select a chat</div>
+                    )}
+                </div>
+            )
+        };
+
+        const root = createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
