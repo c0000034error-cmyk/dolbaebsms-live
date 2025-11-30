@@ -38,11 +38,28 @@
 
     <!-- Styles -->
     <style>
-      body { background-color: #0f172a; color: #e2e8f0; overscroll-behavior-y: none; }
+      * {
+        box-sizing: border-box;
+      }
+      
+      body { 
+        background-color: #0f172a; 
+        color: #e2e8f0; 
+        overscroll-behavior-y: none;
+        height: 100vh;
+        overflow: hidden;
+      }
+      
+      #root {
+        height: 100vh;
+        overflow: hidden;
+      }
+      
       ::-webkit-scrollbar { width: 6px; height: 6px; }
       ::-webkit-scrollbar-track { background: transparent; }
       ::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
       ::-webkit-scrollbar-thumb:hover { background: #475569; }
+      
       .custom-scrollbar::-webkit-scrollbar { width: 5px; }
       .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
       .custom-scrollbar::-webkit-scrollbar-thumb { background: #475569; border-radius: 10px; }
@@ -60,10 +77,21 @@
       
       /* Mobile optimizations */
       @media (max-width: 640px) {
-        .safe-area-bottom { padding-bottom: max(1rem, env(safe-area-inset-bottom)); }
+        .safe-area-bottom { 
+          padding-bottom: max(1rem, env(safe-area-inset-bottom)); 
+        }
+        .safe-area-top { 
+          padding-top: max(0.5rem, env(safe-area-inset-top)); 
+        }
         /* Hide scrollbar on mobile for cleaner look */
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        
+        /* Better touch targets */
+        button, [role="button"] {
+          min-height: 44px;
+          min-width: 44px;
+        }
       }
 
       .coin-animation {
@@ -87,7 +115,7 @@
         top: 50%;
         left: 50%;
         transform: translate(-50%, -50%);
-        font-size: 24px;
+        font-size: 20px;
         z-index: 10;
       }
 
@@ -121,20 +149,20 @@
         background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
         border: 2px solid #475569;
         border-radius: 12px;
-        padding: 10px;
+        padding: 8px;
         position: relative;
         overflow: hidden;
       }
 
       .slot-reel {
-        height: 60px;
+        height: 50px;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 24px;
+        font-size: 20px;
         background: #0f172a;
-        border-radius: 8px;
-        margin: 5px;
+        border-radius: 6px;
+        margin: 4px;
         border: 1px solid #334155;
       }
 
@@ -156,28 +184,36 @@
 
       /* Card styles */
       .card {
-        width: 80px;
-        height: 120px;
+        width: 60px;
+        height: 90px;
         background: #1e293b;
         border: 2px solid #475569;
-        border-radius: 8px;
+        border-radius: 6px;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 24px;
+        font-size: 18px;
         font-weight: bold;
         color: white;
-        margin: 5px;
+        margin: 4px;
+      }
+
+      @media (max-width: 380px) {
+        .card {
+          width: 50px;
+          height: 75px;
+          font-size: 16px;
+        }
       }
 
       .card.red { background: #dc2626; }
       .card.black { background: #1f2937; }
-      .card.win { box-shadow: 0 0 20px #22c55e; }
+      .card.win { box-shadow: 0 0 15px #22c55e; }
 
       /* Roulette styles */
       .roulette-wheel {
-        width: 200px;
-        height: 200px;
+        width: 150px;
+        height: 150px;
         border-radius: 50%;
         background: conic-gradient(
           #ef4444 0deg 60deg,
@@ -192,33 +228,48 @@
         transition: transform 3s cubic-bezier(0.2, 0.8, 0.3, 1);
       }
 
+      @media (max-width: 380px) {
+        .roulette-wheel {
+          width: 120px;
+          height: 120px;
+        }
+      }
+
       .roulette-pointer {
         position: absolute;
-        top: -10px;
+        top: -8px;
         left: 50%;
         transform: translateX(-50%);
         width: 0;
         height: 0;
-        border-left: 10px solid transparent;
-        border-right: 10px solid transparent;
-        border-top: 20px solid #ffffff;
+        border-left: 8px solid transparent;
+        border-right: 8px solid transparent;
+        border-top: 16px solid #ffffff;
         z-index: 10;
       }
 
       /* Coin flip */
       .coin {
-        width: 100px;
-        height: 100px;
+        width: 80px;
+        height: 80px;
         border-radius: 50%;
         background: linear-gradient(45deg, #f59e0b, #fbbf24);
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 40px;
+        font-size: 32px;
         margin: 0 auto;
         position: relative;
         transform-style: preserve-3d;
         transition: transform 1s;
+      }
+
+      @media (max-width: 380px) {
+        .coin {
+          width: 70px;
+          height: 70px;
+          font-size: 28px;
+        }
       }
 
       .coin.flipped {
@@ -239,6 +290,16 @@
       .coin-back {
         transform: rotateY(180deg);
         background: linear-gradient(45deg, #dc2626, #ef4444);
+      }
+
+      /* Responsive text sizes */
+      @media (max-width: 380px) {
+        .text-responsive-sm {
+          font-size: 0.875rem;
+        }
+        .text-responsive-xs {
+          font-size: 0.75rem;
+        }
       }
     </style>
 
@@ -286,7 +347,7 @@
 
         // 1. Button
         const Button = ({ children, variant = 'primary', className = '', isLoading, icon, ...props }) => {
-            const baseStyles = "relative flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-medium transition-all duration-200 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed";
+            const baseStyles = "relative flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl font-medium transition-all duration-200 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed text-sm min-h-[44px]";
             const variants = {
                 primary: "bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-500/20",
                 secondary: "bg-slate-700 hover:bg-slate-600 text-slate-100 border border-slate-600",
@@ -297,8 +358,8 @@
             return (
                 <button className={`${baseStyles} ${variants[variant]} ${className}`} disabled={isLoading || props.disabled} {...props}>
                     {isLoading ? (
-                        <Loader2 className="animate-spin h-5 w-5" />
-                    ) : (<>{icon && <span className="text-lg">{icon}</span>}{children}</>)}
+                        <Loader2 className="animate-spin h-4 w-4" />
+                    ) : (<>{icon && <span className="text-base">{icon}</span>}{children}</>)}
                 </button>
             );
         };
@@ -655,9 +716,9 @@
                 switch (activeGame) {
                     case 'slots':
                         return (
-                            <div className="space-y-4">
+                            <div className="space-y-3">
                                 <div className="slot-machine">
-                                    <div className="flex justify-between mb-4">
+                                    <div className="flex justify-between">
                                         <div className={`slot-reel flex-1 ${isSpinning ? 'spinning' : ''}`}>
                                             {slots[0]}
                                         </div>
@@ -674,29 +735,29 @@
                                     isLoading={isSpinning}
                                     disabled={userCoins < betAmount || isSpinning}
                                     variant="gold"
-                                    className="w-full"
+                                    className="w-full text-sm"
                                 >
-                                    {isSpinning ? 'Крутим...' : `Крутить за ${betAmount.toFixed(3)} коинов`}
+                                    {isSpinning ? 'Крутим...' : `Крутить за ${betAmount.toFixed(3)}`}
                                 </Button>
                             </div>
                         );
 
                     case 'dice':
                         return (
-                            <div className="space-y-4">
+                            <div className="space-y-3">
                                 <div className="text-center">
-                                    <div className="flex justify-center gap-4 mb-4">
-                                        <div className={`text-4xl p-4 bg-slate-800 rounded-lg ${isSpinning ? 'dice-rolling' : ''}`}>
+                                    <div className="flex justify-center gap-3 mb-3">
+                                        <div className={`text-3xl p-3 bg-slate-800 rounded-lg ${isSpinning ? 'dice-rolling' : ''}`}>
                                             {dice1}
                                         </div>
-                                        <div className={`text-4xl p-4 bg-slate-800 rounded-lg ${isSpinning ? 'dice-rolling' : ''}`}>
+                                        <div className={`text-3xl p-3 bg-slate-800 rounded-lg ${isSpinning ? 'dice-rolling' : ''}`}>
                                             {dice2}
                                         </div>
                                     </div>
-                                    <div className="flex gap-2 mb-4">
+                                    <div className="flex gap-2 mb-3">
                                         <button
                                             onClick={() => setDiceBet('over')}
-                                            className={`flex-1 py-2 rounded-lg ${
+                                            className={`flex-1 py-2 rounded-lg text-sm ${
                                                 diceBet === 'over' ? 'bg-green-600 text-white' : 'bg-slate-700 text-slate-300'
                                             }`}
                                         >
@@ -704,7 +765,7 @@
                                         </button>
                                         <button
                                             onClick={() => setDiceBet('under')}
-                                            className={`flex-1 py-2 rounded-lg ${
+                                            className={`flex-1 py-2 rounded-lg text-sm ${
                                                 diceBet === 'under' ? 'bg-green-600 text-white' : 'bg-slate-700 text-slate-300'
                                             }`}
                                         >
@@ -717,17 +778,17 @@
                                     isLoading={isSpinning}
                                     disabled={userCoins < betAmount || isSpinning}
                                     variant="gold"
-                                    className="w-full"
+                                    className="w-full text-sm"
                                 >
-                                    {isSpinning ? 'Бросаем...' : `Бросить за ${betAmount.toFixed(3)} коинов`}
+                                    {isSpinning ? 'Бросаем...' : `Бросить за ${betAmount.toFixed(3)}`}
                                 </Button>
                             </div>
                         );
 
                     case 'cards':
                         return (
-                            <div className="space-y-4">
-                                <div className="flex justify-center gap-2 mb-4">
+                            <div className="space-y-3">
+                                <div className="flex justify-center gap-1 mb-3">
                                     {cards.map((card, index) => (
                                         <div
                                             key={index}
@@ -745,18 +806,18 @@
                                         onClick={startCardGame}
                                         disabled={userCoins < betAmount}
                                         variant="gold"
-                                        className="w-full"
+                                        className="w-full text-sm"
                                     >
-                                        Начать игру за {betAmount.toFixed(3)} коинов
+                                        Начать игру за {betAmount.toFixed(3)}
                                     </Button>
                                 ) : (
                                     <Button 
                                         onClick={startCardGame}
                                         disabled={userCoins < betAmount || isSpinning}
                                         variant="gold"
-                                        className="w-full"
+                                        className="w-full text-sm"
                                     >
-                                        Новая игра за {betAmount.toFixed(3)} коинов
+                                        Новая игра за {betAmount.toFixed(3)}
                                     </Button>
                                 )}
                             </div>
@@ -764,23 +825,23 @@
 
                     case 'roulette':
                         return (
-                            <div className="space-y-4">
+                            <div className="space-y-3">
                                 <div className="relative">
                                     <div className="roulette-wheel" style={{ transform: `rotate(${rouletteNumber * 60}deg)` }}>
                                         <div className="roulette-pointer"></div>
                                     </div>
-                                    <div className="text-center mt-4 text-xl font-bold">
+                                    <div className="text-center mt-3 text-lg font-bold">
                                         <span className={rouletteColor === 'red' ? 'text-red-400' : rouletteColor === 'blue' ? 'text-blue-400' : 'text-white'}>
                                             {rouletteColor === 'red' ? 'КРАСНОЕ' : rouletteColor === 'blue' ? 'СИНЕЕ' : 'ЧЕРНОЕ'}
                                         </span>
                                     </div>
                                 </div>
-                                <div className="flex gap-2 mb-4">
+                                <div className="flex gap-1 mb-3">
                                     {['red', 'black', 'blue'].map(color => (
                                         <button
                                             key={color}
                                             onClick={() => setRouletteBet(color)}
-                                            className={`flex-1 py-2 rounded-lg ${
+                                            className={`flex-1 py-2 rounded-lg text-sm ${
                                                 rouletteBet === color ? 
                                                 (color === 'red' ? 'bg-red-600' : color === 'blue' ? 'bg-blue-600' : 'bg-gray-800') + ' text-white' : 
                                                 'bg-slate-700 text-slate-300'
@@ -795,16 +856,16 @@
                                     isLoading={isSpinning}
                                     disabled={userCoins < betAmount || isSpinning}
                                     variant="gold"
-                                    className="w-full"
+                                    className="w-full text-sm"
                                 >
-                                    {isSpinning ? 'Крутим...' : `Крутить за ${betAmount.toFixed(3)} коинов`}
+                                    {isSpinning ? 'Крутим...' : `Крутить за ${betAmount.toFixed(3)}`}
                                 </Button>
                             </div>
                         );
 
                     case 'coin':
                         return (
-                            <div className="space-y-4">
+                            <div className="space-y-3">
                                 <div className={`coin ${isSpinning ? 'flipped' : ''}`}>
                                     <div className="coin-face">
                                         {coinSide === 'heads' ? '👑' : '⭐'}
@@ -813,10 +874,10 @@
                                         {coinSide === 'tails' ? '⭐' : '👑'}
                                     </div>
                                 </div>
-                                <div className="flex gap-2 mb-4">
+                                <div className="flex gap-1 mb-3">
                                     <button
                                         onClick={() => setCoinBet('heads')}
-                                        className={`flex-1 py-2 rounded-lg ${
+                                        className={`flex-1 py-2 rounded-lg text-sm ${
                                             coinBet === 'heads' ? 'bg-yellow-600 text-white' : 'bg-slate-700 text-slate-300'
                                         }`}
                                     >
@@ -824,7 +885,7 @@
                                     </button>
                                     <button
                                         onClick={() => setCoinBet('tails')}
-                                        className={`flex-1 py-2 rounded-lg ${
+                                        className={`flex-1 py-2 rounded-lg text-sm ${
                                             coinBet === 'tails' ? 'bg-yellow-600 text-white' : 'bg-slate-700 text-slate-300'
                                         }`}
                                     >
@@ -836,9 +897,9 @@
                                     isLoading={isSpinning}
                                     disabled={userCoins < betAmount || isSpinning}
                                     variant="gold"
-                                    className="w-full"
+                                    className="w-full text-sm"
                                 >
-                                    {isSpinning ? 'Подбрасываем...' : `Подбросить за ${betAmount.toFixed(3)} коинов`}
+                                    {isSpinning ? 'Подбрасываем...' : `Подбросить за ${betAmount.toFixed(3)}`}
                                 </Button>
                             </div>
                         );
@@ -849,39 +910,39 @@
             };
 
             return (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
-                    <div className="w-full max-w-md bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl overflow-hidden">
-                        <div className="p-4 border-b border-slate-800 flex items-center justify-between bg-slate-900">
-                            <h2 className="text-xl font-bold text-white flex items-center gap-2"><Trophy size={20} className="text-yellow-500" /> Казино</h2>
-                            <button onClick={onClose} className="text-slate-400 hover:text-white"><X size={24} /></button>
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-3 bg-black/60 backdrop-blur-sm animate-fade-in safe-area-top safe-area-bottom">
+                    <div className="w-full max-w-md bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl overflow-hidden max-h-[95vh] flex flex-col">
+                        <div className="p-3 border-b border-slate-800 flex items-center justify-between bg-slate-900 shrink-0">
+                            <h2 className="text-lg font-bold text-white flex items-center gap-2"><Trophy size={18} className="text-yellow-500" /> Казино</h2>
+                            <button onClick={onClose} className="text-slate-400 hover:text-white p-1"><X size={20} /></button>
                         </div>
-                        <div className="p-6">
-                            <div className="text-center mb-6">
-                                <div className="text-slate-400 mb-2">Ваш баланс</div>
-                                <div className="text-2xl font-bold text-yellow-500">{userCoins.toFixed(3)} коинов</div>
+                        <div className="p-4 overflow-y-auto custom-scrollbar flex-1">
+                            <div className="text-center mb-4">
+                                <div className="text-slate-400 mb-1 text-sm">Ваш баланс</div>
+                                <div className="text-xl font-bold text-yellow-500">{userCoins.toFixed(3)} коинов</div>
                             </div>
 
                             {/* Game Selection */}
-                            <div className="grid grid-cols-3 gap-2 mb-6">
+                            <div className="grid grid-cols-3 gap-1 mb-4">
                                 {games.map(game => (
                                     <button
                                         key={game.id}
                                         onClick={() => setActiveGame(game.id)}
-                                        className={`p-2 rounded-lg text-center text-sm ${
+                                        className={`p-2 rounded-lg text-center text-xs min-h-[44px] ${
                                             activeGame === game.id 
                                             ? 'bg-indigo-600 text-white' 
                                             : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
                                         }`}
                                     >
                                         <div className="font-medium">{game.name}</div>
-                                        <div className="text-xs opacity-75">{game.description}</div>
+                                        <div className="opacity-75 text-[10px]">{game.description}</div>
                                     </button>
                                 ))}
                             </div>
 
                             {/* Bet Controls */}
-                            <div className="mb-6">
-                                <label className="text-slate-400 text-sm mb-2 block">Ставка: {betAmount.toFixed(3)} коинов</label>
+                            <div className="mb-4">
+                                <label className="text-slate-400 text-sm mb-1 block">Ставка: {betAmount.toFixed(3)} коинов</label>
                                 <input 
                                     type="range" 
                                     min="0.1" 
@@ -903,7 +964,7 @@
 
                             {/* Result Display */}
                             {result && (
-                                <div className={`text-center mt-4 p-3 rounded-lg ${result.win ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'}`}>
+                                <div className={`text-center mt-3 p-2 rounded-lg text-sm ${result.win ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'}`}>
                                     {result.win ? (
                                         <div className="win-animation">
                                             🎉 Вы выиграли {result.amount.toFixed(3)} коинов!
@@ -915,7 +976,7 @@
                             )}
 
                             {/* Game Instructions */}
-                            <div className="text-xs text-slate-500 text-center mt-4 space-y-1">
+                            <div className="text-xs text-slate-500 text-center mt-3 space-y-1">
                                 {activeGame === 'slots' && (
                                     <>
                                         <div>3 одинаковых = x2.5 | 2 одинаковых = x1.8</div>
@@ -993,26 +1054,26 @@
             };
 
             return (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
-                    <div className="w-full max-w-2xl bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
-                        <div className="p-4 border-b border-slate-800 flex items-center justify-between bg-slate-900">
-                            <h2 className="text-xl font-bold text-white flex items-center gap-2"><Palette size={20} className="text-yellow-500" /> Цвет имени</h2>
-                            <button onClick={onClose} className="text-slate-400 hover:text-white"><X size={24} /></button>
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-3 bg-black/60 backdrop-blur-sm animate-fade-in safe-area-top safe-area-bottom">
+                    <div className="w-full max-w-2xl bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[95vh]">
+                        <div className="p-3 border-b border-slate-800 flex items-center justify-between bg-slate-900 shrink-0">
+                            <h2 className="text-lg font-bold text-white flex items-center gap-2"><Palette size={18} className="text-yellow-500" /> Цвет имени</h2>
+                            <button onClick={onClose} className="text-slate-400 hover:text-white p-1"><X size={20} /></button>
                         </div>
-                        <div className="p-6 overflow-y-auto custom-scrollbar flex-1 bg-slate-900">
-                            <div className="text-center mb-6">
-                                <p className="text-slate-400">
+                        <div className="p-4 overflow-y-auto custom-scrollbar flex-1">
+                            <div className="text-center mb-4">
+                                <p className="text-slate-400 text-sm">
                                     {currentUser === 'kayivi' ? (
                                         <span className="text-yellow-500 flex items-center justify-center gap-2">
-                                            <Crown size={16} /> Вы можете выбирать цвета бесплатно!
+                                            <Crown size={14} /> Вы можете выбирать цвета бесплатно!
                                         </span>
                                     ) : (
                                         <span>Выберите цвет для покупки</span>
                                     )}
                                 </p>
-                                <p className="text-sm text-slate-500 mt-2">Ваши коины: <span className="text-yellow-500 font-bold">{userCoins.toFixed(3)}</span></p>
+                                <p className="text-xs text-slate-500 mt-1">Ваши коины: <span className="text-yellow-500 font-bold">{userCoins.toFixed(3)}</span></p>
                             </div>
-                            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                                 {colors.map((color) => {
                                     const isPurchased = purchasedColors.includes(color.id);
                                     const canAfford = userCoins >= color.price || currentUser === 'kayivi';
@@ -1023,14 +1084,14 @@
                                             key={color.id}
                                             onClick={() => !isLocked && handleColorSelect(color)}
                                             disabled={isLoading || isLocked}
-                                            className={`p-4 rounded-xl flex flex-col items-center gap-3 transition-all duration-200 ${
+                                            className={`p-3 rounded-xl flex flex-col items-center gap-2 transition-all duration-200 min-h-[100px] ${
                                                 isLocked 
                                                     ? 'bg-slate-800 border-2 border-slate-700 avatar-locked' 
                                                     : 'bg-slate-800 hover:bg-slate-700 border-2 border-slate-600 hover:border-yellow-500 hover:scale-105'
                                             }`}
                                         >
                                             <div 
-                                                className="w-16 h-16 rounded-full flex items-center justify-center text-white font-bold text-2xl"
+                                                className="w-12 h-12 rounded-full flex items-center justify-center text-white font-bold text-xl"
                                                 style={{ 
                                                     background: color.value,
                                                     border: '2px solid #374151'
@@ -1039,8 +1100,8 @@
                                                 A
                                             </div>
                                             <div className="text-center">
-                                                <h3 className="font-medium text-white">{color.name}</h3>
-                                                <p className="text-sm text-slate-400">
+                                                <h3 className="font-medium text-white text-sm">{color.name}</h3>
+                                                <p className="text-xs text-slate-400">
                                                     {color.price === 0 ? 'Бесплатно' : 
                                                      isPurchased ? <span className="text-green-500">✓ Куплено</span> :
                                                      currentUser === 'kayivi' ? <span className="text-yellow-500">Бесплатно</span> :
@@ -1140,42 +1201,43 @@
             };
 
             return (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
-                    <div className="w-full max-w-md bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
-                        <div className="p-4 border-b border-slate-800 flex items-center justify-between bg-slate-900">
-                            <h2 className="text-xl font-bold text-white flex items-center gap-2"><Edit3 size={20} className="text-yellow-500" /> Статус</h2>
-                            <button onClick={onClose} className="text-slate-400 hover:text-white"><X size={24} /></button>
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-3 bg-black/60 backdrop-blur-sm animate-fade-in safe-area-top safe-area-bottom">
+                    <div className="w-full max-w-md bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[95vh]">
+                        <div className="p-3 border-b border-slate-800 flex items-center justify-between bg-slate-900 shrink-0">
+                            <h2 className="text-lg font-bold text-white flex items-center gap-2"><Edit3 size={18} className="text-yellow-500" /> Статус</h2>
+                            <button onClick={onClose} className="text-slate-400 hover:text-white p-1"><X size={20} /></button>
                         </div>
-                        <div className="p-6 overflow-y-auto custom-scrollbar flex-1 bg-slate-900">
-                            <div className="text-center mb-6">
-                                <p className="text-slate-400">
+                        <div className="p-4 overflow-y-auto custom-scrollbar flex-1">
+                            <div className="text-center mb-4">
+                                <p className="text-slate-400 text-sm">
                                     {currentUser === 'kayivi' ? (
                                         <span className="text-yellow-500 flex items-center justify-center gap-2">
-                                            <Crown size={16} /> Вы можете выбирать статусы бесплатно!
+                                            <Crown size={14} /> Вы можете выбирать статусы бесплатно!
                                         </span>
                                     ) : (
                                         <span>Выберите или создайте статус</span>
                                     )}
                                 </p>
-                                <p className="text-sm text-slate-500 mt-2">Ваши коины: <span className="text-yellow-500 font-bold">{userCoins.toFixed(3)}</span></p>
+                                <p className="text-xs text-slate-500 mt-1">Ваши коины: <span className="text-yellow-500 font-bold">{userCoins.toFixed(3)}</span></p>
                             </div>
 
                             {/* Custom Status */}
-                            <div className="mb-6 p-4 bg-slate-800 rounded-xl">
-                                <h3 className="text-white font-medium mb-2">Свой статус (20 коинов)</h3>
+                            <div className="mb-4 p-3 bg-slate-800 rounded-xl">
+                                <h3 className="text-white font-medium mb-2 text-sm">Свой статус (20 коинов)</h3>
                                 <div className="flex gap-2">
                                     <input 
                                         type="text" 
                                         placeholder="Введите свой статус..." 
                                         value={customStatus}
                                         onChange={e => setCustomStatus(e.target.value)}
-                                        className="flex-1 bg-slate-700 border border-slate-600 rounded-lg px-3 py-2 text-white outline-none"
+                                        className="flex-1 bg-slate-700 border border-slate-600 rounded-lg px-3 py-2 text-white outline-none text-sm"
                                     />
                                     <Button 
                                         onClick={handleCustomStatus}
                                         isLoading={isLoading}
                                         disabled={!customStatus.trim() || (userCoins < 20 && currentUser !== 'kayivi')}
                                         variant="primary"
+                                        className="text-xs"
                                     >
                                         ОК
                                     </Button>
@@ -1194,17 +1256,17 @@
                                             key={status.id}
                                             onClick={() => !isLocked && handleStatusSelect(status)}
                                             disabled={isLoading || isLocked}
-                                            className={`p-3 rounded-xl flex items-center gap-3 transition-all duration-200 text-left ${
+                                            className={`p-2 rounded-xl flex items-center gap-2 transition-all duration-200 text-left min-h-[44px] ${
                                                 isLocked 
                                                     ? 'bg-slate-800 border border-slate-700 avatar-locked' 
                                                     : 'bg-slate-800 hover:bg-slate-700 border border-slate-600 hover:border-yellow-500'
                                             }`}
                                         >
-                                            <span className="text-2xl">{status.emoji}</span>
+                                            <span className="text-xl">{status.emoji}</span>
                                             <div className="flex-1">
-                                                <div className="text-white">{status.text}</div>
+                                                <div className="text-white text-sm">{status.text}</div>
                                             </div>
-                                            <div className="text-sm text-slate-400">
+                                            <div className="text-xs text-slate-400">
                                                 {status.price === 0 ? 'Бесплатно' : 
                                                  isPurchased ? <span className="text-green-500">✓</span> :
                                                  currentUser === 'kayivi' ? <span className="text-yellow-500">Бесплатно</span> :
@@ -1283,26 +1345,26 @@
             };
 
             return (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
-                    <div className="w-full max-w-4xl bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
-                        <div className="p-4 border-b border-slate-800 flex items-center justify-between bg-slate-900">
-                            <h2 className="text-xl font-bold text-white flex items-center gap-2"><UserIcon size={20} className="text-yellow-500" /> Магазин аватарок</h2>
-                            <button onClick={onClose} className="text-slate-400 hover:text-white"><X size={24} /></button>
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-3 bg-black/60 backdrop-blur-sm animate-fade-in safe-area-top safe-area-bottom">
+                    <div className="w-full max-w-4xl bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[95vh]">
+                        <div className="p-3 border-b border-slate-800 flex items-center justify-between bg-slate-900 shrink-0">
+                            <h2 className="text-lg font-bold text-white flex items-center gap-2"><UserIcon size={18} className="text-yellow-500" /> Магазин аватарок</h2>
+                            <button onClick={onClose} className="text-slate-400 hover:text-white p-1"><X size={20} /></button>
                         </div>
-                        <div className="p-6 overflow-y-auto custom-scrollbar flex-1 bg-slate-900">
-                            <div className="text-center mb-6">
-                                <p className="text-slate-400">
+                        <div className="p-4 overflow-y-auto custom-scrollbar flex-1">
+                            <div className="text-center mb-4">
+                                <p className="text-slate-400 text-sm">
                                     {currentUser === 'kayivi' ? (
                                         <span className="text-yellow-500 flex items-center justify-center gap-2">
-                                            <Crown size={16} /> Вы можете выбирать аватарки бесплатно!
+                                            <Crown size={14} /> Вы можете выбирать аватарки бесплатно!
                                         </span>
                                     ) : (
                                         <span>Выберите аватарку для покупки</span>
                                     )}
                                 </p>
-                                <p className="text-sm text-slate-500 mt-2">Ваши коины: <span className="text-yellow-500 font-bold">{userCoins.toFixed(3)}</span></p>
+                                <p className="text-xs text-slate-500 mt-1">Ваши коины: <span className="text-yellow-500 font-bold">{userCoins.toFixed(3)}</span></p>
                             </div>
-                            <div className="grid grid-cols-4 md:grid-cols-5 gap-4">
+                            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3">
                                 {avatars.map((avatar, index) => {
                                     const isPurchased = purchasedAvatars.includes(avatar.emoji);
                                     const canAfford = userCoins >= avatar.price || currentUser === 'kayivi';
@@ -1313,16 +1375,16 @@
                                             key={index}
                                             onClick={() => !isLocked && handleAvatarSelect(avatar)}
                                             disabled={isLoading || isLocked}
-                                            className={`p-4 rounded-xl flex flex-col items-center gap-2 transition-all duration-200 ${
+                                            className={`p-3 rounded-xl flex flex-col items-center gap-2 transition-all duration-200 min-h-[100px] ${
                                                 isLocked 
                                                     ? 'bg-slate-800 border-2 border-slate-700 avatar-locked' 
                                                     : 'bg-slate-800 hover:bg-slate-700 border-2 border-slate-600 hover:border-yellow-500 hover:scale-105'
                                             }`}
                                         >
-                                            <div className="text-4xl">{avatar.emoji}</div>
+                                            <div className="text-3xl">{avatar.emoji}</div>
                                             <div className="text-center">
-                                                <h3 className="font-medium text-white text-sm">{avatar.name}</h3>
-                                                <p className="text-sm text-slate-400">
+                                                <h3 className="font-medium text-white text-xs">{avatar.name}</h3>
+                                                <p className="text-xs text-slate-400">
                                                     {isPurchased ? (
                                                         <span className="text-green-500">✓ Куплено</span>
                                                     ) : currentUser === 'kayivi' ? (
@@ -1391,26 +1453,26 @@
             };
 
             return (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
-                    <div className="w-full max-w-2xl bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
-                        <div className="p-4 border-b border-slate-800 flex items-center justify-between bg-slate-900">
-                            <h2 className="text-xl font-bold text-white flex items-center gap-2"><ImageIcon size={20} className="text-yellow-500" /> Магазин рамок</h2>
-                            <button onClick={onClose} className="text-slate-400 hover:text-white"><X size={24} /></button>
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-3 bg-black/60 backdrop-blur-sm animate-fade-in safe-area-top safe-area-bottom">
+                    <div className="w-full max-w-2xl bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[95vh]">
+                        <div className="p-3 border-b border-slate-800 flex items-center justify-between bg-slate-900 shrink-0">
+                            <h2 className="text-lg font-bold text-white flex items-center gap-2"><ImageIcon size={18} className="text-yellow-500" /> Магазин рамок</h2>
+                            <button onClick={onClose} className="text-slate-400 hover:text-white p-1"><X size={20} /></button>
                         </div>
-                        <div className="p-6 overflow-y-auto custom-scrollbar flex-1 bg-slate-900">
-                            <div className="text-center mb-6">
-                                <p className="text-slate-400">
+                        <div className="p-4 overflow-y-auto custom-scrollbar flex-1">
+                            <div className="text-center mb-4">
+                                <p className="text-slate-400 text-sm">
                                     {currentUser === 'kayivi' ? (
                                         <span className="text-yellow-500 flex items-center justify-center gap-2">
-                                            <Crown size={16} /> Вы можете выбирать рамки бесплатно!
+                                            <Crown size={14} /> Вы можете выбирать рамки бесплатно!
                                         </span>
                                     ) : (
                                         <span>Выберите рамку для покупки</span>
                                     )}
                                 </p>
-                                <p className="text-sm text-slate-500 mt-2">Ваши коины: <span className="text-yellow-500 font-bold">{userCoins.toFixed(3)}</span></p>
+                                <p className="text-xs text-slate-500 mt-1">Ваши коины: <span className="text-yellow-500 font-bold">{userCoins.toFixed(3)}</span></p>
                             </div>
-                            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                                 {frames.map((frame) => {
                                     const isPurchased = purchasedFrames.includes(frame.id);
                                     const canAfford = userCoins >= frame.price || currentUser === 'kayivi';
@@ -1421,7 +1483,7 @@
                                             key={frame.id}
                                             onClick={() => !isLocked && handleFrameSelect(frame)}
                                             disabled={isLoading || isLocked}
-                                            className={`p-4 rounded-xl flex flex-col items-center gap-3 transition-all duration-200 ${
+                                            className={`p-3 rounded-xl flex flex-col items-center gap-2 transition-all duration-200 min-h-[120px] ${
                                                 isLocked 
                                                     ? 'bg-slate-800 border-2 border-slate-700 avatar-locked' 
                                                     : userFrame === frame.id 
@@ -1429,12 +1491,12 @@
                                                     : 'bg-slate-800 hover:bg-slate-700 border-2 border-slate-600 hover:border-yellow-500 hover:scale-105'
                                             }`}
                                         >
-                                            <div className={`w-16 h-16 rounded-full bg-gradient-to-tr from-indigo-600 to-purple-600 flex items-center justify-center text-white font-bold text-2xl ${frame.className}`}>
+                                            <div className={`w-12 h-12 rounded-full bg-gradient-to-tr from-indigo-600 to-purple-600 flex items-center justify-center text-white font-bold text-lg ${frame.className}`}>
                                                 {currentUser[0].toUpperCase()}
                                             </div>
                                             <div className="text-center">
-                                                <h3 className="font-medium text-white">{frame.name}</h3>
-                                                <p className="text-sm text-slate-400">
+                                                <h3 className="font-medium text-white text-sm">{frame.name}</h3>
+                                                <p className="text-xs text-slate-400">
                                                     {frame.price === 0 ? 'Бесплатно' : 
                                                      isPurchased ? <span className="text-green-500">✓ Куплено</span> :
                                                      currentUser === 'kayivi' ? <span className="text-yellow-500">Бесплатно</span> :
@@ -1634,59 +1696,78 @@
             };
 
             return (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
-                    <div className="w-full max-w-md bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
-                        <div className="p-4 border-b border-slate-800 flex items-center justify-between bg-slate-900">
-                            <h2 className="text-xl font-bold text-white flex items-center gap-2"><UserIcon size={20} className="text-indigo-500" /> Настройки</h2>
-                            <button onClick={onClose} className="text-slate-400 hover:text-white"><X size={24} /></button>
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-3 bg-black/60 backdrop-blur-sm animate-fade-in safe-area-top safe-area-bottom">
+                    <div className="w-full max-w-md bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[95vh]">
+                        <div className="p-3 border-b border-slate-800 flex items-center justify-between bg-slate-900 shrink-0">
+                            <h2 className="text-lg font-bold text-white flex items-center gap-2"><UserIcon size={18} className="text-indigo-500" /> Настройки</h2>
+                            <button onClick={onClose} className="text-slate-400 hover:text-white p-1"><X size={20} /></button>
                         </div>
-                        <div className="flex border-b border-slate-800 bg-slate-900/50">
+                        <div className="flex border-b border-slate-800 bg-slate-900/50 shrink-0">
                             {['profile', 'coins', 'security', 'danger'].map(tab => (
-                                <button key={tab} onClick={() => setActiveTab(tab)} className={`flex-1 py-3 text-sm font-medium transition-colors capitalize ${activeTab === tab ? 'text-indigo-400 border-b-2 border-indigo-400' : 'text-slate-400'}`}>
+                                <button 
+                                    key={tab} 
+                                    onClick={() => setActiveTab(tab)} 
+                                    className={`flex-1 py-2 text-xs font-medium transition-colors capitalize min-h-[44px] ${
+                                        activeTab === tab ? 'text-indigo-400 border-b-2 border-indigo-400' : 'text-slate-400'
+                                    }`}
+                                >
                                     {tab === 'profile' ? 'Профиль' : tab === 'coins' ? 'Коинсы' : tab === 'security' ? 'Пароль' : 'Удалить'}
                                 </button>
                             ))}
                         </div>
-                        <div className="p-6 overflow-y-auto custom-scrollbar flex-1 bg-slate-900">
-                            {message.text && <div className={`mb-4 p-3 rounded-lg text-sm text-center ${message.type === 'error' ? 'text-red-400 bg-red-500/10' : 'text-green-400 bg-green-500/10'}`}>{message.text}</div>}
+                        <div className="p-4 overflow-y-auto custom-scrollbar flex-1">
+                            {message.text && (
+                                <div className={`mb-3 p-2 rounded-lg text-xs text-center ${
+                                    message.type === 'error' ? 'text-red-400 bg-red-500/10' : 'text-green-400 bg-green-500/10'
+                                }`}>
+                                    {message.text}
+                                </div>
+                            )}
                             
                             {activeTab === 'profile' && (
-                                <div className="space-y-6 text-center">
-                                    <div className={`w-24 h-24 mx-auto rounded-full bg-gradient-to-tr from-indigo-600 to-purple-600 flex items-center justify-center text-white font-bold text-4xl shadow-xl ${getFrameClass(userFrame)}`}>
+                                <div className="space-y-4 text-center">
+                                    <div className={`w-20 h-20 mx-auto rounded-full bg-gradient-to-tr from-indigo-600 to-purple-600 flex items-center justify-center text-white font-bold text-3xl shadow-xl ${getFrameClass(userFrame)}`}>
                                         {userAvatar || currentUser[0].toUpperCase()}
                                     </div>
                                     <div>
-                                        <h3 className="text-2xl font-bold" style={getNameColorStyle(userNameColor)}>{currentUser}</h3>
-                                        <p className="text-slate-400 flex items-center justify-center gap-1">
+                                        <h3 className="text-xl font-bold" style={getNameColorStyle(userNameColor)}>{currentUser}</h3>
+                                        <p className="text-slate-400 text-sm flex items-center justify-center gap-1">
                                             {userStatusEmoji} {userStatus || 'В сети'}
                                         </p>
                                     </div>
-                                    <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-xl p-4">
+                                    <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-xl p-3">
                                         <div className="flex items-center justify-center gap-2 text-yellow-500">
-                                            <Coins size={20} />
-                                            <span className="font-bold text-lg">{userCoins.toFixed(3)} коинов</span>
+                                            <Coins size={18} />
+                                            <span className="font-bold text-md">{userCoins.toFixed(3)} коинов</span>
                                         </div>
                                     </div>
-                                    <Button variant="secondary" onClick={onLogout} className="w-full" icon={<LogOut size={18} />}>Выйти</Button>
+                                    <Button 
+                                        variant="secondary" 
+                                        onClick={onLogout} 
+                                        className="w-full text-sm" 
+                                        icon={<LogOut size={16} />}
+                                    >
+                                        Выйти
+                                    </Button>
                                 </div>
                             )}
 
                             {activeTab === 'coins' && (
-                                <div className="space-y-4">
-                                    <div className="text-center p-4 bg-yellow-500/10 border border-yellow-500/20 rounded-xl">
-                                        <div className="flex items-center justify-center gap-2 text-yellow-500 mb-2">
-                                            <Coins size={24} />
-                                            <span className="font-bold text-xl">{userCoins.toFixed(3)}</span>
+                                <div className="space-y-3">
+                                    <div className="text-center p-3 bg-yellow-500/10 border border-yellow-500/20 rounded-xl">
+                                        <div className="flex items-center justify-center gap-2 text-yellow-500 mb-1">
+                                            <Coins size={20} />
+                                            <span className="font-bold text-lg">{userCoins.toFixed(3)}</span>
                                         </div>
-                                        <p className="text-slate-400 text-sm">Ваш баланс коинов</p>
+                                        <p className="text-slate-400 text-xs">Ваш баланс коинов</p>
                                     </div>
                                     
                                     {currentUser === 'kayivi' && (
                                         <>
-                                            <div className="space-y-3 p-4 bg-green-500/10 border border-green-500/20 rounded-xl">
-                                                <div className="flex items-center gap-2 text-green-500 mb-2">
-                                                    <Crown size={16} />
-                                                    <span className="font-bold">Добавить коины себе</span>
+                                            <div className="space-y-2 p-3 bg-green-500/10 border border-green-500/20 rounded-xl">
+                                                <div className="flex items-center gap-2 text-green-500 mb-1">
+                                                    <Crown size={14} />
+                                                    <span className="font-bold text-sm">Добавить коины себе</span>
                                                 </div>
                                                 <div className="flex gap-2">
                                                     <input 
@@ -1695,23 +1776,23 @@
                                                         placeholder="Количество коинов" 
                                                         value={coinsToAdd} 
                                                         onChange={e => setCoinsToAdd(e.target.value)}
-                                                        className="flex-1 bg-slate-800 border border-slate-700 rounded-xl px-4 py-2 text-white focus:border-green-500 outline-none" 
+                                                        className="flex-1 bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white focus:border-green-500 outline-none text-sm" 
                                                     />
                                                     <Button 
                                                         onClick={handleAddCoins} 
                                                         isLoading={isLoading}
                                                         variant="gold"
-                                                        className="whitespace-nowrap"
+                                                        className="whitespace-nowrap text-xs"
                                                     >
                                                         Добавить
                                                     </Button>
                                                 </div>
                                             </div>
                                             
-                                            <div className="space-y-3 p-4 bg-blue-500/10 border border-blue-500/20 rounded-xl">
-                                                <div className="flex items-center gap-2 text-blue-500 mb-2">
-                                                    <Crown size={16} />
-                                                    <span className="font-bold">Добавить коины другому</span>
+                                            <div className="space-y-2 p-3 bg-blue-500/10 border border-blue-500/20 rounded-xl">
+                                                <div className="flex items-center gap-2 text-blue-500 mb-1">
+                                                    <Crown size={14} />
+                                                    <span className="font-bold text-sm">Добавить коины другому</span>
                                                 </div>
                                                 <div className="space-y-2">
                                                     <input 
@@ -1719,7 +1800,7 @@
                                                         placeholder="Имя пользователя" 
                                                         value={targetUserToAdd} 
                                                         onChange={e => setTargetUserToAdd(e.target.value)}
-                                                        className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2 text-white focus:border-blue-500 outline-none" 
+                                                        className="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white focus:border-blue-500 outline-none text-sm" 
                                                     />
                                                     <div className="flex gap-2">
                                                         <input 
@@ -1728,13 +1809,13 @@
                                                             placeholder="Количество коинов" 
                                                             value={coinsToAddToOther} 
                                                             onChange={e => setCoinsToAddToOther(e.target.value)}
-                                                            className="flex-1 bg-slate-800 border border-slate-700 rounded-xl px-4 py-2 text-white focus:border-blue-500 outline-none" 
+                                                            className="flex-1 bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white focus:border-blue-500 outline-none text-sm" 
                                                         />
                                                         <Button 
                                                             onClick={handleAddCoinsToOther} 
                                                             isLoading={isLoading}
                                                             variant="primary"
-                                                            className="whitespace-nowrap"
+                                                            className="whitespace-nowrap text-xs"
                                                         >
                                                             Добавить
                                                         </Button>
@@ -1742,10 +1823,10 @@
                                                 </div>
                                             </div>
                                             
-                                            <div className="space-y-3 p-4 bg-red-500/10 border border-red-500/20 rounded-xl">
-                                                <div className="flex items-center gap-2 text-red-500 mb-2">
-                                                    <Crown size={16} />
-                                                    <span className="font-bold">Убавить коины</span>
+                                            <div className="space-y-2 p-3 bg-red-500/10 border border-red-500/20 rounded-xl">
+                                                <div className="flex items-center gap-2 text-red-500 mb-1">
+                                                    <Crown size={14} />
+                                                    <span className="font-bold text-sm">Убавить коины</span>
                                                 </div>
                                                 <div className="space-y-2">
                                                     <input 
@@ -1753,7 +1834,7 @@
                                                         placeholder="Имя пользователя" 
                                                         value={targetUser} 
                                                         onChange={e => setTargetUser(e.target.value)}
-                                                        className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2 text-white focus:border-red-500 outline-none" 
+                                                        className="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white focus:border-red-500 outline-none text-sm" 
                                                     />
                                                     <div className="flex gap-2">
                                                         <input 
@@ -1762,13 +1843,13 @@
                                                             placeholder="Количество коинов" 
                                                             value={coinsToRemove} 
                                                             onChange={e => setCoinsToRemove(e.target.value)}
-                                                            className="flex-1 bg-slate-800 border border-slate-700 rounded-xl px-4 py-2 text-white focus:border-red-500 outline-none" 
+                                                            className="flex-1 bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white focus:border-red-500 outline-none text-sm" 
                                                         />
                                                         <Button 
                                                             onClick={handleRemoveCoins} 
                                                             isLoading={isLoading}
                                                             variant="danger"
-                                                            className="whitespace-nowrap"
+                                                            className="whitespace-nowrap text-xs"
                                                         >
                                                             Убавить
                                                         </Button>
@@ -1778,7 +1859,7 @@
                                         </>
                                     )}
 
-                                    <div className="text-slate-400 text-sm space-y-2">
+                                    <div className="text-slate-400 text-xs space-y-1">
                                         <p>💎 1 клик = +0.001 коин</p>
                                         <p>🔄 Аватарки = от 10 до 400 коинов</p>
                                         <p>🖼️ Рамки = от 10 до 500 коинов</p>
@@ -1793,18 +1874,51 @@
                             )}
 
                             {activeTab === 'security' && (
-                                <div className="space-y-4">
-                                    <input type="password" placeholder="Текущий пароль" value={oldPassword} onChange={e => setOldPassword(e.target.value)} className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-white focus:border-indigo-500 outline-none" />
-                                    <input type="password" placeholder="Новый пароль" value={newPassword} onChange={e => setNewPassword(e.target.value)} className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-white focus:border-indigo-500 outline-none" />
-                                    <Button onClick={handleChangePassword} isLoading={isLoading} disabled={!oldPassword || !newPassword} className="w-full">Обновить</Button>
+                                <div className="space-y-3">
+                                    <input 
+                                        type="password" 
+                                        placeholder="Текущий пароль" 
+                                        value={oldPassword} 
+                                        onChange={e => setOldPassword(e.target.value)} 
+                                        className="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white focus:border-indigo-500 outline-none text-sm" 
+                                    />
+                                    <input 
+                                        type="password" 
+                                        placeholder="Новый пароль" 
+                                        value={newPassword} 
+                                        onChange={e => setNewPassword(e.target.value)} 
+                                        className="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white focus:border-indigo-500 outline-none text-sm" 
+                                    />
+                                    <Button 
+                                        onClick={handleChangePassword} 
+                                        isLoading={isLoading} 
+                                        disabled={!oldPassword || !newPassword} 
+                                        className="w-full text-sm"
+                                    >
+                                        Обновить
+                                    </Button>
                                 </div>
                             )}
 
                             {activeTab === 'danger' && (
-                                <div className="space-y-4 p-4 bg-red-500/5 border border-red-500/10 rounded-xl">
-                                    <p className="text-sm text-slate-400">Введите <b>{currentUser}</b> для удаления аккаунта.</p>
-                                    <input type="text" placeholder={currentUser} value={confirmDelete} onChange={e => setConfirmDelete(e.target.value)} className="w-full bg-slate-800 border border-red-900/30 rounded-xl px-4 py-3 text-white focus:border-red-500 outline-none" />
-                                    <Button variant="danger" onClick={handleDeleteAccount} isLoading={isLoading} disabled={confirmDelete !== currentUser} className="w-full">Удалить навсегда</Button>
+                                <div className="space-y-3 p-3 bg-red-500/5 border border-red-500/10 rounded-xl">
+                                    <p className="text-xs text-slate-400">Введите <b>{currentUser}</b> для удаления аккаунта.</p>
+                                    <input 
+                                        type="text" 
+                                        placeholder={currentUser} 
+                                        value={confirmDelete} 
+                                        onChange={e => setConfirmDelete(e.target.value)} 
+                                        className="w-full bg-slate-800 border border-red-900/30 rounded-xl px-3 py-2 text-white focus:border-red-500 outline-none text-sm" 
+                                    />
+                                    <Button 
+                                        variant="danger" 
+                                        onClick={handleDeleteAccount} 
+                                        isLoading={isLoading} 
+                                        disabled={confirmDelete !== currentUser} 
+                                        className="w-full text-sm"
+                                    >
+                                        Удалить навсегда
+                                    </Button>
                                 </div>
                             )}
                         </div>
@@ -1861,38 +1975,38 @@
 
             const renderContent = () => {
                 switch (message.type) {
-                    case 'photo': return <div className="relative group"><img src={message.mediaUrl} alt="Photo" className="max-w-full sm:max-w-[320px] max-h-[400px] object-cover rounded-lg" loading="lazy" /></div>;
-                    case 'video': return <video controls src={message.mediaUrl} className="max-w-full sm:max-w-[320px] max-h-[400px] rounded-lg bg-black" playsInline />;
-                    case 'audio': return <div className="flex items-center gap-3 min-w-[200px]"><div className={`p-2 rounded-full ${isOwn ? 'bg-white/20' : 'bg-indigo-500/20 text-indigo-400'}`}><Mic size={16}/></div><audio controls src={message.mediaUrl} className="h-8 w-full max-w-[200px]" /></div>;
-                    default: return <p className="break-words whitespace-pre-wrap leading-relaxed text-[15px]">{message.text}</p>;
+                    case 'photo': return <div className="relative group"><img src={message.mediaUrl} alt="Photo" className="max-w-full sm:max-w-[280px] max-h-[300px] object-cover rounded-lg" loading="lazy" /></div>;
+                    case 'video': return <video controls src={message.mediaUrl} className="max-w-full sm:max-w-[280px] max-h-[300px] rounded-lg bg-black" playsInline />;
+                    case 'audio': return <div className="flex items-center gap-2 min-w-[160px]"><div className={`p-1.5 rounded-full ${isOwn ? 'bg-white/20' : 'bg-indigo-500/20 text-indigo-400'}`}><Mic size={14}/></div><audio controls src={message.mediaUrl} className="h-7 w-full max-w-[160px]" /></div>;
+                    default: return <p className="break-words whitespace-pre-wrap leading-relaxed text-[14px]">{message.text}</p>;
                 }
             };
 
             return (
-                <div className={`group flex mb-4 ${isOwn ? 'justify-end' : 'justify-start'} animate-slide-up relative z-0`} ref={containerRef}>
-                    <div className={`relative max-w-[85%] sm:max-w-[70%] rounded-2xl px-4 py-3 shadow-sm transition-all ${isOwn ? 'bg-indigo-600 text-white rounded-br-none' : 'bg-slate-800 text-slate-100 rounded-bl-none border border-slate-700'}`}>
-                        <button onClick={(e) => { e.stopPropagation(); setShowActions(!showActions); if(!showActions) setShowReactions(false); }} className={`absolute -top-3 ${isOwn ? 'left-0' : 'right-0'} p-1.5 rounded-full bg-slate-800 border border-slate-700 shadow-md text-slate-400 z-10 hover:text-white hover:scale-110`}><MoreVertical size={14} /></button>
+                <div className={`group flex mb-3 ${isOwn ? 'justify-end' : 'justify-start'} animate-slide-up relative z-0`} ref={containerRef}>
+                    <div className={`relative max-w-[85%] sm:max-w-[70%] rounded-2xl px-3 py-2 shadow-sm transition-all ${isOwn ? 'bg-indigo-600 text-white rounded-br-none' : 'bg-slate-800 text-slate-100 rounded-bl-none border border-slate-700'}`}>
+                        <button onClick={(e) => { e.stopPropagation(); setShowActions(!showActions); if(!showActions) setShowReactions(false); }} className={`absolute -top-2 ${isOwn ? 'left-0' : 'right-0'} p-1 rounded-full bg-slate-800 border border-slate-700 shadow-md text-slate-400 z-10 hover:text-white hover:scale-110`}><MoreVertical size={12} /></button>
                         
                         {showActions && (
-                            <div className={`absolute -top-14 ${isOwn ? 'right-0' : 'left-0'} bg-slate-900 border border-slate-700 rounded-xl shadow-2xl z-50 flex items-center p-1.5 gap-1 animate-fade-in`}>
-                                <button onClick={(e) => { e.stopPropagation(); setShowReactions(!showReactions); }} className="p-2 rounded-lg hover:bg-slate-800 text-slate-300"><Smile size={18} /></button>
-                                {isOwn && <><div className="w-px h-6 bg-slate-800 mx-1"></div><button onClick={(e) => { e.stopPropagation(); handleDelete(); }} className="p-2 rounded-lg hover:bg-red-500/20 text-red-400"><Trash2 size={18} /></button></>}
+                            <div className={`absolute -top-12 ${isOwn ? 'right-0' : 'left-0'} bg-slate-900 border border-slate-700 rounded-xl shadow-2xl z-50 flex items-center p-1 gap-1 animate-fade-in`}>
+                                <button onClick={(e) => { e.stopPropagation(); setShowReactions(!showReactions); }} className="p-1.5 rounded-lg hover:bg-slate-800 text-slate-300"><Smile size={16} /></button>
+                                {isOwn && <><div className="w-px h-4 bg-slate-800 mx-0.5"></div><button onClick={(e) => { e.stopPropagation(); handleDelete(); }} className="p-1.5 rounded-lg hover:bg-red-500/20 text-red-400"><Trash2 size={16} /></button></>}
                             </div>
                         )}
                         
                         {showReactions && (
-                            <div className={`absolute -top-28 ${isOwn ? 'right-0' : 'left-0'} bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl z-50 flex flex-wrap max-w-[160px] p-2 gap-2 animate-fade-in`}>
-                                {EMOJIS.map(emoji => <button key={emoji} onClick={(e) => { e.stopPropagation(); handleReaction(emoji); }} className="hover:bg-slate-800 p-1.5 rounded-lg text-xl">{emoji}</button>)}
+                            <div className={`absolute -top-24 ${isOwn ? 'right-0' : 'left-0'} bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl z-50 flex flex-wrap max-w-[140px] p-1.5 gap-1.5 animate-fade-in`}>
+                                {EMOJIS.map(emoji => <button key={emoji} onClick={(e) => { e.stopPropagation(); handleReaction(emoji); }} className="hover:bg-slate-800 p-1 rounded-lg text-lg">{emoji}</button>)}
                             </div>
                         )}
 
                         {renderContent()}
-                        <div className={`flex items-center justify-end gap-1 mt-1 text-[10px] ${isOwn ? 'text-indigo-200' : 'text-slate-500'} font-medium`}><span>{format(message.timestamp, 'HH:mm')}</span></div>
+                        <div className={`flex items-center justify-end gap-1 mt-1 text-[9px] ${isOwn ? 'text-indigo-200' : 'text-slate-500'} font-medium`}><span>{format(message.timestamp, 'HH:mm')}</span></div>
                         
                         {message.reactions && Object.keys(message.reactions).length > 0 && (
-                            <div className={`absolute -bottom-3 ${isOwn ? 'left-0' : 'right-0'} flex -space-x-1 cursor-pointer`} onClick={(e) => { e.stopPropagation(); setShowReactions(!showReactions); setShowActions(true); }}>
+                            <div className={`absolute -bottom-2 ${isOwn ? 'left-0' : 'right-0'} flex -space-x-1 cursor-pointer`} onClick={(e) => { e.stopPropagation(); setShowReactions(!showReactions); setShowActions(true); }}>
                                 {Object.entries(message.reactions).slice(0, 4).map(([user, emoji]) => (
-                                    <div key={user} className="bg-slate-800 border border-slate-700 rounded-full w-6 h-6 flex items-center justify-center text-xs shadow-md z-10" title={user}>{emoji}</div>
+                                    <div key={user} className="bg-slate-800 border border-slate-700 rounded-full w-5 h-5 flex items-center justify-center text-[10px] shadow-md z-10" title={user}>{emoji}</div>
                                 ))}
                             </div>
                         )}
@@ -1922,7 +2036,7 @@
                 <div className="relative">
                     {showCoin && (
                         <div 
-                            className="absolute text-yellow-500 text-2xl font-bold coin-animation z-50"
+                            className="absolute text-yellow-500 text-xl font-bold coin-animation z-50"
                             style={{ left: coinPosition.x, top: coinPosition.y }}
                         >
                             +0.001
@@ -1930,13 +2044,13 @@
                     )}
                     <button
                         onClick={handleClick}
-                        className="w-full bg-gradient-to-br from-yellow-500 to-orange-500 hover:from-yellow-400 hover:to-orange-400 text-white p-6 rounded-2xl shadow-2xl shadow-yellow-500/25 transition-all duration-200 active:scale-95 border-2 border-yellow-400/50 animate-pulse-gold"
+                        className="w-full bg-gradient-to-br from-yellow-500 to-orange-500 hover:from-yellow-400 hover:to-orange-400 text-white p-4 rounded-2xl shadow-2xl shadow-yellow-500/25 transition-all duration-200 active:scale-95 border-2 border-yellow-400/50 animate-pulse-gold"
                     >
                         <div className="text-center">
-                            <Coins size={48} className="mx-auto mb-2" />
-                            <div className="text-2xl font-bold mb-1">{userCoins.toFixed(3)}</div>
-                            <div className="text-yellow-200 text-sm">Кликни для заработка!</div>
-                            <div className="text-yellow-300/80 text-xs mt-1">+0.001 за клик</div>
+                            <Coins size={36} className="mx-auto mb-1" />
+                            <div className="text-xl font-bold mb-1">{userCoins.toFixed(3)}</div>
+                            <div className="text-yellow-200 text-xs">Кликни для заработка!</div>
+                            <div className="text-yellow-300/80 text-[10px] mt-0.5">+0.001 за клик</div>
                         </div>
                     </button>
                 </div>
@@ -2138,11 +2252,8 @@
                     const chatId = [currentUser, activeChatUser].sort().join('_');
                     const chatRef = ref(db, `messages/${chatId}`);
                     
-                    console.log('Loading messages for chat:', chatId);
-                    
                     const unsubscribe = onValue(chatRef, (snapshot) => {
                         const data = snapshot.val();
-                        console.log('Raw Firebase data:', data);
                         
                         if (!data) {
                             setMessages([]);
@@ -2159,13 +2270,6 @@
                         
                         // Сортируем по timestamp в порядке возрастания (старые сверху, новые снизу)
                         const sortedMessages = messagesArray.sort((a, b) => a.timestamp - b.timestamp);
-                        
-                        console.log('Sorted messages:', sortedMessages.map(m => ({
-                            id: m.id,
-                            text: m.text?.substring(0, 20),
-                            timestamp: new Date(m.timestamp).toLocaleTimeString(),
-                            sender: m.sender
-                        })));
                         
                         setMessages(sortedMessages);
                     }, (error) => {
@@ -2279,8 +2383,6 @@
                 const chatId = [currentUser, activeChatUser].sort().join('_');
                 const timestamp = Date.now();
                 
-                console.log('Sending message with timestamp:', timestamp, 'type:', type);
-                
                 try {
                     const messageRef = push(ref(db, `messages/${chatId}`));
                     
@@ -2298,7 +2400,6 @@
                     
                     await set(messageRef, messageData);
                     
-                    console.log('Message sent successfully');
                     if (type === 'text') setMessageInput('');
                 } catch (e) { 
                     console.error("Send error details:", e);
@@ -2380,20 +2481,20 @@
 
             if (!currentUser) {
                 return (
-                    <div className="min-h-screen flex items-center justify-center p-4 bg-slate-950 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-indigo-900/40 via-slate-950 to-slate-950">
-                        <div className="w-full max-w-md bg-slate-900/60 backdrop-blur-xl p-8 rounded-3xl shadow-2xl border border-indigo-500/20 animate-fade-in relative overflow-hidden">
-                            <div className="text-center mb-10">
-                                <h1 className="text-4xl font-bold text-white mb-2">DolbaebSMS</h1>
-                                <p className="text-slate-400 font-light">Secure. Fast. Simple.</p>
+                    <div className="min-h-screen flex items-center justify-center p-4 bg-slate-950 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-indigo-900/40 via-slate-950 to-slate-950 safe-area-top safe-area-bottom">
+                        <div className="w-full max-w-md bg-slate-900/60 backdrop-blur-xl p-6 rounded-3xl shadow-2xl border border-indigo-500/20 animate-fade-in relative overflow-hidden">
+                            <div className="text-center mb-8">
+                                <h1 className="text-3xl font-bold text-white mb-2">DolbaebSMS</h1>
+                                <p className="text-slate-400 font-light text-sm">Secure. Fast. Simple.</p>
                             </div>
-                            {authError && <div className="p-3 mb-4 rounded-xl bg-red-500/10 text-red-400 text-center">{authError}</div>}
-                            <div className="space-y-4">
-                                <input type="text" placeholder="Имя пользователя" className="w-full bg-slate-950/50 border border-slate-700 rounded-xl px-5 py-4 text-white focus:border-indigo-500 outline-none" value={usernameInput} onChange={e => setUsernameInput(e.target.value)} />
-                                <input type="password" placeholder="Пароль" className="w-full bg-slate-950/50 border border-slate-700 rounded-xl px-5 py-4 text-white focus:border-indigo-500 outline-none" value={passwordInput} onChange={e => setPasswordInput(e.target.value)} onKeyPress={e => e.key === 'Enter' && handleAuth()} />
+                            {authError && <div className="p-2 mb-3 rounded-xl bg-red-500/10 text-red-400 text-center text-sm">{authError}</div>}
+                            <div className="space-y-3">
+                                <input type="text" placeholder="Имя пользователя" className="w-full bg-slate-950/50 border border-slate-700 rounded-xl px-4 py-3 text-white focus:border-indigo-500 outline-none text-sm" value={usernameInput} onChange={e => setUsernameInput(e.target.value)} />
+                                <input type="password" placeholder="Пароль" className="w-full bg-slate-950/50 border border-slate-700 rounded-xl px-4 py-3 text-white focus:border-indigo-500 outline-none text-sm" value={passwordInput} onChange={e => setPasswordInput(e.target.value)} onKeyPress={e => e.key === 'Enter' && handleAuth()} />
                             </div>
-                            <Button className="w-full mt-6 py-4" onClick={handleAuth}>{isLoginView ? 'Войти' : 'Создать аккаунт'}</Button>
-                            <div className="text-center mt-6">
-                                <button onClick={() => { setIsLoginView(!isLoginView); setAuthError(''); }} className="text-slate-400 hover:text-indigo-400 text-sm">
+                            <Button className="w-full mt-4 py-3 text-sm" onClick={handleAuth}>{isLoginView ? 'Войти' : 'Создать аккаунт'}</Button>
+                            <div className="text-center mt-4">
+                                <button onClick={() => { setIsLoginView(!isLoginView); setAuthError(''); }} className="text-slate-400 hover:text-indigo-400 text-xs">
                                     {isLoginView ? 'Создать аккаунт' : 'Войти'}
                                 </button>
                             </div>
@@ -2403,7 +2504,7 @@
             }
 
             return (
-                <div className="flex h-screen overflow-hidden bg-slate-950">
+                <div className="flex h-screen overflow-hidden bg-slate-950 safe-area-top">
                     <SettingsModal 
                         isOpen={isSettingsOpen} 
                         onClose={() => setIsSettingsOpen(false)} 
@@ -2464,72 +2565,72 @@
                     />
                     
                     {connectionError && (
-                        <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 bg-red-500/90 text-white px-4 py-2 rounded-lg text-sm backdrop-blur-sm">
+                        <div className="fixed top-2 left-1/2 transform -translate-x-1/2 z-50 bg-red-500/90 text-white px-3 py-1 rounded-lg text-xs backdrop-blur-sm max-w-[90vw]">
                             {connectionError}
                         </div>
                     )}
                     
                     {/* Sidebar */}
-                    <div className={`${showMobileSidebar ? 'flex' : 'hidden'} md:flex w-full md:w-[420px] flex-col border-r border-slate-800 bg-slate-900 z-10`}>
-                        <div className="p-4 border-b border-slate-800 flex items-center justify-between h-[72px]">
-                            <div className="flex items-center gap-3">
+                    <div className={`${showMobileSidebar ? 'flex' : 'hidden'} md:flex w-full md:w-[380px] flex-col border-r border-slate-800 bg-slate-900 z-10`}>
+                        <div className="p-3 border-b border-slate-800 flex items-center justify-between h-[60px] shrink-0">
+                            <div className="flex items-center gap-2">
                                 <button 
                                     onClick={() => setIsAvatarModalOpen(true)}
-                                    className={`w-10 h-10 rounded-full bg-gradient-to-tr from-indigo-600 to-purple-600 flex items-center justify-center text-white font-bold text-lg relative group ${getFrameClass(userFrame)}`}
+                                    className={`w-8 h-8 rounded-full bg-gradient-to-tr from-indigo-600 to-purple-600 flex items-center justify-center text-white font-bold text-sm relative group ${getFrameClass(userFrame)}`}
                                 >
                                     {userAvatar || currentUser[0].toUpperCase()}
                                 </button>
                                 <div>
-                                    <h2 className="font-bold text-white flex items-center gap-1" style={getNameColorStyle(userNameColor)}>
+                                    <h2 className="font-bold text-white text-sm flex items-center gap-1" style={getNameColorStyle(userNameColor)}>
                                         {currentUser}
-                                        {currentUser === 'kayivi' && <Crown size={14} className="text-yellow-500" />}
+                                        {currentUser === 'kayivi' && <Crown size={12} className="text-yellow-500" />}
                                     </h2>
-                                    <span className="text-[11px] text-green-500 flex items-center gap-1">
+                                    <span className="text-[10px] text-green-500 flex items-center gap-1">
                                         ● {userStatusEmoji} {userStatus || 'В сети'}
                                     </span>
                                 </div>
                             </div>
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-1">
                                 <button 
                                     onClick={() => setIsCasinoModalOpen(true)}
-                                    className="p-2 rounded-xl bg-slate-800 text-slate-400 hover:text-yellow-500 relative"
+                                    className="p-1.5 rounded-xl bg-slate-800 text-slate-400 hover:text-yellow-500 relative"
                                     title="Казино"
                                 >
-                                    <Trophy size={20} />
+                                    <Trophy size={16} />
                                 </button>
                                 <button 
                                     onClick={() => setIsNameColorModalOpen(true)}
-                                    className="p-2 rounded-xl bg-slate-800 text-slate-400 hover:text-yellow-500 relative"
+                                    className="p-1.5 rounded-xl bg-slate-800 text-slate-400 hover:text-yellow-500 relative"
                                     title="Цвет имени"
                                 >
-                                    <Palette size={20} />
+                                    <Palette size={16} />
                                 </button>
                                 <button 
                                     onClick={() => setIsStatusModalOpen(true)}
-                                    className="p-2 rounded-xl bg-slate-800 text-slate-400 hover:text-yellow-500 relative"
+                                    className="p-1.5 rounded-xl bg-slate-800 text-slate-400 hover:text-yellow-500 relative"
                                     title="Статус"
                                 >
-                                    <Edit3 size={20} />
+                                    <Edit3 size={16} />
                                 </button>
                                 <button 
                                     onClick={() => setIsFrameModalOpen(true)}
-                                    className="p-2 rounded-xl bg-slate-800 text-slate-400 hover:text-yellow-500 relative"
+                                    className="p-1.5 rounded-xl bg-slate-800 text-slate-400 hover:text-yellow-500 relative"
                                     title="Рамки"
                                 >
-                                    <ImageIcon size={20} />
+                                    <ImageIcon size={16} />
                                 </button>
                                 <button 
                                     onClick={() => setIsSettingsOpen(true)}
-                                    className="p-2 rounded-xl bg-slate-800 text-slate-400 hover:text-yellow-500 relative"
+                                    className="p-1.5 rounded-xl bg-slate-800 text-slate-400 hover:text-yellow-500 relative"
                                     title="Настройки"
                                 >
-                                    <SettingsIcon size={20} />
+                                    <SettingsIcon size={16} />
                                 </button>
                             </div>
                         </div>
 
                         {/* Clicker Section */}
-                        <div className="p-4 border-b border-slate-800">
+                        <div className="p-3 border-b border-slate-800 shrink-0">
                             <Clicker 
                                 userCoins={userCoins} 
                                 onCoinClick={handleCoinClick}
@@ -2537,42 +2638,42 @@
                             />
                         </div>
 
-                        <div className="p-4">
+                        <div className="p-3 shrink-0">
                             <div className="relative">
-                                <Search className="absolute left-3 top-3 text-slate-500" size={18} />
+                                <Search className="absolute left-2 top-2 text-slate-500" size={16} />
                                 <input 
                                     type="text" 
                                     placeholder="Поиск..." 
-                                    className="w-full bg-slate-800 border border-slate-700 rounded-xl py-2.5 pl-10 text-slate-200 outline-none focus:border-indigo-500" 
+                                    className="w-full bg-slate-800 border border-slate-700 rounded-xl py-2 pl-8 text-slate-200 outline-none focus:border-indigo-500 text-sm" 
                                     value={searchQuery} 
                                     onChange={e => handleSearch(e.target.value)} 
                                 />
                             </div>
                         </div>
-                        <div className="flex-1 overflow-y-auto px-2">
+                        <div className="flex-1 overflow-y-auto px-1">
                             {areChatsLoading ? (
-                                <div className="flex flex-col items-center justify-center mt-10 text-slate-500 gap-2">
-                                    <Loader2 className="animate-spin text-indigo-500" size={24} />
-                                    <p className="text-sm">Загрузка чатов...</p>
+                                <div className="flex flex-col items-center justify-center mt-8 text-slate-500 gap-1">
+                                    <Loader2 className="animate-spin text-indigo-500" size={20} />
+                                    <p className="text-xs">Загрузка чатов...</p>
                                 </div>
                             ) : searchQuery ? (
                                 searchResults.length ? searchResults.map(u => (
                                     <div 
                                         key={u.username} 
                                         onClick={() => { setActiveChatUser(u.username); setSearchQuery(''); setSearchResults([]); }} 
-                                        className="p-3 flex items-center gap-3 rounded-xl hover:bg-slate-800 cursor-pointer"
+                                        className="p-2 flex items-center gap-2 rounded-xl hover:bg-slate-800 cursor-pointer"
                                     >
-                                        <div className={`w-12 h-12 rounded-full bg-slate-800 flex items-center justify-center text-slate-300 font-bold border border-slate-700 text-lg ${getFrameClass(u.frame)}`}>
+                                        <div className={`w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center text-slate-300 font-bold border border-slate-700 text-md ${getFrameClass(u.frame)}`}>
                                             {u.avatar || u.username[0].toUpperCase()}
                                         </div>
                                         <div>
-                                            <h3 className="font-medium text-slate-200" style={getNameColorStyle(u.nameColor)}>{u.username}</h3>
+                                            <h3 className="font-medium text-slate-200 text-sm" style={getNameColorStyle(u.nameColor)}>{u.username}</h3>
                                             <p className="text-xs text-slate-500 flex items-center gap-1">
                                                 {u.statusEmoji} {u.status || 'В сети'}
                                             </p>
                                         </div>
                                     </div>
-                                )) : <div className="text-center text-slate-500 mt-4">Никого не найдено</div>
+                                )) : <div className="text-center text-slate-500 mt-3 text-sm">Никого не найдено</div>
                             ) : (
                                 chats.length ? chats.map(c => {
                                     const userData = usersData[c.user];
@@ -2580,19 +2681,19 @@
                                         <div 
                                             key={c.user} 
                                             onClick={() => setActiveChatUser(c.user)} 
-                                            className={`p-3 flex items-center gap-3 rounded-xl cursor-pointer hover:bg-slate-800 ${activeChatUser === c.user ? 'bg-slate-800' : ''}`}
+                                            className={`p-2 flex items-center gap-2 rounded-xl cursor-pointer hover:bg-slate-800 ${activeChatUser === c.user ? 'bg-slate-800' : ''}`}
                                         >
-                                            <div className={`w-12 h-12 rounded-full bg-slate-800 flex items-center justify-center text-white font-bold border border-slate-700 text-lg ${getFrameClass(userData?.frame)}`}>
+                                            <div className={`w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center text-white font-bold border border-slate-700 text-md ${getFrameClass(userData?.frame)}`}>
                                                 {userData?.avatar || c.user[0].toUpperCase()}
                                             </div>
                                             <div className="flex-1 min-w-0">
                                                 <div className="flex justify-between items-baseline">
-                                                    <h3 className="font-semibold text-slate-200 truncate" style={getNameColorStyle(userData?.nameColor)}>{c.user}</h3>
+                                                    <h3 className="font-semibold text-slate-200 truncate text-sm" style={getNameColorStyle(userData?.nameColor)}>{c.user}</h3>
                                                     <span className="text-xs text-slate-500">
                                                         {new Date(c.timestamp).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}
                                                     </span>
                                                 </div>
-                                                <p className="text-sm text-slate-400 truncate">
+                                                <p className="text-xs text-slate-400 truncate">
                                                     {c.lastMessage.type === 'text' ? c.lastMessage.text : 
                                                      c.lastMessage.type === 'photo' ? '📷 Фото' : 
                                                      c.lastMessage.type === 'video' ? '🎥 Видео' : 
@@ -2602,9 +2703,9 @@
                                         </div>
                                     );
                                 }) : (
-                                    <div className="text-center text-slate-500 mt-10 p-4">
-                                        <p>Нет чатов</p>
-                                        <p className="text-xs mt-2">Начните общение, отправив сообщение пользователю через поиск</p>
+                                    <div className="text-center text-slate-500 mt-8 p-3">
+                                        <p className="text-sm">Нет чатов</p>
+                                        <p className="text-xs mt-1">Начните общение, отправив сообщение пользователю через поиск</p>
                                     </div>
                                 )
                             )}
@@ -2614,25 +2715,25 @@
                     {/* Chat Area */}
                     {activeChatUser ? (
                         <div className={`${!showMobileSidebar ? 'flex' : 'hidden md:flex'} flex-1 flex-col bg-slate-950 relative`}>
-                            <div className="h-[72px] px-4 flex items-center gap-3 border-b border-slate-800 bg-slate-900/80 backdrop-blur-md sticky top-0 z-20">
-                                <button onClick={() => { setActiveChatUser(null); setShowMobileSidebar(true); }} className="md:hidden text-slate-400">
-                                    <ChevronLeft size={24} />
+                            <div className="h-[60px] px-3 flex items-center gap-2 border-b border-slate-800 bg-slate-900/80 backdrop-blur-md sticky top-0 z-20 shrink-0">
+                                <button onClick={() => { setActiveChatUser(null); setShowMobileSidebar(true); }} className="md:hidden text-slate-400 p-1">
+                                    <ChevronLeft size={20} />
                                 </button>
-                                <div className={`w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold ${getFrameClass(usersData[activeChatUser]?.frame)}`}>
+                                <div className={`w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold ${getFrameClass(usersData[activeChatUser]?.frame)}`}>
                                     {usersData[activeChatUser]?.avatar || activeChatUser[0].toUpperCase()}
                                 </div>
                                 <div>
-                                    <h3 className="font-bold text-slate-200" style={getNameColorStyle(usersData[activeChatUser]?.nameColor)}>{activeChatUser}</h3>
+                                    <h3 className="font-bold text-slate-200 text-sm" style={getNameColorStyle(usersData[activeChatUser]?.nameColor)}>{activeChatUser}</h3>
                                     <p className="text-xs text-slate-500 flex items-center gap-1">
                                         {usersData[activeChatUser]?.statusEmoji} {usersData[activeChatUser]?.status || 'В сети'}
                                     </p>
                                 </div>
                             </div>
-                            <div className="flex-1 overflow-y-auto p-4 custom-scrollbar">
+                            <div className="flex-1 overflow-y-auto p-3 custom-scrollbar">
                                 {messages.length === 0 ? (
-                                    <div className="text-center text-slate-500 mt-10">
-                                        <p>Нет сообщений</p>
-                                        <p className="text-sm mt-2">Начните общение первым!</p>
+                                    <div className="text-center text-slate-500 mt-8">
+                                        <p className="text-sm">Нет сообщений</p>
+                                        <p className="text-xs mt-1">Начните общение первым!</p>
                                     </div>
                                 ) : (
                                     messages.map(msg => (
@@ -2648,22 +2749,22 @@
                                 )}
                                 <div ref={messagesEndRef} />
                             </div>
-                            <div className="p-3 bg-slate-900 border-t border-slate-800 safe-area-bottom">
+                            <div className="p-2 bg-slate-900 border-t border-slate-800 safe-area-bottom shrink-0">
                                 <div className="flex items-end gap-2 max-w-4xl mx-auto">
                                     <div className="flex gap-1 bg-slate-800 p-1 rounded-xl shrink-0">
-                                        <label className="p-2 text-slate-400 hover:text-indigo-400 cursor-pointer">
-                                            <ImageIcon size={20} />
+                                        <label className="p-1.5 text-slate-400 hover:text-indigo-400 cursor-pointer">
+                                            <ImageIcon size={16} />
                                             <input type="file" className="hidden" accept="image/*" onChange={e => handleFileUpload(e, 'photo')} />
                                         </label>
-                                        <label className="p-2 text-slate-400 hover:text-indigo-400 cursor-pointer">
-                                            <Video size={20} />
+                                        <label className="p-1.5 text-slate-400 hover:text-indigo-400 cursor-pointer">
+                                            <Video size={16} />
                                             <input type="file" className="hidden" accept="video/*" onChange={e => handleFileUpload(e, 'video')} />
                                         </label>
                                         <button 
                                             onClick={toggleRecording} 
-                                            className={`p-2 rounded-lg ${isRecording ? 'text-red-500 animate-pulse' : 'text-slate-400 hover:text-indigo-400'}`}
+                                            className={`p-1.5 rounded-lg ${isRecording ? 'text-red-500 animate-pulse' : 'text-slate-400 hover:text-indigo-400'}`}
                                         >
-                                            {isRecording ? <div className="w-5 h-5 bg-red-500 rounded-sm" /> : <Mic size={20} />}
+                                            {isRecording ? <div className="w-4 h-4 bg-red-500 rounded-sm" /> : <Mic size={16} />}
                                         </button>
                                     </div>
                                     <div className="flex-1 min-w-0 bg-slate-800 rounded-2xl border border-slate-700">
@@ -2677,25 +2778,26 @@
                                                 }
                                             }} 
                                             placeholder={isRecording ? "Запись..." : "Сообщение..."} 
-                                            className="w-full bg-transparent text-white px-4 py-3 outline-none resize-none h-[50px] custom-scrollbar" 
+                                            className="w-full bg-transparent text-white px-3 py-2 outline-none resize-none h-[44px] custom-scrollbar text-sm" 
+                                            rows="1"
                                         />
                                     </div>
                                     <button 
                                         onClick={() => handleSendMessage('text')} 
                                         disabled={!messageInput.trim() && !isRecording} 
-                                        className="p-3 bg-indigo-600 text-white rounded-xl hover:bg-indigo-500 shadow-lg shadow-indigo-600/20 shrink-0"
+                                        className="p-2 bg-indigo-600 text-white rounded-xl hover:bg-indigo-500 shadow-lg shadow-indigo-600/20 shrink-0"
                                     >
-                                        <Send size={20} />
+                                        <Send size={16} />
                                     </button>
                                 </div>
                             </div>
                         </div>
                     ) : (
-                        <div className="hidden md:flex flex-1 items-center justify-center bg-slate-950 text-slate-500 flex-col gap-4">
-                            <div className="w-24 h-24 rounded-full bg-slate-900 border border-slate-800 flex items-center justify-center">
-                                <Send size={40} className="text-indigo-500" />
+                        <div className="hidden md:flex flex-1 items-center justify-center bg-slate-950 text-slate-500 flex-col gap-3">
+                            <div className="w-16 h-16 rounded-full bg-slate-900 border border-slate-800 flex items-center justify-center">
+                                <Send size={28} className="text-indigo-500" />
                             </div>
-                            <p>Выберите чат для общения</p>
+                            <p className="text-sm">Выберите чат для общения</p>
                         </div>
                     )}
                 </div>
