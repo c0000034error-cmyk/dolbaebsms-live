@@ -1090,7 +1090,7 @@
                 const wear = userNFT ? getWearLevel(userNFT.purchasedAt) : { name: 'Идеальное' };
 
                 return (
-                    <div className="fixed inset-0 z-[100] flex items-center justify-center p-3 bg-black/60 backdrop-blur-sm animate-fade-in">
+                    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 bg-black/60 backdrop-blur-sm animate-fade-in">
                         <div className="w-full max-w-md bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl overflow-hidden">
                             <div className="p-3 border-b border-slate-800 flex items-center justify-between">
                                 <h3 className="text-lg font-bold text-white">Продажа NFT</h3>
@@ -2068,7 +2068,7 @@
             };
 
             return (
-                <div className="fixed inset-0 z-[100] flex items-center justify-center p-3 bg-black/60 backdrop-blur-sm animate-fade-in safe-area-top safe-area-bottom">
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-3 bg-black/60 backdrop-blur-sm animate-fade-in safe-area-top safe-area-bottom">
                     <div className="w-full max-w-2xl bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[95vh]">
                         <div className="p-3 border-b border-slate-800 flex items-center justify-between bg-slate-900 shrink-0">
                             <h2 className="text-lg font-bold text-white flex items-center gap-2"><Palette size={18} className="text-yellow-500" /> Цвет имени</h2>
@@ -2225,7 +2225,7 @@
             };
 
             return (
-                <div className="fixed inset-0 z-[100] flex items-center justify-center p-3 bg-black/60 backdrop-blur-sm animate-fade-in safe-area-top safe-area-bottom">
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-3 bg-black/60 backdrop-blur-sm animate-fade-in safe-area-top safe-area-bottom">
                     <div className="w-full max-w-md bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[95vh]">
                         <div className="p-3 border-b border-slate-800 flex items-center justify-between bg-slate-900 shrink-0">
                             <h2 className="text-lg font-bold text-white flex items-center gap-2"><Edit3 size={18} className="text-yellow-500" /> Статус</h2>
@@ -2377,7 +2377,7 @@
             };
 
             return (
-                <div className="fixed inset-0 z-[100] flex items-center justify-center p-3 bg-black/60 backdrop-blur-sm animate-fade-in safe-area-top safe-area-bottom">
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-3 bg-black/60 backdrop-blur-sm animate-fade-in safe-area-top safe-area-bottom">
                     <div className="w-full max-w-4xl bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[95vh]">
                         <div className="p-3 border-b border-slate-800 flex items-center justify-between bg-slate-900 shrink-0">
                             <h2 className="text-lg font-bold text-white flex items-center gap-2"><UserIcon size={18} className="text-yellow-500" /> Магазин аватарок</h2>
@@ -2491,7 +2491,7 @@
             };
 
             return (
-                <div className="fixed inset-0 z-[100] flex items-center justify-center p-3 bg-black/60 backdrop-blur-sm animate-fade-in safe-area-top safe-area-bottom">
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-3 bg-black/60 backdrop-blur-sm animate-fade-in safe-area-top safe-area-bottom">
                     <div className="w-full max-w-2xl bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[95vh]">
                         <div className="p-3 border-b border-slate-800 flex items-center justify-between bg-slate-900 shrink-0">
                             <h2 className="text-lg font-bold text-white flex items-center gap-2"><ImageIcon size={18} className="text-yellow-500" /> Магазин рамок</h2>
@@ -3208,7 +3208,7 @@
                             <div className="text-yellow-300/80 text-[10px] mt-0.5">+{coinsPerClick.toFixed(3)} за клик</div>
                             <div className="text-yellow-300/70 text-[10px]">Уровень: {clickerLevel}</div>
                         </div>
-                    </div>
+                    </button>
                 </div>
             );
         };
