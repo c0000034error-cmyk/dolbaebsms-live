@@ -91,13 +91,12 @@
         .nav-icon { color:#555; cursor:pointer; font-size:18px; }
         .nav-icon.active { color:white; }
         
-        /* ЛОГ ДЛЯ ОТЛАДКИ (Спрятан, появляется при ошибках) */
         #log-area { position:fixed; bottom:10px; left:60px; font-size:10px; color:#444; pointer-events:none; }
     </style>
 </head>
 <body>
 
-<!-- 1. ЭКРАН ВХОДА (Исправленный) -->
+<!-- 1. ЭКРАН ВХОДА -->
 <div id="auth-screen">
     <div class="auth-box">
         <h1 style="font-weight:300; margin-bottom:30px; letter-spacing:2px;">METH</h1>
@@ -105,7 +104,6 @@
         <input type="password" id="password" class="min-inp" placeholder="Пароль">
         <div id="auth-err" style="color:var(--danger); font-size:11px; margin-top:5px;"></div>
         
-        <!-- Исправлено: функция processLogin вместо auth -->
         <button class="min-btn" onclick="processLogin('login')">ВОЙТИ</button>
         <button class="min-btn" onclick="processLogin('reg')" style="background:transparent; color:#666; border:1px solid #333;">РЕГИСТРАЦИЯ</button>
     </div>
@@ -135,7 +133,6 @@
 
 <!-- 4. ОСНОВНОЙ ИНТЕРФЕЙС -->
 <div id="app">
-    <!-- Иконки приложений -->
     <div class="nav-rail">
         <div class="nav-icon active" onclick="showApp('chat')"><i class="fas fa-comment"></i></div>
         <div class="nav-icon" onclick="showApp('spotify')"><i class="fab fa-spotify"></i></div>
@@ -143,19 +140,14 @@
         <div class="nav-icon" onclick="showApp('browser')"><i class="fas fa-globe"></i></div>
     </div>
 
-    <!-- Вкладка ЧАТ -->
     <div id="view-chat" class="app-view" style="display:flex; flex-direction:row;">
-        <!-- Сайдбар контактов -->
         <div class="sidebar">
             <div class="sb-header">
                 <span>ЧАТЫ</span>
                 <i class="fas fa-user-plus" style="cursor:pointer;" onclick="document.getElementById('add-modal').style.display='grid'" title="Добавить друга"></i>
             </div>
             
-            <!-- Секция входящих заявок -->
             <div id="req-section"></div>
-
-            <!-- Список друзей -->
             <div class="sb-list" id="contact-list"></div>
             
             <div style="padding:15px; border-top:1px solid #222; font-size:11px; color:#555;">
@@ -163,7 +155,6 @@
             </div>
         </div>
 
-        <!-- Окно переписки -->
         <div class="chat-area">
             <div class="chat-header">
                 <span id="chat-title">Выберите друга</span>
@@ -182,7 +173,6 @@
                 <button class="icon-btn" onclick="sendMsg()"><i class="fas fa-paper-plane"></i></button>
             </div>
 
-            <!-- Окно активного звонка -->
             <div id="call-ui">
                 <div class="vid-wrapper">
                     <video id="remote-v" autoplay playsinline></video>
@@ -197,13 +187,13 @@
         </div>
     </div>
 
-    <!-- Другие вкладки -->
+    <!-- Apps -->
     <div id="view-spotify" class="app-view">
         <div style="padding:10px; background:#111; display:flex; gap:10px;">
-            <input id="spot-url" class="inp-field" placeholder="Ссылка на Spotify плейлист/трек">
+            <input id="spot-url" class="inp-field" placeholder="Ссылка на Spotify">
             <button class="min-btn" style="width:auto; margin:0;" onclick="loadUrl('spotify')">Загрузить</button>
         </div>
-        <iframe id="fr-spotify" style="flex:1; border:none;" src="https://open.spotify.com/embed/playlist/37i9dQZF1DXcBWIGoYBM5M" allow="encrypted-media"></iframe>
+        <iframe id="fr-spotify" style="flex:1; border:none;" src="https://open.spotify.com/embed/playlist/37i9dQZF1DXcBWIGoYBM5M"></iframe>
     </div>
 
     <div id="view-youtube" class="app-view">
@@ -211,7 +201,7 @@
             <input id="yt-url" class="inp-field" placeholder="Поиск YouTube или ссылка">
             <button class="min-btn" style="width:auto; margin:0;" onclick="loadUrl('youtube')">Смотреть</button>
         </div>
-        <iframe id="fr-youtube" style="flex:1; border:none;" src="https://www.youtube.com/embed/dQw4w9WgXcQ" allowfullscreen></iframe>
+        <iframe id="fr-youtube" style="flex:1; border:none;" src="https://www.youtube.com/embed/dQw4w9WgXcQ"></iframe>
     </div>
     
     <div id="view-browser" class="app-view">
@@ -226,7 +216,7 @@
 <div id="log-area">Система готова.</div>
 
 <script>
-    // --- 1. НАСТРОЙКА FIREBASE ---
+    // --- 1. CONFIG ---
     const firebaseConfig = {
       apiKey: "AIzaSyBFAWc-An48eKYfTMGhlJICkDPdecEJbb4",
       authDomain: "kolyasurfing-1a685.firebaseapp.com",
@@ -238,15 +228,14 @@
     };
 
     if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
-    // Переименовали переменную, чтобы не было конфликтов
     const fbAuth = firebase.auth();
     const db = firebase.firestore();
     const storage = firebase.storage();
     
     let myNick = "";
     let peer = null;
-    let activeChat = null; // Никнейм друга
-    let activeChatDoc = null; // ID документа в базе
+    let activeChat = null;
+    let activeChatDoc = null;
     let currentCall = null;
     let localStream = null;
 
@@ -257,14 +246,23 @@
         setTimeout(()=>l.innerText='', 5000);
     }
 
-    // --- 2. ЛОГИКА АВТОРИЗАЦИИ ---
-    fbAuth.onAuthStateChanged(user => {
+    // --- 2. AUTH & SELF-REPAIR ---
+    fbAuth.onAuthStateChanged(async (user) => {
         if(user) {
             myNick = user.email.split('@')[0];
             document.getElementById('my-id').innerText = myNick;
             document.getElementById('auth-screen').style.display='none';
             document.getElementById('app').style.display='flex';
             
+            // === АВТО-ПОЧИНКА АККАУНТА ===
+            // Проверяем, есть ли запись в базе. Если нет - создаем.
+            const userDoc = await db.collection('users').doc(myNick).get();
+            if(!userDoc.exists) {
+                console.log("Аккаунт не найден в базе. Создаем запись...");
+                await db.collection('users').doc(myNick).set({ uid: user.uid });
+            }
+            // ============================
+
             initPeer();
             loadFriends();
             listenRequests();
@@ -273,7 +271,6 @@
         }
     });
 
-    // Функция переименована, чтобы убрать конфликт имен!
     async function processLogin(type) {
         const u = document.getElementById('username').value.trim().toLowerCase();
         const p = document.getElementById('password').value;
@@ -285,34 +282,31 @@
         try {
             if(type === 'reg') {
                 await fbAuth.createUserWithEmailAndPassword(email, p);
-                // Создаем профиль для поиска
                 await db.collection('users').doc(u).set({ uid: fbAuth.currentUser.uid });
             } else {
                 await fbAuth.signInWithEmailAndPassword(email, p);
             }
-        } catch(e) { 
-            let msg = e.message;
-            if(e.code === 'auth/wrong-password') msg = "Неверный пароль";
-            if(e.code === 'auth/user-not-found') msg = "Пользователь не найден";
-            if(e.code === 'auth/email-already-in-use') msg = "Логин уже занят";
-            errDiv.innerText = msg; 
-        }
+        } catch(e) { errDiv.innerText = e.message; }
     }
 
-    // --- 3. ДРУЗЬЯ И ЗАЯВКИ ---
+    // --- 3. FRIENDS ---
     async function sendRequest() {
         const target = document.getElementById('target-user').value.trim().toLowerCase();
         if(!target || target === myNick) return alert("Некорректный никнейм");
 
-        const doc = await db.collection('users').doc(target).get();
-        if(!doc.exists) return alert("Пользователь не найден!");
+        try {
+            const doc = await db.collection('users').doc(target).get();
+            if(!doc.exists) return alert("Пользователь не найден! Попросите друга зайти в приложение, чтобы активировать профиль.");
 
-        const reqId = [myNick, target].sort().join('_');
-        await db.collection('requests').doc(reqId).set({
-            from: myNick, to: target, status: 'pending'
-        });
-        alert("Заявка отправлена!");
-        document.getElementById('add-modal').style.display='none';
+            const reqId = [myNick, target].sort().join('_');
+            await db.collection('requests').doc(reqId).set({
+                from: myNick, to: target, status: 'pending'
+            });
+            alert("Заявка отправлена!");
+            document.getElementById('add-modal').style.display='none';
+        } catch(e) {
+            alert("Ошибка поиска: " + e.message);
+        }
     }
 
     function listenRequests() {
@@ -336,13 +330,10 @@
 
     async function acceptReq(reqId, friendNick) {
         await db.collection('requests').doc(reqId).update({ status: 'accepted' });
-        
         const chatID = [myNick, friendNick].sort().join('_');
         
-        // Записываем друга себе и ему
         await db.collection('users').doc(myNick).collection('friends').doc(friendNick).set({ chatId: chatID });
         await db.collection('users').doc(friendNick).collection('friends').doc(myNick).set({ chatId: chatID });
-        
         await db.collection('chats').doc(chatID).set({ members: [myNick, friendNick] });
     }
 
@@ -361,7 +352,7 @@
         });
     }
 
-    // --- 4. СИСТЕМА ЧАТА (Приватные) ---
+    // --- 4. CHAT ---
     let msgUnsub = null;
 
     function openChat(friendNick, chatId) {
@@ -371,7 +362,6 @@
         document.getElementById('chat-title').innerText = "@" + friendNick;
         document.getElementById('chat-actions').style.display = 'block';
         document.getElementById('inp-area').style.display = 'flex';
-        
         document.querySelectorAll('.contact').forEach(e => e.classList.remove('active'));
 
         if(msgUnsub) msgUnsub();
@@ -384,10 +374,8 @@
                     const m = doc.data();
                     const div = document.createElement('div');
                     div.className = 'msg ' + (m.from === myNick ? 'me' : '');
-                    
                     let content = m.type==='img' ? `<img src="${m.txt}" style="max-width:200px;border-radius:4px;">` : 
                                   m.type==='file' ? `<a href="${m.txt}" target="_blank" style="color:blue">Файл</a>` : m.txt;
-
                     div.innerHTML = `<div class="bubble">${content}<div class="msg-time">${m.ts?new Date(m.ts.toDate()).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}):''}</div></div>`;
                     box.appendChild(div);
                 });
@@ -398,7 +386,6 @@
     function sendMsg() {
         const t = document.getElementById('msg-txt').value.trim();
         if(!t || !activeChatDoc) return;
-        
         db.collection('chats').doc(activeChatDoc).collection('messages').add({
             txt: t, from: myNick, type: 'text',
             ts: firebase.firestore.FieldValue.serverTimestamp()
@@ -418,18 +405,15 @@
         });
     }
 
-    // --- 5. ЗВОНКИ (PeerJS) ---
+    // --- 5. PEERJS ---
     function initPeer() {
         if(peer) peer.destroy();
-        // ID PeerJS = наш никнейм
         peer = new Peer(myNick, {
             debug: 1,
             config: {'iceServers': [{urls:'stun:stun.l.google.com:19302'}]}
         });
-
-        peer.on('open', id => log("Сеть подключена. Ваш ID: " + id));
+        peer.on('open', id => log("ID сети: " + id));
         peer.on('error', e => log("Ошибка сети: " + e.type));
-        
         peer.on('call', call => {
             document.getElementById('ring-modal').style.display = 'grid';
             document.getElementById('caller-nick').innerText = call.peer;
@@ -438,12 +422,10 @@
     }
 
     async function startCall(video=false) {
-        if(!activeChat) return alert("Сначала выберите чат!");
-        
-        log("Звоним " + activeChat + "...");
+        if(!activeChat) return alert("Выберите чат!");
+        log("Звонок " + activeChat + "...");
         const stream = await getMedia(video);
         if(!stream) return;
-
         document.getElementById('call-ui').style.display = 'flex';
         const call = peer.call(activeChat, stream);
         handleCall(call);
@@ -453,7 +435,6 @@
         document.getElementById('ring-modal').style.display = 'none';
         const stream = await getMedia(true); 
         if(!stream) return;
-
         document.getElementById('call-ui').style.display = 'flex';
         currentCall.answer(stream);
         handleCall(currentCall);
@@ -468,7 +449,7 @@
         currentCall = call;
         call.on('stream', rs => document.getElementById('remote-v').srcObject = rs);
         call.on('close', closeCall);
-        call.on('error', e => { log("Звонок прерван"); closeCall(); });
+        call.on('error', e => { log("Звонок окончен"); closeCall(); });
     }
 
     async function getMedia(video) {
@@ -478,8 +459,8 @@
             document.getElementById('local-v').srcObject = s;
             return s;
         } catch(e) {
-            alert("Ошибка доступа к камере/микрофону: " + e.message);
-            if(video) return getMedia(false); // Пробуем только звук, если видео не работает
+            alert("Ошибка: " + e.message);
+            if(video) return getMedia(false);
             return null;
         }
     }
@@ -516,12 +497,11 @@
         } catch(e) {}
     }
 
-    // --- 6. ПРИЛОЖЕНИЯ ---
+    // --- 6. UI ---
     function showApp(id) {
         document.querySelectorAll('.app-view').forEach(e=>e.style.display='none');
         document.querySelectorAll('.nav-icon').forEach(e=>e.classList.remove('active'));
         event.currentTarget.classList.add('active');
-        
         if(id === 'chat') document.getElementById('view-chat').style.display = 'flex';
         else document.getElementById('view-'+id).style.display = 'flex';
     }
