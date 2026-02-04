@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Meth OS | Discord Mode</title>
+    <title>METH</title>
     
     <!-- Firebase -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
@@ -11,289 +11,273 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-storage.js"></script>
     
-    <!-- PeerJS (Звонки) -->
+    <!-- PeerJS -->
     <script src="https://unpkg.com/peerjs@1.4.7/dist/peerjs.min.js"></script>
     
-    <!-- Icons & Fonts -->
+    <!-- Fonts & Icons -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
 
     <style>
         :root {
-            --bg-primary: #313338;
-            --bg-secondary: #2b2d31;
-            --bg-tertiary: #1e1f22;
-            --accent: #5865F2;
-            --danger: #da373c;
-            --success: #23a559;
-            --text-main: #dbdee1;
-            --text-muted: #949ba4;
+            --bg: #09090b;       /* Почти черный */
+            --sidebar: #000000;  /* Черный */
+            --border: #27272a;   /* Темно-серый */
+            --text: #e4e4e7;     /* Светло-серый */
+            --text-dim: #71717a; /* Тусклый */
+            --accent: #ffffff;   /* Акцент - белый */
+            --danger: #ef4444;
             --font: 'Inter', sans-serif;
-            --custom-bg: none;
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; outline: none; font-family: var(--font); }
-        body { background-color: var(--bg-primary); color: var(--text-main); height: 100vh; overflow: hidden; display: flex; }
+        body { background: var(--bg); color: var(--text); height: 100vh; overflow: hidden; display: flex; font-size: 14px; }
         
-        .app-bg {
-            position: absolute; inset: 0; z-index: -1;
-            background-image: var(--custom-bg);
-            background-size: cover; background-position: center;
-            opacity: 0.4; pointer-events: none;
-        }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-thumb { background: #333; border-radius: 3px; }
 
-        /* --- AUTH --- */
+        /* --- AUTH (CLEAN) --- */
         #auth-screen {
             position: fixed; inset: 0; z-index: 9999;
-            background: #313338; display: flex; justify-content: center; align-items: center;
+            background: var(--bg); display: flex; justify-content: center; align-items: center;
         }
-        .auth-box {
-            background: #2b2d31; padding: 30px; border-radius: 5px; width: 400px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.2); text-align: center;
+        .auth-form { width: 320px; text-align: center; }
+        .auth-logo { font-size: 24px; font-weight: 600; margin-bottom: 40px; letter-spacing: -1px; }
+        .minimal-inp {
+            width: 100%; background: transparent; border: none; border-bottom: 1px solid #333;
+            color: white; padding: 15px 0; font-size: 14px; margin-bottom: 10px; transition: 0.3s;
         }
-        .auth-inp {
-            width: 100%; padding: 10px; margin: 10px 0; background: #1e1f22;
-            border: none; color: white; border-radius: 3px; font-size: 16px;
+        .minimal-inp:focus { border-color: white; }
+        .minimal-btn {
+            width: 100%; background: white; color: black; border: none; padding: 15px;
+            font-weight: 500; cursor: pointer; margin-top: 20px; border-radius: 4px; transition: 0.2s;
         }
-        .discord-btn {
-            width: 100%; padding: 12px; background: var(--accent); color: white;
-            border: none; border-radius: 3px; cursor: pointer; font-weight: 600; transition: 0.2s;
-        }
-        .discord-btn:hover { background: #4752c4; }
+        .minimal-btn:hover { opacity: 0.9; }
 
-        /* --- LAYOUT --- */
+        /* --- MAIN LAYOUT --- */
         #app { display: none; width: 100%; height: 100%; }
-        
-        .servers {
-            width: 72px; background: var(--bg-tertiary); display: flex; flex-direction: column;
-            align-items: center; padding-top: 12px; gap: 8px; overflow-y: auto;
-        }
-        .srv-icon {
-            width: 48px; height: 48px; background: #313338; border-radius: 50%;
-            display: grid; place-items: center; cursor: pointer; transition: 0.2s; color: var(--text-main);
-            position: relative;
-        }
-        .srv-icon:hover, .srv-icon.active { background: var(--accent); border-radius: 16px; color: white; }
-        .srv-separator { width: 32px; height: 2px; background: #35363c; margin: 2px 0; }
 
-        .sidebar {
-            width: 240px; background: var(--bg-secondary); display: flex; flex-direction: column;
-            border-radius: 8px 0 0 0;
+        /* 1. NAV RAIL (ICONS) */
+        .nav-rail {
+            width: 60px; background: var(--sidebar); border-right: 1px solid var(--border);
+            display: flex; flex-direction: column; align-items: center; padding-top: 20px; gap: 10px;
         }
-        .sb-header { padding: 15px; border-bottom: 1px solid #1f2023; font-weight: 700; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
-        .sb-content { flex: 1; padding: 10px; overflow-y: auto; }
-        .friend-item {
-            display: flex; align-items: center; gap: 10px; padding: 10px;
-            border-radius: 4px; cursor: pointer; color: var(--text-muted);
+        .nav-item {
+            width: 40px; height: 40px; border-radius: 8px; display: grid; place-items: center;
+            color: var(--text-dim); cursor: pointer; transition: 0.2s;
         }
-        .friend-item:hover { background: #35373c; color: var(--text-main); }
-        
-        .user-panel {
-            background: #232428; padding: 10px; display: flex; align-items: center; gap: 10px;
-        }
-        .user-avatar { width: 32px; height: 32px; background: var(--accent); border-radius: 50%; display: grid; place-items: center; font-weight: bold; }
-        
-        /* CONNECTION STATUS INDICATOR */
-        .conn-status {
-            width: 10px; height: 10px; border-radius: 50%; background: var(--danger);
-            border: 2px solid #232428;
-        }
-        .conn-status.online { background: var(--success); }
+        .nav-item:hover { color: white; background: #222; }
+        .nav-item.active { color: black; background: white; }
 
-        .main-stage { flex: 1; display: flex; flex-direction: column; background: var(--bg-primary); position: relative; }
+        /* 2. SIDE LIST (CONTACTS) */
+        .side-list {
+            width: 240px; background: var(--bg); border-right: 1px solid var(--border);
+            display: flex; flex-direction: column;
+        }
+        .side-header {
+            padding: 20px; font-weight: 600; font-size: 13px; letter-spacing: -0.5px;
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .contact-item {
+            padding: 12px 20px; display: flex; align-items: center; gap: 10px;
+            cursor: pointer; color: var(--text-dim); transition: 0.2s;
+        }
+        .contact-item:hover { background: #18181b; color: white; }
+        .user-status-dot { width: 6px; height: 6px; border-radius: 50%; background: #333; }
+        .user-status-dot.online { background: #10b981; }
+
+        /* 3. CONTENT AREA */
+        .content { flex: 1; display: flex; flex-direction: column; background: var(--bg); position: relative; }
         
         /* CHAT */
-        .chat-view { display: flex; flex-direction: column; height: 100%; }
-        .messages { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 15px; }
-        .msg { display: flex; gap: 15px; }
-        .msg-content h4 { font-size: 15px; margin-bottom: 2px; }
-        .msg-content h4 span { font-size: 11px; color: var(--text-muted); font-weight: 400; margin-left: 5px; }
-        .msg-text { font-size: 15px; line-height: 1.4; color: #dbdee1; white-space: pre-wrap; word-break: break-word;}
+        .chat-scroll { flex: 1; overflow-y: auto; padding: 30px; display: flex; flex-direction: column; gap: 20px; }
+        .msg-block { display: flex; gap: 15px; }
+        .msg-avatar { 
+            width: 32px; height: 32px; background: #222; border-radius: 50%; 
+            display: grid; place-items: center; font-size: 12px; font-weight: 600; color: #fff;
+        }
+        .msg-body { flex: 1; }
+        .msg-header { font-size: 13px; font-weight: 600; margin-bottom: 4px; color: white; }
+        .msg-time { font-size: 11px; color: #555; font-weight: 400; margin-left: 8px; }
+        .msg-text { 
+            font-size: 14px; color: #d4d4d8; line-height: 1.5; 
+            background: #18181b; padding: 8px 12px; border-radius: 0 8px 8px 8px; display: inline-block;
+        }
         
-        .chat-input-area { padding: 0 20px 25px 20px; }
-        .chat-bar {
-            background: #383a40; border-radius: 8px; display: flex; align-items: center;
-            padding: 10px; gap: 10px;
+        .input-area {
+            padding: 20px; border-top: 1px solid var(--border); display: flex; gap: 10px;
         }
-        .chat-inp {
-            background: transparent; border: none; color: white; flex: 1; height: 25px; font-size: 15px;
+        .clean-inp {
+            flex: 1; background: #18181b; border: 1px solid transparent; color: white;
+            padding: 12px; border-radius: 6px; font-size: 14px;
         }
-        .action-btn { background: none; border: none; color: #b5bac1; cursor: pointer; font-size: 18px; }
-        .action-btn:hover { color: var(--text-main); }
+        .clean-inp:focus { background: #222; }
+        .clean-btn {
+            background: transparent; border: none; color: var(--text-dim); cursor: pointer; padding: 0 10px;
+        }
+        .clean-btn:hover { color: white; }
 
-        /* EMBED APPS */
-        .embed-view { display: none; width: 100%; height: 100%; flex-direction: column; }
-        .embed-nav { padding: 10px; background: var(--bg-tertiary); display: flex; gap: 10px; }
-        .embed-frame { flex: 1; border: none; background: #fff; }
-
-        /* --- CALL UI --- */
-        #call-modal {
-            position: fixed; top: 20px; right: 20px; width: 300px;
-            background: #000; border-radius: 8px; z-index: 5000;
-            border: 1px solid #1f2023; display: none; overflow: hidden;
-            box-shadow: 0 10px 20px rgba(0,0,0,0.5);
+        /* CALL POPUP (Minimal) */
+        #call-popup {
+            position: fixed; bottom: 30px; right: 30px; width: 320px;
+            background: #111; border: 1px solid #333; border-radius: 12px;
+            overflow: hidden; display: none; z-index: 5000; box-shadow: 0 20px 50px rgba(0,0,0,0.5);
         }
-        .video-grid { position: relative; width: 100%; height: 200px; background: #111; }
-        
-        /* Playsinline важно для iPhone */
+        .video-wrapper { position: relative; height: 200px; background: black; }
         video { width: 100%; height: 100%; object-fit: cover; }
-        
-        #local-video {
-            position: absolute; bottom: 10px; right: 10px; width: 80px; height: 60px;
-            border: 2px solid #000; border-radius: 4px; background: #222; transform: scaleX(-1);
+        #local-vid {
+            position: absolute; bottom: 15px; right: 15px; width: 80px; height: 60px;
+            background: #222; border-radius: 6px; transform: scaleX(-1); border: 1px solid #444;
         }
-        .call-controls {
-            display: flex; justify-content: space-around; padding: 15px; background: #1e1f22;
+        .call-actions {
+            display: flex; justify-content: center; gap: 15px; padding: 15px; background: #111;
         }
-        .ctrl-btn {
-            width: 40px; height: 40px; border-radius: 50%; border: none;
-            background: #2b2d31; color: white; cursor: pointer; font-size: 16px; transition: 0.2s;
+        .circle-btn {
+            width: 40px; height: 40px; border-radius: 50%; background: #222; border: none;
+            color: white; cursor: pointer; transition: 0.2s; display: grid; place-items: center;
         }
-        .ctrl-btn:hover { opacity: 0.8; }
-        .ctrl-btn.active { background: white; color: black; }
-        .ctrl-btn.danger { background: var(--danger); }
+        .circle-btn:hover { background: #333; }
+        .circle-btn.red { background: rgba(239, 68, 68, 0.2); color: #ef4444; }
+        .circle-btn.red:hover { background: #ef4444; color: white; }
+        .circle-btn.active { background: white; color: black; }
 
-        /* SETTINGS */
-        #settings-modal {
+        /* IFRAMES */
+        .iframe-full { width: 100%; height: 100%; border: none; display: none; }
+        .url-header { padding: 15px; border-bottom: 1px solid var(--border); display: flex; gap: 10px; }
+
+        /* MODAL */
+        .modal {
             position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 6000;
             display: none; place-items: center;
         }
-        .settings-box {
-            background: #313338; width: 500px; padding: 25px; border-radius: 5px;
-        }
-        .set-grp { margin-bottom: 20px; }
-        .set-grp label { display: block; color: var(--text-muted); font-size: 12px; font-weight: 700; margin-bottom: 8px; }
-        .set-inp { width: 100%; padding: 8px; background: #1e1f22; border: none; color: white; border-radius: 3px; }
-
-        /* INCOMING CALL */
-        #incoming-call {
-            position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
-            background: #1e1f22; padding: 20px; border-radius: 8px; z-index: 7000;
-            display: none; box-shadow: 0 5px 15px rgba(0,0,0,0.5); text-align: center; border: 1px solid var(--success);
-        }
+        .modal-box { background: #111; padding: 30px; border-radius: 12px; width: 350px; border: 1px solid #333; }
     </style>
 </head>
 <body>
 
-<div class="app-bg"></div>
-
 <!-- AUTH -->
 <div id="auth-screen">
-    <div class="auth-box">
-        <h2 style="color:white; margin-bottom:20px;">Meth OS</h2>
-        <input type="text" id="username" class="auth-inp" placeholder="Придумай никнейм (ID)">
-        <input type="password" id="password" class="auth-inp" placeholder="Пароль">
-        <div style="font-size:12px; color:#aaa; margin:10px 0;">Никнейм только маленькими английскими буквами!</div>
-        <button class="discord-btn" onclick="authFunc('login')">Войти</button>
-        <button class="discord-btn" onclick="authFunc('register')" style="background:#4e5058; margin-top:10px;">Регистрация</button>
-        <div id="auth-error" style="color:var(--danger); margin-top:10px; font-size:13px;"></div>
+    <div class="auth-form">
+        <div class="auth-logo">METH</div>
+        <input type="text" id="username" class="minimal-inp" placeholder="Username" autocomplete="off">
+        <input type="password" id="password" class="minimal-inp" placeholder="Password">
+        <div id="auth-error" style="color:var(--danger); font-size:12px; margin-top:10px;"></div>
+        <button class="minimal-btn" onclick="authFunc('login')">Login</button>
+        <button class="minimal-btn" onclick="authFunc('register')" style="background:transparent; color:#666; margin-top:0;">Create Account</button>
     </div>
 </div>
 
-<!-- INCOMING CALL ALERT -->
-<div id="incoming-call">
-    <h3 style="margin-bottom:10px;">📞 Входящий звонок!</h3>
-    <div id="caller-name" style="color:var(--text-muted); margin-bottom:15px;">Unknown</div>
-    <div style="display:flex; gap:10px; justify-content:center;">
-        <button onclick="answerCall()" class="discord-btn" style="background:var(--success); width:auto; padding:8px 20px;">Ответить</button>
-        <button onclick="rejectCall()" class="discord-btn" style="background:var(--danger); width:auto; padding:8px 20px;">Сброс</button>
+<!-- INCOMING CALL -->
+<div class="modal" id="incoming-modal">
+    <div class="modal-box" style="text-align:center;">
+        <h3 style="margin-bottom:20px;">Incoming Call</h3>
+        <div id="caller-name" style="margin-bottom:30px; color:#888;">User</div>
+        <div style="display:flex; gap:10px; justify-content:center;">
+            <button class="minimal-btn" style="background:#10b981; color:white; padding:10px 30px;" onclick="answerCall()">Answer</button>
+            <button class="minimal-btn" style="background:#ef4444; color:white; padding:10px 30px;" onclick="rejectCall()">Decline</button>
+        </div>
+    </div>
+</div>
+
+<!-- APP -->
+<div id="app">
+    <!-- 1. Nav -->
+    <div class="nav-rail">
+        <div class="nav-item active" onclick="switchTab('chat')"><i class="fas fa-comment"></i></div>
+        <div class="nav-item" onclick="switchTab('spotify')"><i class="fab fa-spotify"></i></div>
+        <div class="nav-item" onclick="switchTab('youtube')"><i class="fab fa-youtube"></i></div>
+        <div class="nav-item" onclick="switchTab('browser')"><i class="fas fa-compass"></i></div>
+        <div style="flex:1;"></div>
+        <div class="nav-item" onclick="document.getElementById('settings-modal').style.display='grid'"><i class="fas fa-sliders-h"></i></div>
+    </div>
+
+    <!-- 2. Sidebar -->
+    <div class="side-list">
+        <div class="side-header">
+            <span>CONTACTS</span>
+            <button onclick="addFriendInput()" style="background:none; border:none; color:white; cursor:pointer;">+</button>
+        </div>
+        
+        <div id="add-friend-box" style="padding:10px; display:none; border-bottom:1px solid #222;">
+            <input id="friend-inp" type="text" placeholder="username..." style="background:#111; border:none; color:white; padding:5px; width:100%;">
+            <button onclick="addFriendAndCall()" style="width:100%; margin-top:5px; background:white; border:none; cursor:pointer; font-size:10px; padding:4px;">ADD</button>
+        </div>
+
+        <div id="friends-list" style="flex:1; overflow-y:auto;">
+            <!-- Friends here -->
+        </div>
+
+        <div style="padding:15px; border-top:1px solid var(--border); display:flex; align-items:center; gap:10px;">
+            <div class="user-status-dot" id="status-dot"></div>
+            <div style="flex:1;">
+                <div style="font-weight:600; font-size:12px;" id="my-name">...</div>
+                <div style="font-size:10px; color:#555;" id="my-status">Offline</div>
+            </div>
+            <i class="fas fa-redo" style="cursor:pointer; font-size:10px; color:#555;" onclick="reconnectPeer()"></i>
+        </div>
+    </div>
+
+    <!-- 3. Content -->
+    <div class="content">
+        
+        <!-- Chat -->
+        <div id="tab-chat" style="display:flex; flex-direction:column; height:100%;">
+            <div class="side-header" style="border-bottom:1px solid var(--border);">GENERAL</div>
+            <div class="chat-scroll" id="msg-container"></div>
+            <div class="input-area">
+                <button class="clean-btn" onclick="document.getElementById('file-in').click()"><i class="fas fa-plus"></i></button>
+                <input type="file" id="file-in" hidden onchange="uploadFile()">
+                <input type="text" class="clean-inp" id="msg-in" placeholder="Type a message..." onkeypress="if(event.key==='Enter') sendMessage()">
+                <button class="clean-btn" onclick="sendMessage()"><i class="fas fa-arrow-up"></i></button>
+            </div>
+        </div>
+
+        <!-- Apps -->
+        <div id="tab-spotify" class="iframe-full" style="flex-direction:column;">
+            <div class="url-header"><input id="spot-url" class="clean-inp" placeholder="Spotify Link"><button class="minimal-btn" style="width:auto; margin:0; padding:10px;" onclick="loadSpotify()">Load</button></div>
+            <iframe id="frame-spotify" style="flex:1; border:none;" src="https://open.spotify.com/embed/playlist/37i9dQZF1DXcBWIGoYBM5M"></iframe>
+        </div>
+
+        <div id="tab-youtube" class="iframe-full" style="flex-direction:column;">
+            <div class="url-header"><input id="yt-url" class="clean-inp" placeholder="YouTube Search"><button class="minimal-btn" style="width:auto; margin:0; padding:10px;" onclick="loadYoutube()">Watch</button></div>
+            <iframe id="frame-youtube" style="flex:1; border:none;" src="https://www.youtube.com/embed/dQw4w9WgXcQ"></iframe>
+        </div>
+
+        <div id="tab-browser" class="iframe-full" style="flex-direction:column;">
+            <div class="url-header"><input id="web-url" class="clean-inp" placeholder="URL"><button class="minimal-btn" style="width:auto; margin:0; padding:10px;" onclick="loadWeb()">Go</button></div>
+            <iframe id="frame-web" style="flex:1; border:none;" src="https://www.bing.com"></iframe>
+        </div>
+
+    </div>
+</div>
+
+<!-- CALL POPUP -->
+<div id="call-popup">
+    <div class="video-wrapper">
+        <video id="remote-vid" autoplay playsinline></video>
+        <video id="local-vid" autoplay muted playsinline></video>
+    </div>
+    <div class="call-actions">
+        <button class="circle-btn" onclick="toggleMic()" id="btn-mic"><i class="fas fa-microphone"></i></button>
+        <button class="circle-btn" onclick="toggleDeafen()" id="btn-deaf"><i class="fas fa-volume-up"></i></button>
+        <button class="circle-btn" onclick="shareScreen()" id="btn-screen"><i class="fas fa-desktop"></i></button>
+        <button class="circle-btn red" onclick="endCall()"><i class="fas fa-phone-slash"></i></button>
     </div>
 </div>
 
 <!-- SETTINGS -->
-<div id="settings-modal">
-    <div class="settings-box">
-        <h2 style="margin-bottom:20px;">Настройки</h2>
-        <div class="set-grp">
-            <label>ФОН (URL)</label>
-            <input type="text" id="bg-url" class="set-inp" placeholder="https://..." onchange="updateBg()">
-        </div>
-        <div class="set-grp">
-            <label>МИКРОФОН</label>
-            <select id="mic-select" class="set-inp"><option>По умолчанию</option></select>
-        </div>
-        <button class="discord-btn" onclick="document.getElementById('settings-modal').style.display='none'">Сохранить</button>
-        <button class="discord-btn" onclick="logout()" style="background:var(--danger); margin-top:10px;">Выйти</button>
-    </div>
-</div>
-
-<!-- CALL UI -->
-<div id="call-modal">
-    <div class="video-grid">
-        <!-- playsinline обязательно для iPhone -->
-        <video id="remote-video" autoplay playsinline></video>
-        <video id="local-video" autoplay muted playsinline></video>
-    </div>
-    <div class="call-controls">
-        <button class="ctrl-btn" onclick="toggleMic()" id="btn-mic" title="Мут микро"><i class="fas fa-microphone"></i></button>
-        <button class="ctrl-btn" onclick="toggleDeafen()" id="btn-deaf" title="Выкл звук"><i class="fas fa-volume-up"></i></button>
-        <button class="ctrl-btn" onclick="shareScreen()" id="btn-screen" title="Демонстрация"><i class="fas fa-desktop"></i></button>
-        <button class="ctrl-btn danger" onclick="endCall()"><i class="fas fa-phone-slash"></i></button>
-    </div>
-</div>
-
-<!-- APP UI -->
-<div id="app">
-    <div class="servers">
-        <div class="srv-icon active" onclick="switchTab('chat')"><i class="fab fa-discord"></i></div>
-        <div class="srv-separator"></div>
-        <div class="srv-icon" onclick="switchTab('spotify')"><i class="fab fa-spotify" style="color:#1DB954;"></i></div>
-        <div class="srv-icon" onclick="switchTab('youtube')"><i class="fab fa-youtube" style="color:#FF0000;"></i></div>
-        <div class="srv-icon" onclick="switchTab('browser')"><i class="fas fa-globe"></i></div>
-    </div>
-
-    <div class="sidebar">
-        <div class="sb-header">Meth OS</div>
-        <div class="sb-content">
-            <div style="font-size:11px; font-weight:700; color:var(--text-muted); margin-bottom:8px;">ЗВОНКИ</div>
-            <div style="padding:10px; background:#1e1f22; border-radius:4px; margin-bottom:10px;">
-                <input type="text" id="add-friend-inp" placeholder="Ник друга (англ)..." style="background:transparent; border:none; color:white; width:100%; font-size:13px;">
-            </div>
-            <button class="discord-btn" onclick="addFriendAndCall()" style="font-size:12px; padding:5px; margin-bottom:15px;">Позвонить</button>
-            <div id="friends-list"></div>
-        </div>
-
-        <div class="user-panel">
-            <!-- Индикатор сети PeerJS -->
-            <div style="position:relative;">
-                <div class="user-avatar" id="my-avatar">U</div>
-                <div id="conn-status" class="conn-status" style="position:absolute; bottom:0; right:0;"></div>
-            </div>
-            
-            <div style="flex:1;">
-                <div style="font-size:13px; font-weight:700;" id="my-username">User</div>
-                <div style="font-size:10px; color:var(--text-muted);">
-                    Статус: <span id="status-text">Оффлайн</span>
-                </div>
-            </div>
-            <!-- Кнопка реконнекта -->
-            <button class="action-btn" onclick="reconnectPeer()" title="Переподключить сеть"><i class="fas fa-sync-alt"></i></button>
-            <button class="action-btn" onclick="document.getElementById('settings-modal').style.display='grid'"><i class="fas fa-cog"></i></button>
-        </div>
-    </div>
-
-    <div class="main-stage">
-        <!-- TABS -->
-        <div id="tab-chat" class="chat-view">
-            <div class="sb-header" style="background:var(--bg-primary);"><i class="fas fa-hashtag"></i> general</div>
-            <div class="messages" id="msg-container"></div>
-            <div class="chat-input-area">
-                <div class="chat-bar">
-                    <button class="action-btn" onclick="document.getElementById('file-in').click()"><i class="fas fa-plus-circle"></i></button>
-                    <input type="file" id="file-in" hidden onchange="uploadFile()">
-                    <input type="text" class="chat-inp" id="msg-in" placeholder="Сообщение..." onkeypress="if(event.key==='Enter') sendMessage()">
-                    <button class="action-btn" onclick="sendMessage()"><i class="fas fa-paper-plane"></i></button>
-                </div>
-            </div>
-        </div>
-        <div id="tab-spotify" class="embed-view"><div class="embed-nav"><input id="spot-url" class="set-inp" placeholder="Spotify Link"><button class="discord-btn" onclick="loadSpotify()">Load</button></div><iframe id="frame-spotify" class="embed-frame" src="https://open.spotify.com/embed/playlist/37i9dQZF1DXcBWIGoYBM5M"></iframe></div>
-        <div id="tab-youtube" class="embed-view"><div class="embed-nav"><input id="yt-url" class="set-inp" placeholder="YouTube Search/Link"><button class="discord-btn" onclick="loadYoutube()">Watch</button></div><iframe id="frame-youtube" class="embed-frame" src="https://www.youtube.com/embed/dQw4w9WgXcQ"></iframe></div>
-        <div id="tab-browser" class="embed-view"><div class="embed-nav"><input id="web-url" class="set-inp" placeholder="URL"><button class="discord-btn" onclick="loadWeb()">Go</button></div><iframe id="frame-web" class="embed-frame" src="https://www.bing.com"></iframe></div>
+<div class="modal" id="settings-modal">
+    <div class="modal-box">
+        <h3 style="margin-bottom:20px;">Settings</h3>
+        <label style="font-size:12px; color:#666;">Audio Input</label>
+        <select id="mic-select" class="minimal-inp" style="background:#111; padding:10px; border:1px solid #333;"><option>Default</option></select>
+        <button class="minimal-btn" style="background:#222; color:white; margin-top:20px;" onclick="document.getElementById('settings-modal').style.display='none'">Close</button>
+        <button class="minimal-btn" style="background:#ef4444; color:white; margin-top:10px;" onclick="logout()">Log Out</button>
     </div>
 </div>
 
 <script>
-    // 1. CONFIG
+    // --- 1. SETUP ---
     const firebaseConfig = {
       apiKey: "AIzaSyBFAWc-An48eKYfTMGhlJICkDPdecEJbb4",
       authDomain: "kolyasurfing-1a685.firebaseapp.com",
@@ -309,14 +293,10 @@
     const db = firebase.firestore();
     const storage = firebase.storage();
     
-    let currentUser = null;
-    let peer = null;
-    let currentCall = null;
-    let localStream = null;
-    let isMicMuted = false;
-    let isDeafened = false;
+    let currentUser = null, peer = null, currentCall = null, localStream = null;
+    let isMicMuted = false, isDeafened = false;
 
-    // 2. AUTH
+    // --- 2. AUTH ---
     auth.onAuthStateChanged(user => {
         if (user) {
             currentUser = user;
@@ -324,288 +304,248 @@
             document.getElementById('app').style.display = 'flex';
             
             const cleanId = user.email.split('@')[0];
-            document.getElementById('my-username').innerText = cleanId;
-            document.getElementById('my-avatar').innerText = cleanId[0].toUpperCase();
+            document.getElementById('my-name').innerText = cleanId;
             
             initPeer(cleanId);
             loadChat();
             loadFriends();
-            cleanOldMessages();
+            updateMics();
+            cleanMsgs();
         } else {
             document.getElementById('auth-screen').style.display = 'flex';
         }
     });
 
     async function authFunc(type) {
-        // Убираем пробелы и капс в нике
         const nick = document.getElementById('username').value.trim().toLowerCase().replace(/[^a-z0-9]/g, '');
         const pass = document.getElementById('password').value;
-        const err = document.getElementById('auth-error');
-
-        if(nick.length < 3) return err.innerText = "Никнейм некорректный (только a-z и цифры)";
-        const email = nick + "@meth.os";
+        const email = nick + "@meth.app";
 
         try {
             if(type === 'register') {
                 await auth.createUserWithEmailAndPassword(email, pass);
                 await db.collection('users').doc(nick).set({ uid: auth.currentUser.uid });
-            } else {
-                await auth.signInWithEmailAndPassword(email, pass);
-            }
-        } catch(e) { err.innerText = e.message; }
+            } else await auth.signInWithEmailAndPassword(email, pass);
+        } catch(e) { document.getElementById('auth-error').innerText = e.message; }
     }
-
     function logout() { auth.signOut(); location.reload(); }
 
-    // 3. PEERJS (Исправлено для совместимости)
+    // --- 3. NETWORK (PEER) ---
     function initPeer(id) {
         if(peer) peer.destroy();
-
         peer = new Peer(id, {
-            debug: 2,
-            secure: true, // ВАЖНО ДЛЯ FIREBASE
-            config: {
-                'iceServers': [
-                    { urls: 'stun:stun.l.google.com:19302' },
-                    { urls: 'stun:stun1.l.google.com:19302' },
-                    { urls: 'stun:stun2.l.google.com:19302' },
-                    { urls: 'stun:global.stun.twilio.com:3478' }
-                ]
-            }
+            secure: true, debug: 1,
+            config: {'iceServers': [{urls:'stun:stun.l.google.com:19302'},{urls:'stun:global.stun.twilio.com:3478'}]}
         });
-
-        peer.on('open', (id) => {
-            console.log('Connected to PeerServer as: ' + id);
-            document.getElementById('status-text').innerText = "В сети (Готов)";
-            document.getElementById('conn-status').classList.add('online');
+        peer.on('open', () => {
+            document.getElementById('my-status').innerText = "Online";
+            document.getElementById('status-dot').classList.add('online');
         });
-
-        peer.on('error', (err) => {
-            console.error(err);
-            document.getElementById('status-text').innerText = "Ошибка сети";
-            document.getElementById('conn-status').classList.remove('online');
-            if(err.type === 'unavailable-id') alert("Этот ник уже занят (возможно, открыта другая вкладка?)");
+        peer.on('error', () => {
+            document.getElementById('my-status').innerText = "Network Error";
+            document.getElementById('status-dot').classList.remove('online');
         });
-
-        peer.on('disconnected', () => {
-            document.getElementById('status-text').innerText = "Потеря связи";
-            document.getElementById('conn-status').classList.remove('online');
-        });
-
-        peer.on('call', (call) => {
-            console.log("Incoming call from:", call.peer);
-            document.getElementById('incoming-call').style.display = 'block';
+        peer.on('call', call => {
+            document.getElementById('incoming-modal').style.display = 'flex';
             document.getElementById('caller-name').innerText = call.peer;
             currentCall = call;
         });
     }
+    function reconnectPeer() { if(currentUser) initPeer(currentUser.email.split('@')[0]); }
 
-    function reconnectPeer() {
-        if(!currentUser) return;
-        const id = currentUser.email.split('@')[0];
-        document.getElementById('status-text').innerText = "Переподключение...";
-        initPeer(id);
-    }
-
-    // 4. CALL LOGIC
-    async function startLocalStream(video = true) {
-        const micId = document.getElementById('mic-select').value;
-        const constraints = {
-            video: video,
-            audio: { 
-                echoCancellation: true, 
-                noiseSuppression: true,
-                autoGainControl: true
-            }
-        };
-        if(micId !== 'По умолчанию') constraints.audio.deviceId = { exact: micId };
+    // --- 4. CALLS (FIXED) ---
+    async function startStream(video=true) {
+        const mic = document.getElementById('mic-select').value;
+        let conf = { echoCancellation: true, noiseSuppression: true };
+        if(mic !== 'Default') conf.deviceId = { exact: mic };
 
         try {
-            localStream = await navigator.mediaDevices.getUserMedia(constraints);
-            document.getElementById('local-video').srcObject = localStream;
-            return localStream;
+            const s = await navigator.mediaDevices.getUserMedia({ video: video, audio: conf });
+            document.getElementById('local-vid').srcObject = s;
+            document.getElementById('local-vid').style.display = 'block';
+            return s;
         } catch(e) {
-            alert("Не удалось получить доступ к Камере/Микрофону. Проверьте разрешения в браузере! " + e.message);
+            if(video) {
+                try {
+                    // Fallback to audio only
+                    const as = await navigator.mediaDevices.getUserMedia({ video: false, audio: conf });
+                    document.getElementById('local-vid').style.display = 'none';
+                    return as;
+                } catch(e2) { alert("Mic Access Denied"); return null; }
+            }
             return null;
         }
     }
 
-    function addFriendAndCall() {
-        const id = document.getElementById('add-friend-inp').value.trim().toLowerCase();
-        if(!id) return;
+    async function makeCall(id) {
+        if(id === currentUser.email.split('@')[0]) return;
+        const s = await startStream(true);
+        if(!s) return;
         
-        // Save friend
-        let friends = JSON.parse(localStorage.getItem('meth_friends') || '[]');
-        if(!friends.includes(id)) {
-            friends.push(id);
-            localStorage.setItem('meth_friends', JSON.stringify(friends));
-            loadFriends();
-        }
-        makeCall(id);
+        document.getElementById('call-popup').style.display = 'block';
+        const call = peer.call(id, s);
+        handleCall(call);
     }
-
-    function loadFriends() {
-        const list = document.getElementById('friends-list');
-        list.innerHTML = '';
-        const friends = JSON.parse(localStorage.getItem('meth_friends') || '[]');
-        friends.forEach(f => {
-            const div = document.createElement('div');
-            div.className = 'friend-item';
-            div.innerHTML = `<div class="user-avatar" style="width:20px;height:20px;font-size:10px;">${f[0]}</div><div style="flex:1;">${f}</div><i class="fas fa-phone" onclick="makeCall('${f}')" style="cursor:pointer;color:var(--success)"></i>`;
-            list.appendChild(div);
-        });
-    }
-
-    async function makeCall(remoteId) {
-        if(remoteId === currentUser.email.split('@')[0]) return alert("Нельзя звонить самому себе!");
-        
-        const stream = await startLocalStream();
-        if(!stream) return;
-
-        console.log("Calling " + remoteId + "...");
-        document.getElementById('call-modal').style.display = 'block';
-        
-        const call = peer.call(remoteId, stream);
-        if(!call) return alert("Ошибка создания звонка. Проверь статус сети.");
-        
-        handleCallStream(call);
-    }
-
+    
     async function answerCall() {
-        document.getElementById('incoming-call').style.display = 'none';
-        const stream = await startLocalStream();
-        if(!stream) return;
-
-        document.getElementById('call-modal').style.display = 'block';
-        currentCall.answer(stream);
-        handleCallStream(currentCall);
+        document.getElementById('incoming-modal').style.display = 'none';
+        const s = await startStream(true);
+        if(!s) return;
+        
+        document.getElementById('call-popup').style.display = 'block';
+        currentCall.answer(s);
+        handleCall(currentCall);
     }
-
+    
     function rejectCall() {
-        document.getElementById('incoming-call').style.display = 'none';
+        document.getElementById('incoming-modal').style.display = 'none';
         if(currentCall) currentCall.close();
     }
 
-    function handleCallStream(call) {
+    function handleCall(call) {
         currentCall = call;
-        call.on('stream', remoteStream => {
-            console.log("Remote stream received");
-            document.getElementById('remote-video').srcObject = remoteStream;
-        });
-        call.on('close', endCallUI);
-        call.on('error', (e) => { console.error(e); alert("Сбой звонка"); endCallUI(); });
+        call.on('stream', rs => document.getElementById('remote-vid').srcObject = rs);
+        call.on('close', closeCallUI);
+        call.on('error', closeCallUI);
     }
 
-    function endCall() {
-        if(currentCall) currentCall.close();
-        endCallUI();
-    }
-
-    function endCallUI() {
-        document.getElementById('call-modal').style.display = 'none';
-        if(localStream) localStream.getTracks().forEach(t => t.stop());
-        document.getElementById('remote-video').srcObject = null;
+    function endCall() { if(currentCall) currentCall.close(); closeCallUI(); }
+    
+    function closeCallUI() {
+        document.getElementById('call-popup').style.display = 'none';
+        if(localStream) localStream.getTracks().forEach(t=>t.stop());
+        document.getElementById('remote-vid').srcObject = null;
         currentCall = null;
     }
 
     // Media Controls
     function toggleMic() {
         if(!localStream) return;
-        const track = localStream.getAudioTracks()[0];
-        isMicMuted = !isMicMuted;
-        track.enabled = !isMicMuted;
-        document.getElementById('btn-mic').classList.toggle('danger', isMicMuted);
+        const t = localStream.getAudioTracks()[0];
+        isMicMuted = !isMicMuted; t.enabled = !isMicMuted;
+        document.getElementById('btn-mic').classList.toggle('red', isMicMuted);
     }
     function toggleDeafen() {
-        const vid = document.getElementById('remote-video');
-        isDeafened = !isDeafened;
-        vid.muted = isDeafened;
-        document.getElementById('btn-deaf').classList.toggle('danger', isDeafened);
+        const v = document.getElementById('remote-vid');
+        isDeafened = !isDeafened; v.muted = isDeafened;
+        document.getElementById('btn-deaf').classList.toggle('red', isDeafened);
     }
     async function shareScreen() {
         try {
-            const screenStream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: true });
-            const sender = currentCall.peerConnection.getSenders().find(s => s.track.kind === 'video');
-            sender.replaceTrack(screenStream.getVideoTracks()[0]);
-            document.getElementById('local-video').srcObject = screenStream;
+            const ss = await navigator.mediaDevices.getDisplayMedia({video:true,audio:true});
+            const sender = currentCall.peerConnection.getSenders().find(s=>s.track.kind==='video');
+            if(sender) sender.replaceTrack(ss.getVideoTracks()[0]);
+            document.getElementById('local-vid').srcObject = ss;
+            document.getElementById('btn-screen').classList.add('active');
             
-            screenStream.getVideoTracks()[0].onended = () => {
-                startLocalStream().then(cam => {
-                    sender.replaceTrack(cam.getVideoTracks()[0]);
+            ss.getVideoTracks()[0].onended = () => {
+                startStream(true).then(cs => {
+                    if(sender) sender.replaceTrack(cs.getVideoTracks()[0]);
+                    document.getElementById('btn-screen').classList.remove('active');
                 });
             };
-        } catch(e) { console.log("Screen share cancelled"); }
+        } catch(e){}
     }
 
-    // 5. CHAT & HELPERS
-    function sendMessage() {
-        const txt = document.getElementById('msg-in').value.trim();
-        if(!txt) return;
-        db.collection('messages').add({
-            text: txt, uid: currentUser.uid, user: currentUser.email.split('@')[0],
-            ts: firebase.firestore.FieldValue.serverTimestamp(), type: 'text'
+    // --- 5. UI & DATA ---
+    function addFriendInput() {
+        const box = document.getElementById('add-friend-box');
+        box.style.display = box.style.display==='none'?'block':'none';
+    }
+    function addFriendAndCall() {
+        const id = document.getElementById('friend-inp').value.trim().toLowerCase();
+        if(!id) return;
+        let fs = JSON.parse(localStorage.getItem('meth_friends')||'[]');
+        if(!fs.includes(id)) { fs.push(id); localStorage.setItem('meth_friends',JSON.stringify(fs)); loadFriends(); }
+    }
+    function loadFriends() {
+        const l = document.getElementById('friends-list'); l.innerHTML='';
+        const fs = JSON.parse(localStorage.getItem('meth_friends')||'[]');
+        fs.forEach(f=>{
+            const d = document.createElement('div'); d.className='contact-item';
+            d.innerHTML=`
+                <div style="width:24px;height:24px;background:#222;border-radius:50%;display:grid;place-items:center;font-size:10px;">${f[0].toUpperCase()}</div>
+                <div style="flex:1;font-size:13px;">${f}</div>
+                <i class="fas fa-phone" onclick="makeCall('${f}')" style="font-size:10px;"></i>
+                <i class="fas fa-times" onclick="delFriend('${f}')" style="font-size:10px;margin-left:5px;"></i>`;
+            l.appendChild(d);
         });
-        document.getElementById('msg-in').value = '';
+    }
+    function delFriend(id) {
+        let fs = JSON.parse(localStorage.getItem('meth_friends')||'[]');
+        fs = fs.filter(x=>x!==id); localStorage.setItem('meth_friends',JSON.stringify(fs)); loadFriends();
+    }
+
+    // --- 6. CHAT ---
+    function sendMessage() {
+        const t = document.getElementById('msg-in').value.trim();
+        if(!t) return;
+        db.collection('messages').add({
+            text:t, uid:currentUser.uid, user:currentUser.email.split('@')[0],
+            ts:firebase.firestore.FieldValue.serverTimestamp(), type:'text'
+        });
+        document.getElementById('msg-in').value='';
     }
     function uploadFile() {
-        const file = document.getElementById('file-in').files[0];
-        if(!file) return;
-        const ref = storage.ref('uploads/'+Date.now()+'_'+file.name);
-        ref.put(file).then(snap=>snap.ref.getDownloadURL()).then(url=>{
+        const f = document.getElementById('file-in').files[0];
+        if(!f) return;
+        const ref = storage.ref('u/'+Date.now());
+        ref.put(f).then(s=>s.ref.getDownloadURL()).then(u=>{
             db.collection('messages').add({
-                text: url, uid: currentUser.uid, user: currentUser.email.split('@')[0],
-                ts: firebase.firestore.FieldValue.serverTimestamp(), type: file.type.startsWith('image')?'image':'file'
+                text:u, uid:currentUser.uid, user:currentUser.email.split('@')[0],
+                ts:firebase.firestore.FieldValue.serverTimestamp(), type:f.type.startsWith('image')?'image':'file'
             });
         });
     }
     function loadChat() {
-        db.collection('messages').orderBy('ts','asc').limitToLast(50).onSnapshot(snap=>{
+        db.collection('messages').orderBy('ts','asc').limitToLast(50).onSnapshot(s=>{
             const c = document.getElementById('msg-container'); c.innerHTML='';
-            snap.forEach(doc=>{
-                const d=doc.data();
-                const div=document.createElement('div'); div.className='msg';
-                let content = d.type==='image' ? `<img src="${d.text}" style="max-width:250px;border-radius:5px;">` : (d.type==='file'?`<a href="${d.text}" target="_blank" style="color:#5865F2">Файл</a>` : d.text);
-                div.innerHTML=`<div class="user-avatar">${d.user[0]}</div><div class="msg-content"><h4>${d.user}</h4><div class="msg-text">${content}</div></div>`;
+            s.forEach(d=>{
+                const dt = d.data();
+                const div = document.createElement('div'); div.className='msg-block';
+                let content = dt.type==='image'?`<img src="${dt.text}" style="max-width:200px;border-radius:8px;">` :
+                              (dt.type==='file'?`<a href="${dt.text}" target="_blank" style="color:white;text-decoration:underline;">File</a>` : linkify(dt.text));
+                
+                div.innerHTML = `
+                    <div class="msg-avatar">${dt.user[0].toUpperCase()}</div>
+                    <div class="msg-body">
+                        <div class="msg-header">${dt.user} <span class="msg-time">${dt.ts?new Date(dt.ts.toDate()).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}):''}</span></div>
+                        <div class="msg-text">${content}</div>
+                    </div>`;
                 c.appendChild(div);
             });
-            c.scrollTop=c.scrollHeight;
+            c.scrollTop = c.scrollHeight;
         });
     }
-    async function cleanOldMessages() {
+    function linkify(t) { return t.replace(/(https?:\/\/[^\s]+)/g, u=>`<a href="${u}" target="_blank" style="color:#aaa;">${u}</a>`); }
+    async function cleanMsgs() {
         const d=new Date(); d.setDate(d.getDate()-2);
-        const s=await db.collection('messages').where('ts','<',d).get();
-        const b=db.batch(); s.forEach(doc=>b.delete(doc.ref));
-        await b.commit();
+        const s = await db.collection('messages').where('ts','<',d).get();
+        const b = db.batch(); s.forEach(doc=>b.delete(doc.ref)); await b.commit();
     }
-    
-    // Tabs & Embeds
-    function switchTab(t) {
-        document.querySelectorAll('.chat-view, .embed-view').forEach(e=>e.style.display='none');
-        document.querySelectorAll('.srv-icon').forEach(e=>e.classList.remove('active'));
-        event.currentTarget.classList.add('active');
-        document.getElementById('tab-'+t).style.display = (t==='chat'?'flex':'flex');
-    }
-    function loadSpotify() { 
-        let v=document.getElementById('spot-url').value; 
-        if(v&&!v.includes('embed'))v=v.replace('open.spotify.com/','open.spotify.com/embed/');
-        document.getElementById('frame-spotify').src=v||"https://open.spotify.com/embed/playlist/37i9dQZF1DXcBWIGoYBM5M";
-    }
-    function loadYoutube() {
-        let v=document.getElementById('yt-url').value;
-        if(v.includes('watch?v='))v=v.replace('watch?v=','embed/');
-        else if(!v.includes('http')) v='https://www.youtube.com/embed?listType=search&list='+v;
-        document.getElementById('frame-youtube').src=v;
-    }
-    function loadWeb() { document.getElementById('frame-web').src=document.getElementById('web-url').value; }
-    function updateBg() { document.documentElement.style.setProperty('--custom-bg', `url('${document.getElementById('bg-url').value}')`); }
 
-    // Mic List
-    navigator.mediaDevices.enumerateDevices().then(ds=>{
-        const s=document.getElementById('mic-select');
+    // --- 7. TABS ---
+    function switchTab(t) {
+        document.querySelectorAll('.nav-item').forEach(e=>e.classList.remove('active'));
+        event.currentTarget.classList.add('active');
+        document.getElementById('tab-chat').style.display='none';
+        document.querySelectorAll('.iframe-full').forEach(e=>e.style.display='none');
+        
+        if(t==='chat') document.getElementById('tab-chat').style.display='flex';
+        else document.getElementById('tab-'+t).style.display='flex';
+    }
+    function loadSpotify(){ let v=document.getElementById('spot-url').value; if(v&&!v.includes('embed'))v=v.replace('open.spotify.com/','open.spotify.com/embed/'); document.getElementById('frame-spotify').src=v||"https://open.spotify.com/embed/playlist/37i9dQZF1DXcBWIGoYBM5M"; }
+    function loadYoutube(){ let v=document.getElementById('yt-url').value; if(v.includes('watch?v='))v=v.replace('watch?v=','embed/'); else if(!v.includes('http')) v='https://www.youtube.com/embed?listType=search&list='+v; document.getElementById('frame-youtube').src=v; }
+    function loadWeb(){ document.getElementById('frame-web').src=document.getElementById('web-url').value; }
+    
+    async function updateMics() {
+        try { await navigator.mediaDevices.getUserMedia({audio:true});
+        const ds=await navigator.mediaDevices.enumerateDevices();
+        const s=document.getElementById('mic-select'); s.innerHTML='<option>Default</option>';
         ds.filter(d=>d.kind==='audioinput').forEach(d=>{
-            const o=document.createElement('option'); o.value=d.deviceId; o.text=d.label||'Mic'; s.appendChild(o);
-        });
-    });
+            const o=document.createElement('option'); o.value=d.deviceId; o.text=d.label; s.appendChild(o);
+        }); }catch(e){}
+    }
 </script>
 </body>
 </html>
