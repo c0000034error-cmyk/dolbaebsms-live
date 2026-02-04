@@ -29,13 +29,12 @@
             --text-main: #dbdee1;
             --text-muted: #949ba4;
             --font: 'Inter', sans-serif;
-            --custom-bg: none; /* Для пользовательского фона */
+            --custom-bg: none;
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; outline: none; font-family: var(--font); }
         body { background-color: var(--bg-primary); color: var(--text-main); height: 100vh; overflow: hidden; display: flex; }
         
-        /* Пользовательский фон */
         .app-bg {
             position: absolute; inset: 0; z-index: -1;
             background-image: var(--custom-bg);
@@ -65,7 +64,6 @@
         /* --- LAYOUT --- */
         #app { display: none; width: 100%; height: 100%; }
         
-        /* 1. Server List (Left) */
         .servers {
             width: 72px; background: var(--bg-tertiary); display: flex; flex-direction: column;
             align-items: center; padding-top: 12px; gap: 8px; overflow-y: auto;
@@ -78,7 +76,6 @@
         .srv-icon:hover, .srv-icon.active { background: var(--accent); border-radius: 16px; color: white; }
         .srv-separator { width: 32px; height: 2px; background: #35363c; margin: 2px 0; }
 
-        /* 2. Sidebar (Channels/Friends) */
         .sidebar {
             width: 240px; background: var(--bg-secondary); display: flex; flex-direction: column;
             border-radius: 8px 0 0 0;
@@ -90,15 +87,19 @@
             border-radius: 4px; cursor: pointer; color: var(--text-muted);
         }
         .friend-item:hover { background: #35373c; color: var(--text-main); }
-        .friend-status { width: 10px; height: 10px; background: var(--success); border-radius: 50%; }
-
-        /* User Area (Bottom Left) */
+        
         .user-panel {
             background: #232428; padding: 10px; display: flex; align-items: center; gap: 10px;
         }
         .user-avatar { width: 32px; height: 32px; background: var(--accent); border-radius: 50%; display: grid; place-items: center; font-weight: bold; }
         
-        /* 3. Main Content (Chat/Browser) */
+        /* CONNECTION STATUS INDICATOR */
+        .conn-status {
+            width: 10px; height: 10px; border-radius: 50%; background: var(--danger);
+            border: 2px solid #232428;
+        }
+        .conn-status.online { background: var(--success); }
+
         .main-stage { flex: 1; display: flex; flex-direction: column; background: var(--bg-primary); position: relative; }
         
         /* CHAT */
@@ -120,12 +121,12 @@
         .action-btn { background: none; border: none; color: #b5bac1; cursor: pointer; font-size: 18px; }
         .action-btn:hover { color: var(--text-main); }
 
-        /* EMBED APPS (Browser/Music) */
+        /* EMBED APPS */
         .embed-view { display: none; width: 100%; height: 100%; flex-direction: column; }
         .embed-nav { padding: 10px; background: var(--bg-tertiary); display: flex; gap: 10px; }
         .embed-frame { flex: 1; border: none; background: #fff; }
 
-        /* --- CALL UI (Overlay) --- */
+        /* --- CALL UI --- */
         #call-modal {
             position: fixed; top: 20px; right: 20px; width: 300px;
             background: #000; border-radius: 8px; z-index: 5000;
@@ -133,10 +134,13 @@
             box-shadow: 0 10px 20px rgba(0,0,0,0.5);
         }
         .video-grid { position: relative; width: 100%; height: 200px; background: #111; }
+        
+        /* Playsinline важно для iPhone */
         video { width: 100%; height: 100%; object-fit: cover; }
+        
         #local-video {
             position: absolute; bottom: 10px; right: 10px; width: 80px; height: 60px;
-            border: 2px solid #000; border-radius: 4px; background: #222;
+            border: 2px solid #000; border-radius: 4px; background: #222; transform: scaleX(-1);
         }
         .call-controls {
             display: flex; justify-content: space-around; padding: 15px; background: #1e1f22;
@@ -149,7 +153,7 @@
         .ctrl-btn.active { background: white; color: black; }
         .ctrl-btn.danger { background: var(--danger); }
 
-        /* --- SETTINGS MODAL --- */
+        /* SETTINGS */
         #settings-modal {
             position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 6000;
             display: none; place-items: center;
@@ -176,10 +180,10 @@
 <!-- AUTH -->
 <div id="auth-screen">
     <div class="auth-box">
-        <h2 style="color:white; margin-bottom:20px;">Добро пожаловать</h2>
-        <input type="text" id="username" class="auth-inp" placeholder="Придумай никнейм (будет твоим ID)">
+        <h2 style="color:white; margin-bottom:20px;">Meth OS</h2>
+        <input type="text" id="username" class="auth-inp" placeholder="Придумай никнейм (ID)">
         <input type="password" id="password" class="auth-inp" placeholder="Пароль">
-        <div style="font-size:12px; color:#aaa; margin:10px 0;">Никнейм должен быть на английском (например: kolyasurfing)</div>
+        <div style="font-size:12px; color:#aaa; margin:10px 0;">Никнейм только маленькими английскими буквами!</div>
         <button class="discord-btn" onclick="authFunc('login')">Войти</button>
         <button class="discord-btn" onclick="authFunc('register')" style="background:#4e5058; margin-top:10px;">Регистрация</button>
         <div id="auth-error" style="color:var(--danger); margin-top:10px; font-size:13px;"></div>
@@ -200,17 +204,14 @@
 <div id="settings-modal">
     <div class="settings-box">
         <h2 style="margin-bottom:20px;">Настройки</h2>
-        
         <div class="set-grp">
-            <label>ССЫЛКА НА ФОН (URL КАРТИНКИ)</label>
+            <label>ФОН (URL)</label>
             <input type="text" id="bg-url" class="set-inp" placeholder="https://..." onchange="updateBg()">
         </div>
-
         <div class="set-grp">
             <label>МИКРОФОН</label>
             <select id="mic-select" class="set-inp"><option>По умолчанию</option></select>
         </div>
-
         <button class="discord-btn" onclick="document.getElementById('settings-modal').style.display='none'">Сохранить</button>
         <button class="discord-btn" onclick="logout()" style="background:var(--danger); margin-top:10px;">Выйти</button>
     </div>
@@ -219,20 +220,20 @@
 <!-- CALL UI -->
 <div id="call-modal">
     <div class="video-grid">
-        <video id="remote-video" autoplay></video>
-        <video id="local-video" autoplay muted></video>
+        <!-- playsinline обязательно для iPhone -->
+        <video id="remote-video" autoplay playsinline></video>
+        <video id="local-video" autoplay muted playsinline></video>
     </div>
     <div class="call-controls">
-        <button class="ctrl-btn" onclick="toggleMic()" id="btn-mic" title="Микрофон"><i class="fas fa-microphone"></i></button>
-        <button class="ctrl-btn" onclick="toggleDeafen()" id="btn-deaf" title="Звук"><i class="fas fa-volume-up"></i></button>
+        <button class="ctrl-btn" onclick="toggleMic()" id="btn-mic" title="Мут микро"><i class="fas fa-microphone"></i></button>
+        <button class="ctrl-btn" onclick="toggleDeafen()" id="btn-deaf" title="Выкл звук"><i class="fas fa-volume-up"></i></button>
         <button class="ctrl-btn" onclick="shareScreen()" id="btn-screen" title="Демонстрация"><i class="fas fa-desktop"></i></button>
         <button class="ctrl-btn danger" onclick="endCall()"><i class="fas fa-phone-slash"></i></button>
     </div>
 </div>
 
-<!-- APP -->
+<!-- APP UI -->
 <div id="app">
-    <!-- 1. SERVERS -->
     <div class="servers">
         <div class="srv-icon active" onclick="switchTab('chat')"><i class="fab fa-discord"></i></div>
         <div class="srv-separator"></div>
@@ -241,82 +242,58 @@
         <div class="srv-icon" onclick="switchTab('browser')"><i class="fas fa-globe"></i></div>
     </div>
 
-    <!-- 2. SIDEBAR -->
     <div class="sidebar">
         <div class="sb-header">Meth OS</div>
         <div class="sb-content">
-            <div style="font-size:11px; font-weight:700; color:var(--text-muted); margin-bottom:8px;">ДРУЗЬЯ / ЗВОНКИ</div>
+            <div style="font-size:11px; font-weight:700; color:var(--text-muted); margin-bottom:8px;">ЗВОНКИ</div>
             <div style="padding:10px; background:#1e1f22; border-radius:4px; margin-bottom:10px;">
-                <input type="text" id="add-friend-inp" placeholder="Ник друга..." style="background:transparent; border:none; color:white; width:100%; font-size:13px;">
+                <input type="text" id="add-friend-inp" placeholder="Ник друга (англ)..." style="background:transparent; border:none; color:white; width:100%; font-size:13px;">
             </div>
-            <button class="discord-btn" onclick="addFriend()" style="font-size:12px; padding:5px; margin-bottom:15px;">Добавить / Позвонить</button>
-            
-            <div id="friends-list">
-                <!-- Сюда добавляются друзья -->
-            </div>
+            <button class="discord-btn" onclick="addFriendAndCall()" style="font-size:12px; padding:5px; margin-bottom:15px;">Позвонить</button>
+            <div id="friends-list"></div>
         </div>
 
         <div class="user-panel">
-            <div class="user-avatar" id="my-avatar">U</div>
+            <!-- Индикатор сети PeerJS -->
+            <div style="position:relative;">
+                <div class="user-avatar" id="my-avatar">U</div>
+                <div id="conn-status" class="conn-status" style="position:absolute; bottom:0; right:0;"></div>
+            </div>
+            
             <div style="flex:1;">
                 <div style="font-size:13px; font-weight:700;" id="my-username">User</div>
-                <div style="font-size:11px; color:var(--text-muted);">ID: <span id="my-peer-id">...</span></div>
+                <div style="font-size:10px; color:var(--text-muted);">
+                    Статус: <span id="status-text">Оффлайн</span>
+                </div>
             </div>
+            <!-- Кнопка реконнекта -->
+            <button class="action-btn" onclick="reconnectPeer()" title="Переподключить сеть"><i class="fas fa-sync-alt"></i></button>
             <button class="action-btn" onclick="document.getElementById('settings-modal').style.display='grid'"><i class="fas fa-cog"></i></button>
         </div>
     </div>
 
-    <!-- 3. MAIN CONTENT -->
     <div class="main-stage">
-        
-        <!-- CHAT TAB -->
+        <!-- TABS -->
         <div id="tab-chat" class="chat-view">
-            <div class="sb-header" style="background:var(--bg-primary); display:flex; align-items:center; gap:10px;">
-                <i class="fas fa-hashtag" style="color:var(--text-muted);"></i> general
-            </div>
+            <div class="sb-header" style="background:var(--bg-primary);"><i class="fas fa-hashtag"></i> general</div>
             <div class="messages" id="msg-container"></div>
             <div class="chat-input-area">
                 <div class="chat-bar">
                     <button class="action-btn" onclick="document.getElementById('file-in').click()"><i class="fas fa-plus-circle"></i></button>
                     <input type="file" id="file-in" hidden onchange="uploadFile()">
-                    <input type="text" class="chat-inp" id="msg-in" placeholder="Написать сообщение #general..." onkeypress="if(event.key==='Enter') sendMessage()">
+                    <input type="text" class="chat-inp" id="msg-in" placeholder="Сообщение..." onkeypress="if(event.key==='Enter') sendMessage()">
                     <button class="action-btn" onclick="sendMessage()"><i class="fas fa-paper-plane"></i></button>
                 </div>
             </div>
         </div>
-
-        <!-- SPOTIFY TAB -->
-        <div id="tab-spotify" class="embed-view">
-            <div class="embed-nav">
-                <input type="text" class="set-inp" id="spot-url" placeholder="Вставь ссылку на плейлист/трек Spotify">
-                <button class="discord-btn" style="width:auto;" onclick="loadSpotify()">Load</button>
-            </div>
-            <iframe id="frame-spotify" class="embed-frame" src="https://open.spotify.com/embed/playlist/37i9dQZF1DXcBWIGoYBM5M" allow="encrypted-media"></iframe>
-        </div>
-
-        <!-- YOUTUBE TAB -->
-        <div id="tab-youtube" class="embed-view">
-            <div class="embed-nav">
-                <input type="text" class="set-inp" id="yt-url" placeholder="Поиск YouTube или ссылка">
-                <button class="discord-btn" style="width:auto;" onclick="loadYoutube()">Watch</button>
-            </div>
-            <iframe id="frame-youtube" class="embed-frame" src="https://www.youtube.com/embed/dQw4w9WgXcQ" allowfullscreen></iframe>
-        </div>
-
-        <!-- BROWSER TAB -->
-        <div id="tab-browser" class="embed-view">
-            <div class="embed-nav">
-                <input type="text" class="set-inp" id="web-url" placeholder="URL (не все сайты разрешают iframe)">
-                <button class="discord-btn" style="width:auto;" onclick="loadWeb()">Go</button>
-            </div>
-            <iframe id="frame-web" class="embed-frame" src="https://www.bing.com"></iframe>
-        </div>
-
+        <div id="tab-spotify" class="embed-view"><div class="embed-nav"><input id="spot-url" class="set-inp" placeholder="Spotify Link"><button class="discord-btn" onclick="loadSpotify()">Load</button></div><iframe id="frame-spotify" class="embed-frame" src="https://open.spotify.com/embed/playlist/37i9dQZF1DXcBWIGoYBM5M"></iframe></div>
+        <div id="tab-youtube" class="embed-view"><div class="embed-nav"><input id="yt-url" class="set-inp" placeholder="YouTube Search/Link"><button class="discord-btn" onclick="loadYoutube()">Watch</button></div><iframe id="frame-youtube" class="embed-frame" src="https://www.youtube.com/embed/dQw4w9WgXcQ"></iframe></div>
+        <div id="tab-browser" class="embed-view"><div class="embed-nav"><input id="web-url" class="set-inp" placeholder="URL"><button class="discord-btn" onclick="loadWeb()">Go</button></div><iframe id="frame-web" class="embed-frame" src="https://www.bing.com"></iframe></div>
     </div>
 </div>
 
 <script>
-    // 1. CONFIGURATION
+    // 1. CONFIG
     const firebaseConfig = {
       apiKey: "AIzaSyBFAWc-An48eKYfTMGhlJICkDPdecEJbb4",
       authDomain: "kolyasurfing-1a685.firebaseapp.com",
@@ -339,89 +316,108 @@
     let isMicMuted = false;
     let isDeafened = false;
 
-    // 2. AUTH SYSTEM
+    // 2. AUTH
     auth.onAuthStateChanged(user => {
         if (user) {
             currentUser = user;
             document.getElementById('auth-screen').style.display = 'none';
             document.getElementById('app').style.display = 'flex';
             
-            // Clean ID: берем часть до @meth.os
             const cleanId = user.email.split('@')[0];
-            
             document.getElementById('my-username').innerText = cleanId;
             document.getElementById('my-avatar').innerText = cleanId[0].toUpperCase();
             
             initPeer(cleanId);
             loadChat();
             loadFriends();
-            cleanOldMessages(); // Удаляем старое только при входе
+            cleanOldMessages();
         } else {
             document.getElementById('auth-screen').style.display = 'flex';
         }
     });
 
     async function authFunc(type) {
+        // Убираем пробелы и капс в нике
         const nick = document.getElementById('username').value.trim().toLowerCase().replace(/[^a-z0-9]/g, '');
         const pass = document.getElementById('password').value;
         const err = document.getElementById('auth-error');
 
-        if(nick.length < 3) return err.innerText = "Никнейм слишком короткий (только a-z и 0-9)";
+        if(nick.length < 3) return err.innerText = "Никнейм некорректный (только a-z и цифры)";
         const email = nick + "@meth.os";
 
         try {
             if(type === 'register') {
                 await auth.createUserWithEmailAndPassword(email, pass);
-                // Создаем профиль в базе
-                await db.collection('users').doc(nick).set({ uid: auth.currentUser.uid, bg: '' });
+                await db.collection('users').doc(nick).set({ uid: auth.currentUser.uid });
             } else {
                 await auth.signInWithEmailAndPassword(email, pass);
             }
-        } catch(e) {
-            err.innerText = e.message;
-        }
+        } catch(e) { err.innerText = e.message; }
     }
 
     function logout() { auth.signOut(); location.reload(); }
 
-    // 3. PEERJS (CALLS) - ВАЖНО: ID = NICKNAME
+    // 3. PEERJS (Исправлено для совместимости)
     function initPeer(id) {
-        // Используем твой ник как ID
+        if(peer) peer.destroy();
+
         peer = new Peer(id, {
             debug: 2,
+            secure: true, // ВАЖНО ДЛЯ FIREBASE
             config: {
                 'iceServers': [
-                    { urls: 'stun:stun.l.google.com:19302' }, // Бесплатный Google STUN
+                    { urls: 'stun:stun.l.google.com:19302' },
+                    { urls: 'stun:stun1.l.google.com:19302' },
+                    { urls: 'stun:stun2.l.google.com:19302' },
                     { urls: 'stun:global.stun.twilio.com:3478' }
                 ]
             }
         });
 
         peer.on('open', (id) => {
-            document.getElementById('my-peer-id').innerText = id;
-        });
-
-        // Входящий звонок
-        peer.on('call', (call) => {
-            document.getElementById('incoming-call').style.display = 'block';
-            document.getElementById('caller-name').innerText = call.peer;
-            currentCall = call;
+            console.log('Connected to PeerServer as: ' + id);
+            document.getElementById('status-text').innerText = "В сети (Готов)";
+            document.getElementById('conn-status').classList.add('online');
         });
 
         peer.on('error', (err) => {
             console.error(err);
-            if(err.type === 'unavailable-id') alert("Этот никнейм уже в сети (возможно это ты в другой вкладке?)");
+            document.getElementById('status-text').innerText = "Ошибка сети";
+            document.getElementById('conn-status').classList.remove('online');
+            if(err.type === 'unavailable-id') alert("Этот ник уже занят (возможно, открыта другая вкладка?)");
+        });
+
+        peer.on('disconnected', () => {
+            document.getElementById('status-text').innerText = "Потеря связи";
+            document.getElementById('conn-status').classList.remove('online');
+        });
+
+        peer.on('call', (call) => {
+            console.log("Incoming call from:", call.peer);
+            document.getElementById('incoming-call').style.display = 'block';
+            document.getElementById('caller-name').innerText = call.peer;
+            currentCall = call;
         });
     }
 
+    function reconnectPeer() {
+        if(!currentUser) return;
+        const id = currentUser.email.split('@')[0];
+        document.getElementById('status-text').innerText = "Переподключение...";
+        initPeer(id);
+    }
+
     // 4. CALL LOGIC
-    async function startLocalStream(video = true, audio = true) {
+    async function startLocalStream(video = true) {
+        const micId = document.getElementById('mic-select').value;
         const constraints = {
             video: video,
-            audio: { echoCancellation: true, noiseSuppression: true }
+            audio: { 
+                echoCancellation: true, 
+                noiseSuppression: true,
+                autoGainControl: true
+            }
         };
-        // Выбор микрофона
-        const micId = document.getElementById('mic-select').value;
         if(micId !== 'По умолчанию') constraints.audio.deviceId = { exact: micId };
 
         try {
@@ -429,55 +425,49 @@
             document.getElementById('local-video').srcObject = localStream;
             return localStream;
         } catch(e) {
-            alert("Ошибка доступа к устройству: " + e.message);
+            alert("Не удалось получить доступ к Камере/Микрофону. Проверьте разрешения в браузере! " + e.message);
             return null;
         }
     }
 
-    function addFriend() {
+    function addFriendAndCall() {
         const id = document.getElementById('add-friend-inp').value.trim().toLowerCase();
         if(!id) return;
         
+        // Save friend
         let friends = JSON.parse(localStorage.getItem('meth_friends') || '[]');
         if(!friends.includes(id)) {
             friends.push(id);
             localStorage.setItem('meth_friends', JSON.stringify(friends));
             loadFriends();
         }
-        makeCall(id); // Сразу пытаемся позвонить
+        makeCall(id);
     }
 
     function loadFriends() {
         const list = document.getElementById('friends-list');
         list.innerHTML = '';
         const friends = JSON.parse(localStorage.getItem('meth_friends') || '[]');
-        
         friends.forEach(f => {
             const div = document.createElement('div');
             div.className = 'friend-item';
-            div.innerHTML = `
-                <div class="user-avatar" style="width:24px; height:24px; font-size:10px;">${f[0].toUpperCase()}</div>
-                <div style="flex:1;">${f}</div>
-                <i class="fas fa-phone" onclick="makeCall('${f}')" style="color:var(--success);"></i>
-                <i class="fas fa-trash" onclick="removeFriend('${f}')" style="color:var(--danger); margin-left:5px;"></i>
-            `;
+            div.innerHTML = `<div class="user-avatar" style="width:20px;height:20px;font-size:10px;">${f[0]}</div><div style="flex:1;">${f}</div><i class="fas fa-phone" onclick="makeCall('${f}')" style="cursor:pointer;color:var(--success)"></i>`;
             list.appendChild(div);
         });
     }
-    
-    function removeFriend(id) {
-        let friends = JSON.parse(localStorage.getItem('meth_friends') || '[]');
-        friends = friends.filter(x => x !== id);
-        localStorage.setItem('meth_friends', JSON.stringify(friends));
-        loadFriends();
-    }
 
     async function makeCall(remoteId) {
+        if(remoteId === currentUser.email.split('@')[0]) return alert("Нельзя звонить самому себе!");
+        
         const stream = await startLocalStream();
         if(!stream) return;
 
+        console.log("Calling " + remoteId + "...");
         document.getElementById('call-modal').style.display = 'block';
+        
         const call = peer.call(remoteId, stream);
+        if(!call) return alert("Ошибка создания звонка. Проверь статус сети.");
+        
         handleCallStream(call);
     }
 
@@ -499,10 +489,11 @@
     function handleCallStream(call) {
         currentCall = call;
         call.on('stream', remoteStream => {
+            console.log("Remote stream received");
             document.getElementById('remote-video').srcObject = remoteStream;
         });
         call.on('close', endCallUI);
-        call.on('error', (e) => { alert("Ошибка звонка"); endCallUI(); });
+        call.on('error', (e) => { console.error(e); alert("Сбой звонка"); endCallUI(); });
     }
 
     function endCall() {
@@ -517,176 +508,104 @@
         currentCall = null;
     }
 
-    // CALL CONTROLS
+    // Media Controls
     function toggleMic() {
         if(!localStream) return;
         const track = localStream.getAudioTracks()[0];
         isMicMuted = !isMicMuted;
         track.enabled = !isMicMuted;
         document.getElementById('btn-mic').classList.toggle('danger', isMicMuted);
-        document.getElementById('btn-mic').innerHTML = isMicMuted ? '<i class="fas fa-microphone-slash"></i>' : '<i class="fas fa-microphone"></i>';
     }
-
     function toggleDeafen() {
         const vid = document.getElementById('remote-video');
         isDeafened = !isDeafened;
         vid.muted = isDeafened;
         document.getElementById('btn-deaf').classList.toggle('danger', isDeafened);
-        document.getElementById('btn-deaf').innerHTML = isDeafened ? '<i class="fas fa-volume-mute"></i>' : '<i class="fas fa-volume-up"></i>';
     }
-
     async function shareScreen() {
         try {
             const screenStream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: true });
-            const screenTrack = screenStream.getVideoTracks()[0];
-            
-            // Заменяем видео трек в текущем звонке
             const sender = currentCall.peerConnection.getSenders().find(s => s.track.kind === 'video');
-            sender.replaceTrack(screenTrack);
-            
+            sender.replaceTrack(screenStream.getVideoTracks()[0]);
             document.getElementById('local-video').srcObject = screenStream;
-            document.getElementById('btn-screen').classList.add('active');
-
-            screenTrack.onended = () => {
-                // Вернуть камеру когда демо закончилось
-                startLocalStream().then(camStream => {
-                    const camTrack = camStream.getVideoTracks()[0];
-                    sender.replaceTrack(camTrack);
-                    document.getElementById('btn-screen').classList.remove('active');
+            
+            screenStream.getVideoTracks()[0].onended = () => {
+                startLocalStream().then(cam => {
+                    sender.replaceTrack(cam.getVideoTracks()[0]);
                 });
             };
-        } catch(e) {
-            console.error(e);
-        }
+        } catch(e) { console.log("Screen share cancelled"); }
     }
 
-    // 5. CHAT & OPTIMIZATION
+    // 5. CHAT & HELPERS
     function sendMessage() {
-        const inp = document.getElementById('msg-in');
-        const txt = inp.value.trim();
+        const txt = document.getElementById('msg-in').value.trim();
         if(!txt) return;
-
         db.collection('messages').add({
-            text: txt,
-            uid: currentUser.uid,
-            user: currentUser.email.split('@')[0],
-            ts: firebase.firestore.FieldValue.serverTimestamp(),
-            type: 'text'
+            text: txt, uid: currentUser.uid, user: currentUser.email.split('@')[0],
+            ts: firebase.firestore.FieldValue.serverTimestamp(), type: 'text'
         });
-        inp.value = '';
+        document.getElementById('msg-in').value = '';
     }
-
     function uploadFile() {
         const file = document.getElementById('file-in').files[0];
         if(!file) return;
-
-        const ref = storage.ref('uploads/' + Date.now() + '_' + file.name);
-        ref.put(file).then(snap => snap.ref.getDownloadURL()).then(url => {
+        const ref = storage.ref('uploads/'+Date.now()+'_'+file.name);
+        ref.put(file).then(snap=>snap.ref.getDownloadURL()).then(url=>{
             db.collection('messages').add({
-                text: url,
-                uid: currentUser.uid,
-                user: currentUser.email.split('@')[0],
-                ts: firebase.firestore.FieldValue.serverTimestamp(),
-                type: file.type.startsWith('image') ? 'image' : 'file'
+                text: url, uid: currentUser.uid, user: currentUser.email.split('@')[0],
+                ts: firebase.firestore.FieldValue.serverTimestamp(), type: file.type.startsWith('image')?'image':'file'
             });
         });
     }
-
     function loadChat() {
-        const container = document.getElementById('msg-container');
-        // Ограничиваем подгрузку последними 50 сообщениями для скорости
-        db.collection('messages').orderBy('ts', 'asc').limitToLast(50)
-        .onSnapshot(snap => {
-            container.innerHTML = '';
-            snap.forEach(doc => {
-                const d = doc.data();
-                const div = document.createElement('div');
-                div.className = 'msg';
-                
-                let content = '';
-                if(d.type === 'image') {
-                    content = `<img src="${d.text}" style="max-width:300px; border-radius:5px; margin-top:5px;">`;
-                } else if(d.type === 'file') {
-                    content = `<a href="${d.text}" target="_blank" style="color:var(--accent);">Скачать файл</a>`;
-                } else {
-                    content = linkify(d.text);
-                }
-
-                div.innerHTML = `
-                    <div class="user-avatar" style="margin-top:5px;">${d.user[0].toUpperCase()}</div>
-                    <div class="msg-content">
-                        <h4>${d.user} <span>${d.ts ? new Date(d.ts.toDate()).toLocaleTimeString() : '...'}</span></h4>
-                        <div class="msg-text">${content}</div>
-                    </div>
-                `;
-                container.appendChild(div);
+        db.collection('messages').orderBy('ts','asc').limitToLast(50).onSnapshot(snap=>{
+            const c = document.getElementById('msg-container'); c.innerHTML='';
+            snap.forEach(doc=>{
+                const d=doc.data();
+                const div=document.createElement('div'); div.className='msg';
+                let content = d.type==='image' ? `<img src="${d.text}" style="max-width:250px;border-radius:5px;">` : (d.type==='file'?`<a href="${d.text}" target="_blank" style="color:#5865F2">Файл</a>` : d.text);
+                div.innerHTML=`<div class="user-avatar">${d.user[0]}</div><div class="msg-content"><h4>${d.user}</h4><div class="msg-text">${content}</div></div>`;
+                c.appendChild(div);
             });
-            container.scrollTop = container.scrollHeight;
+            c.scrollTop=c.scrollHeight;
         });
     }
-
-    // Удаление сообщений старше 2 дней (Запускается 1 раз при старте)
     async function cleanOldMessages() {
-        const date = new Date();
-        date.setDate(date.getDate() - 2);
-        
-        const snaps = await db.collection('messages').where('ts', '<', date).get();
-        const batch = db.batch();
-        snaps.forEach(doc => batch.delete(doc.ref));
-        await batch.commit();
-        console.log("Cleanup done:", snaps.size, "msgs removed");
+        const d=new Date(); d.setDate(d.getDate()-2);
+        const s=await db.collection('messages').where('ts','<',d).get();
+        const b=db.batch(); s.forEach(doc=>b.delete(doc.ref));
+        await b.commit();
     }
-
-    function linkify(text) {
-        const urlRegex = /(https?:\/\/[^\s]+)/g;
-        return text.replace(urlRegex, url => `<a href="${url}" target="_blank" style="color:var(--accent);">${url}</a>`);
-    }
-
-    // 6. UI & MEDIA TABS
-    function switchTab(name) {
-        document.querySelectorAll('.srv-icon').forEach(el => el.classList.remove('active'));
+    
+    // Tabs & Embeds
+    function switchTab(t) {
+        document.querySelectorAll('.chat-view, .embed-view').forEach(e=>e.style.display='none');
+        document.querySelectorAll('.srv-icon').forEach(e=>e.classList.remove('active'));
         event.currentTarget.classList.add('active');
-        
-        document.querySelectorAll('.chat-view, .embed-view').forEach(el => el.style.display = 'none');
-        
-        if(name === 'chat') document.getElementById('tab-chat').style.display = 'flex';
-        else document.getElementById('tab-' + name).style.display = 'flex';
+        document.getElementById('tab-'+t).style.display = (t==='chat'?'flex':'flex');
     }
-
-    function loadSpotify() {
-        let val = document.getElementById('spot-url').value;
-        // Превращаем обычную ссылку в embed
-        if(val && !val.includes('/embed/')) val = val.replace('open.spotify.com/', 'open.spotify.com/embed/');
-        document.getElementById('frame-spotify').src = val || "https://open.spotify.com/embed/playlist/37i9dQZF1DXcBWIGoYBM5M";
+    function loadSpotify() { 
+        let v=document.getElementById('spot-url').value; 
+        if(v&&!v.includes('embed'))v=v.replace('open.spotify.com/','open.spotify.com/embed/');
+        document.getElementById('frame-spotify').src=v||"https://open.spotify.com/embed/playlist/37i9dQZF1DXcBWIGoYBM5M";
     }
-
     function loadYoutube() {
-        let val = document.getElementById('yt-url').value;
-        if(val.includes('watch?v=')) val = val.replace('watch?v=', 'embed/');
-        else if(!val.includes('embed')) val = 'https://www.youtube.com/embed?listType=search&list=' + val;
-        document.getElementById('frame-youtube').src = val;
+        let v=document.getElementById('yt-url').value;
+        if(v.includes('watch?v='))v=v.replace('watch?v=','embed/');
+        else if(!v.includes('http')) v='https://www.youtube.com/embed?listType=search&list='+v;
+        document.getElementById('frame-youtube').src=v;
     }
+    function loadWeb() { document.getElementById('frame-web').src=document.getElementById('web-url').value; }
+    function updateBg() { document.documentElement.style.setProperty('--custom-bg', `url('${document.getElementById('bg-url').value}')`); }
 
-    function loadWeb() {
-        document.getElementById('frame-web').src = document.getElementById('web-url').value;
-    }
-
-    function updateBg() {
-        const url = document.getElementById('bg-url').value;
-        document.documentElement.style.setProperty('--custom-bg', `url('${url}')`);
-    }
-
-    // Загрузка устройств
-    navigator.mediaDevices.enumerateDevices().then(devices => {
-        const sel = document.getElementById('mic-select');
-        devices.filter(d => d.kind === 'audioinput').forEach(d => {
-            const opt = document.createElement('option');
-            opt.value = d.deviceId;
-            opt.text = d.label || `Mic ${sel.length + 1}`;
-            sel.appendChild(opt);
+    // Mic List
+    navigator.mediaDevices.enumerateDevices().then(ds=>{
+        const s=document.getElementById('mic-select');
+        ds.filter(d=>d.kind==='audioinput').forEach(d=>{
+            const o=document.createElement('option'); o.value=d.deviceId; o.text=d.label||'Mic'; s.appendChild(o);
         });
     });
-
 </script>
 </body>
 </html>
