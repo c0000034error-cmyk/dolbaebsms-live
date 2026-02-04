@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>METH</title>
+    <title>METH | Private</title>
     
     <!-- Firebase -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
@@ -14,267 +14,216 @@
     <!-- PeerJS -->
     <script src="https://unpkg.com/peerjs@1.4.7/dist/peerjs.min.js"></script>
     
-    <!-- Fonts & Icons -->
+    <!-- Icons & Fonts -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
 
     <style>
         :root {
-            --bg: #09090b;       /* Почти черный */
-            --sidebar: #000000;  /* Черный */
-            --border: #27272a;   /* Темно-серый */
-            --text: #e4e4e7;     /* Светло-серый */
-            --text-dim: #71717a; /* Тусклый */
-            --accent: #ffffff;   /* Акцент - белый */
-            --danger: #ef4444;
+            --bg: #09090b; --panel: #111; --border: #27272a;
+            --text: #e4e4e7; --accent: #fff; --danger: #ef4444; --success: #10b981;
             --font: 'Inter', sans-serif;
         }
+        * { margin:0; padding:0; box-sizing:border-box; outline:none; font-family:var(--font); }
+        body { background:var(--bg); color:var(--text); height:100vh; display:flex; font-size:13px; overflow:hidden; }
+        ::-webkit-scrollbar { width:4px; } ::-webkit-scrollbar-thumb { background:#333; }
 
-        * { margin: 0; padding: 0; box-sizing: border-box; outline: none; font-family: var(--font); }
-        body { background: var(--bg); color: var(--text); height: 100vh; overflow: hidden; display: flex; font-size: 14px; }
+        /* AUTH */
+        #auth-screen { position:fixed; inset:0; background:var(--bg); z-index:9999; display:flex; place-items:center; justify-content:center; }
+        .auth-box { width:300px; text-align:center; }
+        .min-inp { width:100%; background:transparent; border:none; border-bottom:1px solid #333; color:white; padding:10px 0; margin-bottom:10px; transition:0.3s; }
+        .min-inp:focus { border-color:white; }
+        .min-btn { width:100%; padding:12px; background:white; color:black; border:none; cursor:pointer; font-weight:600; margin-top:10px; border-radius:4px; }
         
-        ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-thumb { background: #333; border-radius: 3px; }
-
-        /* --- AUTH (CLEAN) --- */
-        #auth-screen {
-            position: fixed; inset: 0; z-index: 9999;
-            background: var(--bg); display: flex; justify-content: center; align-items: center;
-        }
-        .auth-form { width: 320px; text-align: center; }
-        .auth-logo { font-size: 24px; font-weight: 600; margin-bottom: 40px; letter-spacing: -1px; }
-        .minimal-inp {
-            width: 100%; background: transparent; border: none; border-bottom: 1px solid #333;
-            color: white; padding: 15px 0; font-size: 14px; margin-bottom: 10px; transition: 0.3s;
-        }
-        .minimal-inp:focus { border-color: white; }
-        .minimal-btn {
-            width: 100%; background: white; color: black; border: none; padding: 15px;
-            font-weight: 500; cursor: pointer; margin-top: 20px; border-radius: 4px; transition: 0.2s;
-        }
-        .minimal-btn:hover { opacity: 0.9; }
-
-        /* --- MAIN LAYOUT --- */
-        #app { display: none; width: 100%; height: 100%; }
-
-        /* 1. NAV RAIL (ICONS) */
-        .nav-rail {
-            width: 60px; background: var(--sidebar); border-right: 1px solid var(--border);
-            display: flex; flex-direction: column; align-items: center; padding-top: 20px; gap: 10px;
-        }
-        .nav-item {
-            width: 40px; height: 40px; border-radius: 8px; display: grid; place-items: center;
-            color: var(--text-dim); cursor: pointer; transition: 0.2s;
-        }
-        .nav-item:hover { color: white; background: #222; }
-        .nav-item.active { color: black; background: white; }
-
-        /* 2. SIDE LIST (CONTACTS) */
-        .side-list {
-            width: 240px; background: var(--bg); border-right: 1px solid var(--border);
-            display: flex; flex-direction: column;
-        }
-        .side-header {
-            padding: 20px; font-weight: 600; font-size: 13px; letter-spacing: -0.5px;
-            display: flex; justify-content: space-between; align-items: center;
-        }
-        .contact-item {
-            padding: 12px 20px; display: flex; align-items: center; gap: 10px;
-            cursor: pointer; color: var(--text-dim); transition: 0.2s;
-        }
-        .contact-item:hover { background: #18181b; color: white; }
-        .user-status-dot { width: 6px; height: 6px; border-radius: 50%; background: #333; }
-        .user-status-dot.online { background: #10b981; }
-
-        /* 3. CONTENT AREA */
-        .content { flex: 1; display: flex; flex-direction: column; background: var(--bg); position: relative; }
+        /* APP LAYOUT */
+        #app { display:none; width:100%; height:100%; }
         
-        /* CHAT */
-        .chat-scroll { flex: 1; overflow-y: auto; padding: 30px; display: flex; flex-direction: column; gap: 20px; }
-        .msg-block { display: flex; gap: 15px; }
-        .msg-avatar { 
-            width: 32px; height: 32px; background: #222; border-radius: 50%; 
-            display: grid; place-items: center; font-size: 12px; font-weight: 600; color: #fff;
-        }
-        .msg-body { flex: 1; }
-        .msg-header { font-size: 13px; font-weight: 600; margin-bottom: 4px; color: white; }
-        .msg-time { font-size: 11px; color: #555; font-weight: 400; margin-left: 8px; }
-        .msg-text { 
-            font-size: 14px; color: #d4d4d8; line-height: 1.5; 
-            background: #18181b; padding: 8px 12px; border-radius: 0 8px 8px 8px; display: inline-block;
-        }
+        /* SIDEBAR (Contacts) */
+        .sidebar { width:260px; background:var(--panel); border-right:1px solid var(--border); display:flex; flex-direction:column; }
+        .sb-header { padding:20px; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center; }
+        .sb-list { flex:1; overflow-y:auto; }
         
-        .input-area {
-            padding: 20px; border-top: 1px solid var(--border); display: flex; gap: 10px;
-        }
-        .clean-inp {
-            flex: 1; background: #18181b; border: 1px solid transparent; color: white;
-            padding: 12px; border-radius: 6px; font-size: 14px;
-        }
-        .clean-inp:focus { background: #222; }
-        .clean-btn {
-            background: transparent; border: none; color: var(--text-dim); cursor: pointer; padding: 0 10px;
-        }
-        .clean-btn:hover { color: white; }
+        .contact { padding:12px 20px; cursor:pointer; display:flex; align-items:center; gap:10px; transition:0.2s; color:#888; }
+        .contact:hover { background:#1a1a1a; color:white; }
+        .contact.active { background:#222; color:white; border-right:2px solid white; }
+        .contact-avatar { width:30px; height:30px; background:#333; border-radius:50%; display:grid; place-items:center; font-size:10px; color:white; font-weight:bold; }
+        
+        /* Requests Section */
+        #req-section { display:none; border-bottom:1px solid var(--border); background:#1a1a00; }
+        .req-item { padding:10px 20px; display:flex; justify-content:space-between; align-items:center; font-size:12px; }
+        .req-btn { font-size:10px; padding:3px 8px; cursor:pointer; border:none; border-radius:3px; }
 
-        /* CALL POPUP (Minimal) */
-        #call-popup {
-            position: fixed; bottom: 30px; right: 30px; width: 320px;
-            background: #111; border: 1px solid #333; border-radius: 12px;
-            overflow: hidden; display: none; z-index: 5000; box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+        /* CHAT AREA */
+        .chat-area { flex:1; display:flex; flex-direction:column; background:var(--bg); position:relative; }
+        .chat-header { 
+            padding:15px 25px; border-bottom:1px solid var(--border); font-weight:600; display:flex; justify-content:space-between; align-items:center;
+            background: rgba(9,9,11,0.95);
         }
-        .video-wrapper { position: relative; height: 200px; background: black; }
-        video { width: 100%; height: 100%; object-fit: cover; }
-        #local-vid {
-            position: absolute; bottom: 15px; right: 15px; width: 80px; height: 60px;
-            background: #222; border-radius: 6px; transform: scaleX(-1); border: 1px solid #444;
-        }
-        .call-actions {
-            display: flex; justify-content: center; gap: 15px; padding: 15px; background: #111;
-        }
-        .circle-btn {
-            width: 40px; height: 40px; border-radius: 50%; background: #222; border: none;
-            color: white; cursor: pointer; transition: 0.2s; display: grid; place-items: center;
-        }
-        .circle-btn:hover { background: #333; }
-        .circle-btn.red { background: rgba(239, 68, 68, 0.2); color: #ef4444; }
-        .circle-btn.red:hover { background: #ef4444; color: white; }
-        .circle-btn.active { background: white; color: black; }
+        .chat-msgs { flex:1; overflow-y:auto; padding:25px; display:flex; flex-direction:column; gap:15px; }
+        
+        .msg { display:flex; gap:10px; max-width:70%; }
+        .msg.me { align-self:flex-end; flex-direction:row-reverse; }
+        .bubble { background:#1f1f22; padding:8px 12px; border-radius:8px; font-size:14px; line-height:1.4; color:#ddd; word-break:break-word;}
+        .msg.me .bubble { background:white; color:black; }
+        .msg-time { font-size:10px; color:#555; margin-top:2px; text-align:right; }
 
-        /* IFRAMES */
-        .iframe-full { width: 100%; height: 100%; border: none; display: none; }
-        .url-header { padding: 15px; border-bottom: 1px solid var(--border); display: flex; gap: 10px; }
+        .chat-input { padding:20px; display:flex; gap:10px; border-top:1px solid var(--border); }
+        .inp-field { flex:1; background:#18181b; border:1px solid #333; color:white; padding:10px 15px; border-radius:6px; }
+        .icon-btn { background:transparent; border:none; color:#666; cursor:pointer; font-size:16px; padding:0 10px; }
+        .icon-btn:hover { color:white; }
 
-        /* MODAL */
-        .modal {
-            position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 6000;
-            display: none; place-items: center;
-        }
-        .modal-box { background: #111; padding: 30px; border-radius: 12px; width: 350px; border: 1px solid #333; }
+        /* MODALS & CALLS */
+        .modal { position:fixed; inset:0; background:rgba(0,0,0,0.8); z-index:5000; display:none; place-items:center; }
+        .modal-card { width:320px; background:#111; border:1px solid #333; padding:25px; border-radius:12px; text-align:center; }
+
+        #call-ui { position:absolute; inset:0; background:black; z-index:100; display:none; flex-direction:column; }
+        .vid-wrapper { flex:1; position:relative; }
+        video { width:100%; height:100%; object-fit:cover; }
+        #local-v { position:absolute; bottom:20px; right:20px; width:100px; height:75px; background:#222; border:1px solid #444; border-radius:6px; transform:scaleX(-1); }
+        .call-bar { height:80px; background:#111; display:flex; justify-content:center; align-items:center; gap:20px; }
+        .c-btn { width:50px; height:50px; border-radius:50%; border:none; background:#222; color:white; cursor:pointer; font-size:18px; }
+        .c-btn:hover { background:#333; }
+        .c-btn.red { background:#ef4444; }
+
+        /* TABS (Apps) */
+        .app-view { display:none; width:100%; height:100%; flex-direction:column; }
+        .nav-rail { width:50px; background:#050505; border-right:1px solid #222; display:flex; flex-direction:column; align-items:center; padding-top:15px; gap:15px; }
+        .nav-icon { color:#555; cursor:pointer; font-size:18px; }
+        .nav-icon.active { color:white; }
+        
+        #log-area { position:fixed; bottom:10px; left:60px; font-size:10px; color:#444; pointer-events:none; }
     </style>
 </head>
 <body>
 
-<!-- AUTH -->
+<!-- 1. AUTH SCREEN -->
 <div id="auth-screen">
-    <div class="auth-form">
-        <div class="auth-logo">METH</div>
-        <input type="text" id="username" class="minimal-inp" placeholder="Username" autocomplete="off">
-        <input type="password" id="password" class="minimal-inp" placeholder="Password">
-        <div id="auth-error" style="color:var(--danger); font-size:12px; margin-top:10px;"></div>
-        <button class="minimal-btn" onclick="authFunc('login')">Login</button>
-        <button class="minimal-btn" onclick="authFunc('register')" style="background:transparent; color:#666; margin-top:0;">Create Account</button>
+    <div class="auth-box">
+        <h1 style="font-weight:300; margin-bottom:30px; letter-spacing:2px;">METH</h1>
+        <input type="text" id="username" class="min-inp" placeholder="Username (English only)" autocomplete="off">
+        <input type="password" id="password" class="min-inp" placeholder="Password">
+        <div id="auth-err" style="color:var(--danger); font-size:11px; margin-top:5px;"></div>
+        <button class="min-btn" onclick="auth('login')">LOGIN</button>
+        <button class="min-btn" onclick="auth('reg')" style="background:transparent; color:#666; border:1px solid #333;">REGISTER</button>
     </div>
 </div>
 
-<!-- INCOMING CALL -->
-<div class="modal" id="incoming-modal">
-    <div class="modal-box" style="text-align:center;">
-        <h3 style="margin-bottom:20px;">Incoming Call</h3>
-        <div id="caller-name" style="margin-bottom:30px; color:#888;">User</div>
+<!-- 2. ADD FRIEND MODAL -->
+<div id="add-modal" class="modal">
+    <div class="modal-card">
+        <h3 style="margin-bottom:15px;">Add Friend</h3>
+        <input type="text" id="target-user" class="min-inp" placeholder="Enter friend's username...">
+        <button class="min-btn" onclick="sendRequest()">Send Request</button>
+        <button class="min-btn" style="background:transparent; color:#666;" onclick="document.getElementById('add-modal').style.display='none'">Cancel</button>
+    </div>
+</div>
+
+<!-- 3. INCOMING CALL MODAL -->
+<div id="ring-modal" class="modal">
+    <div class="modal-card">
+        <h3 style="color:var(--success); margin-bottom:10px;">Incoming Call...</h3>
+        <div id="caller-nick" style="font-size:18px; margin-bottom:20px;">User</div>
         <div style="display:flex; gap:10px; justify-content:center;">
-            <button class="minimal-btn" style="background:#10b981; color:white; padding:10px 30px;" onclick="answerCall()">Answer</button>
-            <button class="minimal-btn" style="background:#ef4444; color:white; padding:10px 30px;" onclick="rejectCall()">Decline</button>
+            <button class="min-btn" style="background:var(--success); color:white;" onclick="answerCall()">Answer</button>
+            <button class="min-btn" style="background:var(--danger); color:white;" onclick="rejectCall()">Decline</button>
         </div>
     </div>
 </div>
 
-<!-- APP -->
+<!-- 4. MAIN INTERFACE -->
 <div id="app">
-    <!-- 1. Nav -->
+    <!-- Nav Rail (Apps) -->
     <div class="nav-rail">
-        <div class="nav-item active" onclick="switchTab('chat')"><i class="fas fa-comment"></i></div>
-        <div class="nav-item" onclick="switchTab('spotify')"><i class="fab fa-spotify"></i></div>
-        <div class="nav-item" onclick="switchTab('youtube')"><i class="fab fa-youtube"></i></div>
-        <div class="nav-item" onclick="switchTab('browser')"><i class="fas fa-compass"></i></div>
-        <div style="flex:1;"></div>
-        <div class="nav-item" onclick="document.getElementById('settings-modal').style.display='grid'"><i class="fas fa-sliders-h"></i></div>
+        <div class="nav-icon active" onclick="showApp('chat')"><i class="fas fa-comment"></i></div>
+        <div class="nav-icon" onclick="showApp('spotify')"><i class="fab fa-spotify"></i></div>
+        <div class="nav-icon" onclick="showApp('youtube')"><i class="fab fa-youtube"></i></div>
+        <div class="nav-icon" onclick="showApp('browser')"><i class="fas fa-globe"></i></div>
     </div>
 
-    <!-- 2. Sidebar -->
-    <div class="side-list">
-        <div class="side-header">
-            <span>CONTACTS</span>
-            <button onclick="addFriendInput()" style="background:none; border:none; color:white; cursor:pointer;">+</button>
-        </div>
-        
-        <div id="add-friend-box" style="padding:10px; display:none; border-bottom:1px solid #222;">
-            <input id="friend-inp" type="text" placeholder="username..." style="background:#111; border:none; color:white; padding:5px; width:100%;">
-            <button onclick="addFriendAndCall()" style="width:100%; margin-top:5px; background:white; border:none; cursor:pointer; font-size:10px; padding:4px;">ADD</button>
-        </div>
-
-        <div id="friends-list" style="flex:1; overflow-y:auto;">
-            <!-- Friends here -->
-        </div>
-
-        <div style="padding:15px; border-top:1px solid var(--border); display:flex; align-items:center; gap:10px;">
-            <div class="user-status-dot" id="status-dot"></div>
-            <div style="flex:1;">
-                <div style="font-weight:600; font-size:12px;" id="my-name">...</div>
-                <div style="font-size:10px; color:#555;" id="my-status">Offline</div>
+    <!-- Chat App -->
+    <div id="view-chat" class="app-view" style="display:flex; flex-direction:row;">
+        <!-- Contacts Sidebar -->
+        <div class="sidebar">
+            <div class="sb-header">
+                <span>CHATS</span>
+                <i class="fas fa-plus" style="cursor:pointer;" onclick="document.getElementById('add-modal').style.display='grid'"></i>
             </div>
-            <i class="fas fa-redo" style="cursor:pointer; font-size:10px; color:#555;" onclick="reconnectPeer()"></i>
-        </div>
-    </div>
+            
+            <!-- Requests Pending -->
+            <div id="req-section">
+                <!-- Request Items Go Here -->
+            </div>
 
-    <!-- 3. Content -->
-    <div class="content">
-        
-        <!-- Chat -->
-        <div id="tab-chat" style="display:flex; flex-direction:column; height:100%;">
-            <div class="side-header" style="border-bottom:1px solid var(--border);">GENERAL</div>
-            <div class="chat-scroll" id="msg-container"></div>
-            <div class="input-area">
-                <button class="clean-btn" onclick="document.getElementById('file-in').click()"><i class="fas fa-plus"></i></button>
-                <input type="file" id="file-in" hidden onchange="uploadFile()">
-                <input type="text" class="clean-inp" id="msg-in" placeholder="Type a message..." onkeypress="if(event.key==='Enter') sendMessage()">
-                <button class="clean-btn" onclick="sendMessage()"><i class="fas fa-arrow-up"></i></button>
+            <div class="sb-list" id="contact-list">
+                <!-- Contacts Go Here -->
+            </div>
+            
+            <div style="padding:15px; border-top:1px solid #222; font-size:11px; color:#555;">
+                ID: <span id="my-id" style="color:white;">...</span>
             </div>
         </div>
 
-        <!-- Apps -->
-        <div id="tab-spotify" class="iframe-full" style="flex-direction:column;">
-            <div class="url-header"><input id="spot-url" class="clean-inp" placeholder="Spotify Link"><button class="minimal-btn" style="width:auto; margin:0; padding:10px;" onclick="loadSpotify()">Load</button></div>
-            <iframe id="frame-spotify" style="flex:1; border:none;" src="https://open.spotify.com/embed/playlist/37i9dQZF1DXcBWIGoYBM5M"></iframe>
-        </div>
+        <!-- Conversation Area -->
+        <div class="chat-area">
+            <div class="chat-header">
+                <span id="chat-title">Select a friend</span>
+                <div id="chat-actions" style="display:none;">
+                    <i class="fas fa-phone" style="cursor:pointer; margin-right:15px;" onclick="startCall()"></i>
+                    <i class="fas fa-video" style="cursor:pointer;" onclick="startCall(true)"></i>
+                </div>
+            </div>
 
-        <div id="tab-youtube" class="iframe-full" style="flex-direction:column;">
-            <div class="url-header"><input id="yt-url" class="clean-inp" placeholder="YouTube Search"><button class="minimal-btn" style="width:auto; margin:0; padding:10px;" onclick="loadYoutube()">Watch</button></div>
-            <iframe id="frame-youtube" style="flex:1; border:none;" src="https://www.youtube.com/embed/dQw4w9WgXcQ"></iframe>
-        </div>
+            <div class="chat-msgs" id="msgs"></div>
 
-        <div id="tab-browser" class="iframe-full" style="flex-direction:column;">
-            <div class="url-header"><input id="web-url" class="clean-inp" placeholder="URL"><button class="minimal-btn" style="width:auto; margin:0; padding:10px;" onclick="loadWeb()">Go</button></div>
-            <iframe id="frame-web" style="flex:1; border:none;" src="https://www.bing.com"></iframe>
-        </div>
+            <div class="chat-input" id="inp-area" style="display:none;">
+                <input type="file" id="file-up" hidden onchange="uploadFile()">
+                <button class="icon-btn" onclick="document.getElementById('file-up').click()"><i class="fas fa-paperclip"></i></button>
+                <input type="text" id="msg-txt" class="inp-field" placeholder="Message..." onkeypress="if(event.key==='Enter') sendMsg()">
+                <button class="icon-btn" onclick="sendMsg()"><i class="fas fa-arrow-up"></i></button>
+            </div>
 
+            <!-- Call UI Overlay -->
+            <div id="call-ui">
+                <div class="vid-wrapper">
+                    <video id="remote-v" autoplay playsinline></video>
+                    <video id="local-v" autoplay muted playsinline></video>
+                </div>
+                <div class="call-bar">
+                    <button class="c-btn" onclick="toggleMic()" id="btn-mic"><i class="fas fa-microphone"></i></button>
+                    <button class="c-btn" onclick="shareScreen()"><i class="fas fa-desktop"></i></button>
+                    <button class="c-btn red" onclick="endCall()"><i class="fas fa-phone-slash"></i></button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Other Apps -->
+    <div id="view-spotify" class="app-view">
+        <div style="padding:10px; background:#111; display:flex; gap:10px;">
+            <input id="spot-url" class="inp-field" placeholder="Spotify Link">
+            <button class="min-btn" style="width:auto; margin:0;" onclick="loadUrl('spotify')">Load</button>
+        </div>
+        <iframe id="fr-spotify" style="flex:1; border:none;" src="https://open.spotify.com/embed/playlist/37i9dQZF1DXcBWIGoYBM5M"></iframe>
+    </div>
+
+    <div id="view-youtube" class="app-view">
+        <div style="padding:10px; background:#111; display:flex; gap:10px;">
+            <input id="yt-url" class="inp-field" placeholder="YouTube Search/Link">
+            <button class="min-btn" style="width:auto; margin:0;" onclick="loadUrl('youtube')">Watch</button>
+        </div>
+        <iframe id="fr-youtube" style="flex:1; border:none;" src="https://www.youtube.com/embed/dQw4w9WgXcQ"></iframe>
+    </div>
+    
+    <div id="view-browser" class="app-view">
+        <div style="padding:10px; background:#111; display:flex; gap:10px;">
+            <input id="web-url" class="inp-field" placeholder="URL">
+            <button class="min-btn" style="width:auto; margin:0;" onclick="loadUrl('web')">Go</button>
+        </div>
+        <iframe id="fr-web" style="flex:1; border:none;" src="https://www.bing.com"></iframe>
     </div>
 </div>
 
-<!-- CALL POPUP -->
-<div id="call-popup">
-    <div class="video-wrapper">
-        <video id="remote-vid" autoplay playsinline></video>
-        <video id="local-vid" autoplay muted playsinline></video>
-    </div>
-    <div class="call-actions">
-        <button class="circle-btn" onclick="toggleMic()" id="btn-mic"><i class="fas fa-microphone"></i></button>
-        <button class="circle-btn" onclick="toggleDeafen()" id="btn-deaf"><i class="fas fa-volume-up"></i></button>
-        <button class="circle-btn" onclick="shareScreen()" id="btn-screen"><i class="fas fa-desktop"></i></button>
-        <button class="circle-btn red" onclick="endCall()"><i class="fas fa-phone-slash"></i></button>
-    </div>
-</div>
-
-<!-- SETTINGS -->
-<div class="modal" id="settings-modal">
-    <div class="modal-box">
-        <h3 style="margin-bottom:20px;">Settings</h3>
-        <label style="font-size:12px; color:#666;">Audio Input</label>
-        <select id="mic-select" class="minimal-inp" style="background:#111; padding:10px; border:1px solid #333;"><option>Default</option></select>
-        <button class="minimal-btn" style="background:#222; color:white; margin-top:20px;" onclick="document.getElementById('settings-modal').style.display='none'">Close</button>
-        <button class="minimal-btn" style="background:#ef4444; color:white; margin-top:10px;" onclick="logout()">Log Out</button>
-    </div>
-</div>
+<div id="log-area">Ready.</div>
 
 <script>
     // --- 1. SETUP ---
@@ -293,259 +242,309 @@
     const db = firebase.firestore();
     const storage = firebase.storage();
     
-    let currentUser = null, peer = null, currentCall = null, localStream = null;
-    let isMicMuted = false, isDeafened = false;
+    let myNick = "";
+    let peer = null;
+    let activeChat = null; // ID чата (friendNick)
+    let activeChatDoc = null; // Реальный ID дока в базе
+    let currentCall = null;
+    let localStream = null;
+
+    function log(msg) { 
+        console.log(msg); 
+        const l = document.getElementById('log-area');
+        l.innerText = msg;
+        setTimeout(()=>l.innerText='', 5000);
+    }
 
     // --- 2. AUTH ---
     auth.onAuthStateChanged(user => {
-        if (user) {
-            currentUser = user;
-            document.getElementById('auth-screen').style.display = 'none';
-            document.getElementById('app').style.display = 'flex';
+        if(user) {
+            myNick = user.email.split('@')[0];
+            document.getElementById('my-id').innerText = myNick;
+            document.getElementById('auth-screen').style.display='none';
+            document.getElementById('app').style.display='flex';
             
-            const cleanId = user.email.split('@')[0];
-            document.getElementById('my-name').innerText = cleanId;
-            
-            initPeer(cleanId);
-            loadChat();
+            initPeer();
             loadFriends();
-            updateMics();
-            cleanMsgs();
+            listenRequests();
         } else {
-            document.getElementById('auth-screen').style.display = 'flex';
+            document.getElementById('auth-screen').style.display='flex';
         }
     });
 
-    async function authFunc(type) {
-        const nick = document.getElementById('username').value.trim().toLowerCase().replace(/[^a-z0-9]/g, '');
-        const pass = document.getElementById('password').value;
-        const email = nick + "@meth.app";
+    async function auth(type) {
+        const u = document.getElementById('username').value.trim().toLowerCase();
+        const p = document.getElementById('password').value;
+        if(!u || u.length < 3) return alert("Username too short");
+        const email = u + "@meth.app";
 
         try {
-            if(type === 'register') {
-                await auth.createUserWithEmailAndPassword(email, pass);
-                await db.collection('users').doc(nick).set({ uid: auth.currentUser.uid });
-            } else await auth.signInWithEmailAndPassword(email, pass);
-        } catch(e) { document.getElementById('auth-error').innerText = e.message; }
+            if(type === 'reg') {
+                await auth.createUserWithEmailAndPassword(email, p);
+                // Создаем профиль, чтобы можно было найти
+                await db.collection('users').doc(u).set({ uid: auth.currentUser.uid });
+            } else {
+                await auth.signInWithEmailAndPassword(email, p);
+            }
+        } catch(e) { document.getElementById('auth-err').innerText = e.message; }
     }
-    function logout() { auth.signOut(); location.reload(); }
 
-    // --- 3. NETWORK (PEER) ---
-    function initPeer(id) {
+    // --- 3. FRIENDS & REQUESTS SYSTEM ---
+    async function sendRequest() {
+        const target = document.getElementById('target-user').value.trim().toLowerCase();
+        if(!target || target === myNick) return alert("Invalid username");
+
+        // Проверяем, существует ли юзер
+        const doc = await db.collection('users').doc(target).get();
+        if(!doc.exists) return alert("User not found!");
+
+        // Создаем заявку
+        const reqId = [myNick, target].sort().join('_');
+        await db.collection('requests').doc(reqId).set({
+            from: myNick, to: target, status: 'pending'
+        });
+        alert("Request sent!");
+        document.getElementById('add-modal').style.display='none';
+    }
+
+    function listenRequests() {
+        db.collection('requests').where('to', '==', myNick).where('status','==','pending')
+        .onSnapshot(snap => {
+            const div = document.getElementById('req-section');
+            div.innerHTML = '';
+            if(snap.empty) div.style.display = 'none';
+            else {
+                div.style.display = 'block';
+                snap.forEach(d => {
+                    const data = d.data();
+                    const el = document.createElement('div'); el.className = 'req-item';
+                    el.innerHTML = `<span><b>${data.from}</b> wants to chat</span>
+                    <div><button class="req-btn" style="background:var(--success);color:white;" onclick="acceptReq('${d.id}', '${data.from}')">✔</button></div>`;
+                    div.appendChild(el);
+                });
+            }
+        });
+    }
+
+    async function acceptReq(reqId, friendNick) {
+        // Обновляем статус заявки
+        await db.collection('requests').doc(reqId).update({ status: 'accepted' });
+        
+        // Добавляем в друзья (просто создаем запись о чате)
+        const chatID = [myNick, friendNick].sort().join('_');
+        
+        // Записываем себе и другу
+        await db.collection('users').doc(myNick).collection('friends').doc(friendNick).set({ chatId: chatID });
+        await db.collection('users').doc(friendNick).collection('friends').doc(myNick).set({ chatId: chatID });
+        
+        // Создаем сам чат
+        await db.collection('chats').doc(chatID).set({ members: [myNick, friendNick] });
+    }
+
+    function loadFriends() {
+        db.collection('users').doc(myNick).collection('friends').onSnapshot(snap => {
+            const list = document.getElementById('contact-list');
+            list.innerHTML = '';
+            snap.forEach(doc => {
+                const fNick = doc.id;
+                const d = document.createElement('div');
+                d.className = 'contact';
+                d.onclick = () => openChat(fNick, doc.data().chatId);
+                d.innerHTML = `<div class="contact-avatar">${fNick[0].toUpperCase()}</div><div>${fNick}</div>`;
+                list.appendChild(d);
+            });
+        });
+    }
+
+    // --- 4. CHAT SYSTEM (PRIVATE) ---
+    let msgUnsub = null;
+
+    function openChat(friendNick, chatId) {
+        activeChat = friendNick;
+        activeChatDoc = chatId;
+        
+        document.getElementById('chat-title').innerText = "@" + friendNick;
+        document.getElementById('chat-actions').style.display = 'block';
+        document.getElementById('inp-area').style.display = 'flex';
+        
+        // Подсветка активного
+        document.querySelectorAll('.contact').forEach(e => e.classList.remove('active'));
+        // (Тут можно добавить логику добавления класса active к нажатому элементу)
+
+        // Грузим сообщения
+        if(msgUnsub) msgUnsub();
+        msgUnsub = db.collection('chats').doc(chatId).collection('messages')
+            .orderBy('ts', 'asc').limitToLast(50)
+            .onSnapshot(snap => {
+                const box = document.getElementById('msgs');
+                box.innerHTML = '';
+                snap.forEach(doc => {
+                    const m = doc.data();
+                    const div = document.createElement('div');
+                    div.className = 'msg ' + (m.from === myNick ? 'me' : '');
+                    
+                    let content = m.type==='img' ? `<img src="${m.txt}" style="max-width:200px;border-radius:4px;">` : 
+                                  m.type==='file' ? `<a href="${m.txt}" target="_blank" style="color:blue">File</a>` : m.txt;
+
+                    div.innerHTML = `<div class="bubble">${content}<div class="msg-time">${m.ts?new Date(m.ts.toDate()).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}):''}</div></div>`;
+                    box.appendChild(div);
+                });
+                box.scrollTop = box.scrollHeight;
+            });
+    }
+
+    function sendMsg() {
+        const t = document.getElementById('msg-txt').value.trim();
+        if(!t || !activeChatDoc) return;
+        
+        db.collection('chats').doc(activeChatDoc).collection('messages').add({
+            txt: t, from: myNick, type: 'text',
+            ts: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        document.getElementById('msg-txt').value = '';
+    }
+
+    function uploadFile() {
+        const f = document.getElementById('file-up').files[0];
+        if(!f || !activeChatDoc) return;
+        const ref = storage.ref('chats/'+activeChatDoc+'/'+Date.now());
+        ref.put(f).then(s=>s.ref.getDownloadURL()).then(u => {
+            db.collection('chats').doc(activeChatDoc).collection('messages').add({
+                txt: u, from: myNick, type: f.type.startsWith('image')?'img':'file',
+                ts: firebase.firestore.FieldValue.serverTimestamp()
+            });
+        });
+    }
+
+    // --- 5. CALLS (PEERJS) ---
+    function initPeer() {
+        // ID = НИКНЕЙМ. Это критично.
         if(peer) peer.destroy();
-        peer = new Peer(id, {
-            secure: true, debug: 1,
-            config: {'iceServers': [{urls:'stun:stun.l.google.com:19302'},{urls:'stun:global.stun.twilio.com:3478'}]}
+        peer = new Peer(myNick, {
+            debug: 1,
+            config: {'iceServers': [{urls:'stun:stun.l.google.com:19302'}]}
         });
-        peer.on('open', () => {
-            document.getElementById('my-status').innerText = "Online";
-            document.getElementById('status-dot').classList.add('online');
-        });
-        peer.on('error', () => {
-            document.getElementById('my-status').innerText = "Network Error";
-            document.getElementById('status-dot').classList.remove('online');
-        });
+
+        peer.on('open', id => log("PeerID: " + id));
+        peer.on('error', e => log("Peer Error: " + e.type));
+        
         peer.on('call', call => {
-            document.getElementById('incoming-modal').style.display = 'flex';
-            document.getElementById('caller-name').innerText = call.peer;
+            // Входящий звонок
+            document.getElementById('ring-modal').style.display = 'grid';
+            document.getElementById('caller-nick').innerText = call.peer;
             currentCall = call;
         });
     }
-    function reconnectPeer() { if(currentUser) initPeer(currentUser.email.split('@')[0]); }
 
-    // --- 4. CALLS (FIXED) ---
-    async function startStream(video=true) {
-        const mic = document.getElementById('mic-select').value;
-        let conf = { echoCancellation: true, noiseSuppression: true };
-        if(mic !== 'Default') conf.deviceId = { exact: mic };
-
-        try {
-            const s = await navigator.mediaDevices.getUserMedia({ video: video, audio: conf });
-            document.getElementById('local-vid').srcObject = s;
-            document.getElementById('local-vid').style.display = 'block';
-            return s;
-        } catch(e) {
-            if(video) {
-                try {
-                    // Fallback to audio only
-                    const as = await navigator.mediaDevices.getUserMedia({ video: false, audio: conf });
-                    document.getElementById('local-vid').style.display = 'none';
-                    return as;
-                } catch(e2) { alert("Mic Access Denied"); return null; }
-            }
-            return null;
-        }
-    }
-
-    async function makeCall(id) {
-        if(id === currentUser.email.split('@')[0]) return;
-        const s = await startStream(true);
-        if(!s) return;
+    async function startCall(video=false) {
+        if(!activeChat) return alert("Select a chat first!");
         
-        document.getElementById('call-popup').style.display = 'block';
-        const call = peer.call(id, s);
+        log("Calling " + activeChat + "...");
+        const stream = await getMedia(video);
+        if(!stream) return;
+
+        document.getElementById('call-ui').style.display = 'flex';
+        // Звоним по нику друга (это и есть его ID)
+        const call = peer.call(activeChat, stream);
         handleCall(call);
     }
-    
+
     async function answerCall() {
-        document.getElementById('incoming-modal').style.display = 'none';
-        const s = await startStream(true);
-        if(!s) return;
-        
-        document.getElementById('call-popup').style.display = 'block';
-        currentCall.answer(s);
+        document.getElementById('ring-modal').style.display = 'none';
+        const stream = await getMedia(true); // При ответе обычно включаем видео, если есть
+        if(!stream) return;
+
+        document.getElementById('call-ui').style.display = 'flex';
+        currentCall.answer(stream);
         handleCall(currentCall);
     }
-    
+
     function rejectCall() {
-        document.getElementById('incoming-modal').style.display = 'none';
+        document.getElementById('ring-modal').style.display = 'none';
         if(currentCall) currentCall.close();
     }
 
     function handleCall(call) {
         currentCall = call;
-        call.on('stream', rs => document.getElementById('remote-vid').srcObject = rs);
-        call.on('close', closeCallUI);
-        call.on('error', closeCallUI);
+        call.on('stream', rs => document.getElementById('remote-v').srcObject = rs);
+        call.on('close', closeCall);
+        call.on('error', e => { log("Call fail"); closeCall(); });
     }
 
-    function endCall() { if(currentCall) currentCall.close(); closeCallUI(); }
-    
-    function closeCallUI() {
-        document.getElementById('call-popup').style.display = 'none';
+    async function getMedia(video) {
+        try {
+            const s = await navigator.mediaDevices.getUserMedia({video: video, audio: true});
+            localStream = s;
+            document.getElementById('local-v').srcObject = s;
+            return s;
+        } catch(e) {
+            alert("Mic/Cam error: " + e.message);
+            // Fallback audio only
+            if(video) return getMedia(false);
+            return null;
+        }
+    }
+
+    function endCall() {
+        if(currentCall) currentCall.close();
+        closeCall();
+    }
+
+    function closeCall() {
+        document.getElementById('call-ui').style.display = 'none';
         if(localStream) localStream.getTracks().forEach(t=>t.stop());
-        document.getElementById('remote-vid').srcObject = null;
+        document.getElementById('remote-v').srcObject = null;
         currentCall = null;
     }
 
-    // Media Controls
     function toggleMic() {
         if(!localStream) return;
         const t = localStream.getAudioTracks()[0];
-        isMicMuted = !isMicMuted; t.enabled = !isMicMuted;
-        document.getElementById('btn-mic').classList.toggle('red', isMicMuted);
+        t.enabled = !t.enabled;
+        document.getElementById('btn-mic').style.color = t.enabled ? 'white' : 'red';
     }
-    function toggleDeafen() {
-        const v = document.getElementById('remote-vid');
-        isDeafened = !isDeafened; v.muted = isDeafened;
-        document.getElementById('btn-deaf').classList.toggle('red', isDeafened);
-    }
+
     async function shareScreen() {
         try {
-            const ss = await navigator.mediaDevices.getDisplayMedia({video:true,audio:true});
+            const s = await navigator.mediaDevices.getDisplayMedia({video:true});
+            const track = s.getVideoTracks()[0];
             const sender = currentCall.peerConnection.getSenders().find(s=>s.track.kind==='video');
-            if(sender) sender.replaceTrack(ss.getVideoTracks()[0]);
-            document.getElementById('local-vid').srcObject = ss;
-            document.getElementById('btn-screen').classList.add('active');
-            
-            ss.getVideoTracks()[0].onended = () => {
-                startStream(true).then(cs => {
-                    if(sender) sender.replaceTrack(cs.getVideoTracks()[0]);
-                    document.getElementById('btn-screen').classList.remove('active');
-                });
+            sender.replaceTrack(track);
+            document.getElementById('local-v').srcObject = s;
+            track.onended = () => {
+                // Вернуть камеру, но тут упрощенно просто закроем скриншер
+                endCall(); 
             };
-        } catch(e){}
+        } catch(e) {}
     }
 
-    // --- 5. UI & DATA ---
-    function addFriendInput() {
-        const box = document.getElementById('add-friend-box');
-        box.style.display = box.style.display==='none'?'block':'none';
-    }
-    function addFriendAndCall() {
-        const id = document.getElementById('friend-inp').value.trim().toLowerCase();
-        if(!id) return;
-        let fs = JSON.parse(localStorage.getItem('meth_friends')||'[]');
-        if(!fs.includes(id)) { fs.push(id); localStorage.setItem('meth_friends',JSON.stringify(fs)); loadFriends(); }
-    }
-    function loadFriends() {
-        const l = document.getElementById('friends-list'); l.innerHTML='';
-        const fs = JSON.parse(localStorage.getItem('meth_friends')||'[]');
-        fs.forEach(f=>{
-            const d = document.createElement('div'); d.className='contact-item';
-            d.innerHTML=`
-                <div style="width:24px;height:24px;background:#222;border-radius:50%;display:grid;place-items:center;font-size:10px;">${f[0].toUpperCase()}</div>
-                <div style="flex:1;font-size:13px;">${f}</div>
-                <i class="fas fa-phone" onclick="makeCall('${f}')" style="font-size:10px;"></i>
-                <i class="fas fa-times" onclick="delFriend('${f}')" style="font-size:10px;margin-left:5px;"></i>`;
-            l.appendChild(d);
-        });
-    }
-    function delFriend(id) {
-        let fs = JSON.parse(localStorage.getItem('meth_friends')||'[]');
-        fs = fs.filter(x=>x!==id); localStorage.setItem('meth_friends',JSON.stringify(fs)); loadFriends();
-    }
-
-    // --- 6. CHAT ---
-    function sendMessage() {
-        const t = document.getElementById('msg-in').value.trim();
-        if(!t) return;
-        db.collection('messages').add({
-            text:t, uid:currentUser.uid, user:currentUser.email.split('@')[0],
-            ts:firebase.firestore.FieldValue.serverTimestamp(), type:'text'
-        });
-        document.getElementById('msg-in').value='';
-    }
-    function uploadFile() {
-        const f = document.getElementById('file-in').files[0];
-        if(!f) return;
-        const ref = storage.ref('u/'+Date.now());
-        ref.put(f).then(s=>s.ref.getDownloadURL()).then(u=>{
-            db.collection('messages').add({
-                text:u, uid:currentUser.uid, user:currentUser.email.split('@')[0],
-                ts:firebase.firestore.FieldValue.serverTimestamp(), type:f.type.startsWith('image')?'image':'file'
-            });
-        });
-    }
-    function loadChat() {
-        db.collection('messages').orderBy('ts','asc').limitToLast(50).onSnapshot(s=>{
-            const c = document.getElementById('msg-container'); c.innerHTML='';
-            s.forEach(d=>{
-                const dt = d.data();
-                const div = document.createElement('div'); div.className='msg-block';
-                let content = dt.type==='image'?`<img src="${dt.text}" style="max-width:200px;border-radius:8px;">` :
-                              (dt.type==='file'?`<a href="${dt.text}" target="_blank" style="color:white;text-decoration:underline;">File</a>` : linkify(dt.text));
-                
-                div.innerHTML = `
-                    <div class="msg-avatar">${dt.user[0].toUpperCase()}</div>
-                    <div class="msg-body">
-                        <div class="msg-header">${dt.user} <span class="msg-time">${dt.ts?new Date(dt.ts.toDate()).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}):''}</span></div>
-                        <div class="msg-text">${content}</div>
-                    </div>`;
-                c.appendChild(div);
-            });
-            c.scrollTop = c.scrollHeight;
-        });
-    }
-    function linkify(t) { return t.replace(/(https?:\/\/[^\s]+)/g, u=>`<a href="${u}" target="_blank" style="color:#aaa;">${u}</a>`); }
-    async function cleanMsgs() {
-        const d=new Date(); d.setDate(d.getDate()-2);
-        const s = await db.collection('messages').where('ts','<',d).get();
-        const b = db.batch(); s.forEach(doc=>b.delete(doc.ref)); await b.commit();
-    }
-
-    // --- 7. TABS ---
-    function switchTab(t) {
-        document.querySelectorAll('.nav-item').forEach(e=>e.classList.remove('active'));
+    // --- 6. APPS & UI ---
+    function showApp(id) {
+        document.querySelectorAll('.app-view').forEach(e=>e.style.display='none');
+        document.querySelectorAll('.nav-icon').forEach(e=>e.classList.remove('active'));
         event.currentTarget.classList.add('active');
-        document.getElementById('tab-chat').style.display='none';
-        document.querySelectorAll('.iframe-full').forEach(e=>e.style.display='none');
         
-        if(t==='chat') document.getElementById('tab-chat').style.display='flex';
-        else document.getElementById('tab-'+t).style.display='flex';
+        if(id === 'chat') document.getElementById('view-chat').style.display = 'flex';
+        else document.getElementById('view-'+id).style.display = 'flex';
     }
-    function loadSpotify(){ let v=document.getElementById('spot-url').value; if(v&&!v.includes('embed'))v=v.replace('open.spotify.com/','open.spotify.com/embed/'); document.getElementById('frame-spotify').src=v||"https://open.spotify.com/embed/playlist/37i9dQZF1DXcBWIGoYBM5M"; }
-    function loadYoutube(){ let v=document.getElementById('yt-url').value; if(v.includes('watch?v='))v=v.replace('watch?v=','embed/'); else if(!v.includes('http')) v='https://www.youtube.com/embed?listType=search&list='+v; document.getElementById('frame-youtube').src=v; }
-    function loadWeb(){ document.getElementById('frame-web').src=document.getElementById('web-url').value; }
-    
-    async function updateMics() {
-        try { await navigator.mediaDevices.getUserMedia({audio:true});
-        const ds=await navigator.mediaDevices.enumerateDevices();
-        const s=document.getElementById('mic-select'); s.innerHTML='<option>Default</option>';
-        ds.filter(d=>d.kind==='audioinput').forEach(d=>{
-            const o=document.createElement('option'); o.value=d.deviceId; o.text=d.label; s.appendChild(o);
-        }); }catch(e){}
+
+    function loadUrl(type) {
+        if(type==='spotify') {
+            let v = document.getElementById('spot-url').value;
+            if(v && !v.includes('embed')) v = v.replace('open.spotify.com/', 'open.spotify.com/embed/');
+            document.getElementById('fr-spotify').src = v || "https://open.spotify.com/embed/playlist/37i9dQZF1DXcBWIGoYBM5M";
+        }
+        if(type==='youtube') {
+            let v = document.getElementById('yt-url').value;
+            if(v.includes('watch?v=')) v = v.replace('watch?v=','embed/');
+            else if(!v.includes('http')) v = 'https://www.youtube.com/embed?listType=search&list='+v;
+            document.getElementById('fr-youtube').src = v;
+        }
+        if(type==='web') {
+            document.getElementById('fr-web').src = document.getElementById('web-url').value;
+        }
     }
+
 </script>
 </body>
 </html>
