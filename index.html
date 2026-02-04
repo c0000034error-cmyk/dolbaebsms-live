@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>METH | Private</title>
     
     <!-- Firebase -->
@@ -24,21 +24,21 @@
             --text: #e4e4e7; --accent: #fff; --danger: #ef4444; --success: #10b981;
             --font: 'Inter', sans-serif;
         }
-        * { margin:0; padding:0; box-sizing:border-box; outline:none; font-family:var(--font); }
+        * { margin:0; padding:0; box-sizing:border-box; outline:none; font-family:var(--font); -webkit-tap-highlight-color: transparent; }
         body { background:var(--bg); color:var(--text); height:100vh; display:flex; font-size:13px; overflow:hidden; }
         ::-webkit-scrollbar { width:4px; } ::-webkit-scrollbar-thumb { background:#333; }
 
-        /* ЭКРАН ВХОДА */
+        /* ВХОД */
         #auth-screen { position:fixed; inset:0; background:var(--bg); z-index:9999; display:flex; place-items:center; justify-content:center; }
         .auth-box { width:300px; text-align:center; }
         .min-inp { width:100%; background:transparent; border:none; border-bottom:1px solid #333; color:white; padding:10px 0; margin-bottom:10px; transition:0.3s; }
         .min-inp:focus { border-color:white; }
         .min-btn { width:100%; padding:12px; background:white; color:black; border:none; cursor:pointer; font-weight:600; margin-top:10px; border-radius:4px; }
         
-        /* ОСНОВНОЙ ИНТЕРФЕЙС */
+        /* ИНТЕРФЕЙС */
         #app { display:none; width:100%; height:100%; }
         
-        /* САЙДБАР (Контакты) */
+        /* КОНТАКТЫ */
         .sidebar { width:280px; background:var(--panel); border-right:1px solid var(--border); display:flex; flex-direction:column; }
         .sb-header { padding:20px; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center; }
         .sb-list { flex:1; overflow-y:auto; }
@@ -48,12 +48,17 @@
         .contact.active { background:#222; color:white; border-right:2px solid white; }
         .contact-avatar { width:30px; height:30px; background:#333; border-radius:50%; display:grid; place-items:center; font-size:12px; color:white; font-weight:bold; }
         
-        /* СЕКЦИЯ ЗАЯВОК */
+        /* СТАТУС БАР */
+        .status-bar { padding:15px; border-top:1px solid #222; font-size:11px; color:#555; display:flex; align-items:center; gap:10px; background:#0e0e10; }
+        .status-dot { width:8px; height:8px; border-radius:50%; background:var(--danger); box-shadow:0 0 5px var(--danger); transition:0.3s; }
+        .status-dot.online { background:var(--success); box-shadow:0 0 5px var(--success); }
+        
+        /* ЗАЯВКИ */
         #req-section { display:none; border-bottom:1px solid var(--border); background:#1a1a00; }
         .req-item { padding:10px 20px; display:flex; justify-content:space-between; align-items:center; font-size:12px; }
         .req-btn { font-size:10px; padding:4px 8px; cursor:pointer; border:none; border-radius:3px; }
 
-        /* ОБЛАСТЬ ЧАТА */
+        /* ЧАТ */
         .chat-area { flex:1; display:flex; flex-direction:column; background:var(--bg); position:relative; }
         .chat-header { 
             padding:15px 25px; border-bottom:1px solid var(--border); font-weight:600; display:flex; justify-content:space-between; align-items:center;
@@ -61,7 +66,7 @@
         }
         .chat-msgs { flex:1; overflow-y:auto; padding:25px; display:flex; flex-direction:column; gap:15px; }
         
-        .msg { display:flex; gap:10px; max-width:70%; }
+        .msg { display:flex; gap:10px; max-width:85%; }
         .msg.me { align-self:flex-end; flex-direction:row-reverse; }
         .bubble { background:#1f1f22; padding:8px 12px; border-radius:8px; font-size:14px; line-height:1.4; color:#ddd; word-break:break-word;}
         .msg.me .bubble { background:white; color:black; }
@@ -72,44 +77,53 @@
         .icon-btn { background:transparent; border:none; color:#666; cursor:pointer; font-size:16px; padding:0 10px; }
         .icon-btn:hover { color:white; }
 
-        /* МОДАЛЬНЫЕ ОКНА И ЗВОНКИ */
+        /* МОДАЛЬНЫЕ ОКНА */
         .modal { position:fixed; inset:0; background:rgba(0,0,0,0.8); z-index:5000; display:none; place-items:center; }
         .modal-card { width:320px; background:#111; border:1px solid #333; padding:25px; border-radius:12px; text-align:center; }
 
+        /* ЗВОНОК */
         #call-ui { position:absolute; inset:0; background:black; z-index:100; display:none; flex-direction:column; }
         .vid-wrapper { flex:1; position:relative; }
         video { width:100%; height:100%; object-fit:cover; }
-        #local-v { position:absolute; bottom:20px; right:20px; width:100px; height:75px; background:#222; border:1px solid #444; border-radius:6px; transform:scaleX(-1); }
+        #local-v { position:absolute; bottom:20px; right:20px; width:90px; height:120px; background:#222; border:1px solid #444; border-radius:8px; transform:scaleX(-1); object-fit:cover; z-index:101; }
         .call-bar { height:80px; background:#111; display:flex; justify-content:center; align-items:center; gap:20px; }
         .c-btn { width:50px; height:50px; border-radius:50%; border:none; background:#222; color:white; cursor:pointer; font-size:18px; }
         .c-btn:hover { background:#333; }
         .c-btn.red { background:#ef4444; }
 
-        /* ВКЛАДКИ (APPS) */
+        /* ВКЛАДКИ */
         .app-view { display:none; width:100%; height:100%; flex-direction:column; }
         .nav-rail { width:50px; background:#050505; border-right:1px solid #222; display:flex; flex-direction:column; align-items:center; padding-top:15px; gap:15px; }
         .nav-icon { color:#555; cursor:pointer; font-size:18px; }
         .nav-icon.active { color:white; }
         
-        #log-area { position:fixed; bottom:10px; left:60px; font-size:10px; color:#444; pointer-events:none; }
+        #log-area { position:fixed; bottom:10px; left:60px; font-size:10px; color:#444; pointer-events:none; z-index:9000; }
+        
+        /* Мобильная адаптация */
+        @media (max-width: 600px) {
+            .sidebar { width: 100%; display: flex; }
+            .sidebar.hidden { display: none; }
+            .chat-area { width: 100%; display: none; }
+            .chat-area.active { display: flex; }
+            #local-v { width: 70px; height: 90px; bottom: 100px; right: 10px; }
+        }
     </style>
 </head>
 <body>
 
-<!-- 1. ЭКРАН ВХОДА -->
+<!-- ВХОД -->
 <div id="auth-screen">
     <div class="auth-box">
         <h1 style="font-weight:300; margin-bottom:30px; letter-spacing:2px;">METH</h1>
         <input type="text" id="username" class="min-inp" placeholder="Логин (маленькие англ. буквы)" autocomplete="off">
         <input type="password" id="password" class="min-inp" placeholder="Пароль">
         <div id="auth-err" style="color:var(--danger); font-size:11px; margin-top:5px;"></div>
-        
         <button class="min-btn" onclick="processLogin('login')">ВОЙТИ</button>
         <button class="min-btn" onclick="processLogin('reg')" style="background:transparent; color:#666; border:1px solid #333;">РЕГИСТРАЦИЯ</button>
     </div>
 </div>
 
-<!-- 2. ОКНО ДОБАВЛЕНИЯ ДРУГА -->
+<!-- ДОБАВИТЬ ДРУГА -->
 <div id="add-modal" class="modal">
     <div class="modal-card">
         <h3 style="margin-bottom:15px;">Добавить друга</h3>
@@ -119,7 +133,7 @@
     </div>
 </div>
 
-<!-- 3. ОКНО ВХОДЯЩЕГО ЗВОНКА -->
+<!-- ВХОДЯЩИЙ ЗВОНОК -->
 <div id="ring-modal" class="modal">
     <div class="modal-card">
         <h3 style="color:var(--success); margin-bottom:10px;">Входящий звонок...</h3>
@@ -131,7 +145,7 @@
     </div>
 </div>
 
-<!-- 4. ОСНОВНОЙ ИНТЕРФЕЙС -->
+<!-- ПРИЛОЖЕНИЕ -->
 <div id="app">
     <div class="nav-rail">
         <div class="nav-icon active" onclick="showApp('chat')"><i class="fas fa-comment"></i></div>
@@ -140,8 +154,11 @@
         <div class="nav-icon" onclick="showApp('browser')"><i class="fas fa-globe"></i></div>
     </div>
 
+    <!-- ЧАТ + СПИСОК -->
     <div id="view-chat" class="app-view" style="display:flex; flex-direction:row;">
-        <div class="sidebar">
+        
+        <!-- Список чатов -->
+        <div class="sidebar" id="sidebar-panel">
             <div class="sb-header">
                 <span>ЧАТЫ</span>
                 <i class="fas fa-user-plus" style="cursor:pointer;" onclick="document.getElementById('add-modal').style.display='grid'" title="Добавить друга"></i>
@@ -150,17 +167,24 @@
             <div id="req-section"></div>
             <div class="sb-list" id="contact-list"></div>
             
-            <div style="padding:15px; border-top:1px solid #222; font-size:11px; color:#555;">
-                Мой ID: <span id="my-id" style="color:white; font-weight:bold;">...</span>
+            <div class="status-bar">
+                <div id="status-dot" class="status-dot"></div>
+                <div style="flex:1;">ID: <span id="my-id" style="color:white; font-weight:bold;">...</span></div>
+                <i class="fas fa-sync-alt" onclick="initPeer()" style="cursor:pointer;" title="Переподключить сеть"></i>
             </div>
         </div>
 
-        <div class="chat-area">
+        <!-- Окно диалога -->
+        <div class="chat-area" id="chat-panel">
             <div class="chat-header">
-                <span id="chat-title">Выберите друга</span>
+                <div style="display:flex; align-items:center; gap:10px;">
+                    <!-- Кнопка назад для мобильных -->
+                    <i class="fas fa-arrow-left" style="cursor:pointer; display:none;" id="back-btn" onclick="closeChatMobile()"></i>
+                    <span id="chat-title">Выберите друга</span>
+                </div>
                 <div id="chat-actions" style="display:none;">
-                    <i class="fas fa-phone" style="cursor:pointer; margin-right:15px;" onclick="startCall()" title="Аудио звонок"></i>
-                    <i class="fas fa-video" style="cursor:pointer;" onclick="startCall(true)" title="Видео звонок"></i>
+                    <i class="fas fa-phone" style="cursor:pointer; margin-right:20px;" onclick="startCall(false)" title="Аудио"></i>
+                    <i class="fas fa-video" style="cursor:pointer;" onclick="startCall(true)" title="Видео"></i>
                 </div>
             </div>
 
@@ -169,45 +193,47 @@
             <div class="chat-input" id="inp-area" style="display:none;">
                 <input type="file" id="file-up" hidden onchange="uploadFile()">
                 <button class="icon-btn" onclick="document.getElementById('file-up').click()"><i class="fas fa-paperclip"></i></button>
-                <input type="text" id="msg-txt" class="inp-field" placeholder="Написать сообщение..." onkeypress="if(event.key==='Enter') sendMsg()">
+                <input type="text" id="msg-txt" class="inp-field" placeholder="Сообщение..." onkeypress="if(event.key==='Enter') sendMsg()">
                 <button class="icon-btn" onclick="sendMsg()"><i class="fas fa-paper-plane"></i></button>
             </div>
 
+            <!-- Экран звонка -->
             <div id="call-ui">
                 <div class="vid-wrapper">
+                    <!-- playsinline критично для iPhone -->
                     <video id="remote-v" autoplay playsinline></video>
                     <video id="local-v" autoplay muted playsinline></video>
                 </div>
                 <div class="call-bar">
                     <button class="c-btn" onclick="toggleMic()" id="btn-mic" title="Микрофон"><i class="fas fa-microphone"></i></button>
                     <button class="c-btn" onclick="shareScreen()" title="Экран"><i class="fas fa-desktop"></i></button>
-                    <button class="c-btn red" onclick="endCall()" title="Завершить"><i class="fas fa-phone-slash"></i></button>
+                    <button class="c-btn red" onclick="endCall()" title="Сбросить"><i class="fas fa-phone-slash"></i></button>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Apps -->
+    <!-- Другие вкладки -->
     <div id="view-spotify" class="app-view">
         <div style="padding:10px; background:#111; display:flex; gap:10px;">
-            <input id="spot-url" class="inp-field" placeholder="Ссылка на Spotify">
-            <button class="min-btn" style="width:auto; margin:0;" onclick="loadUrl('spotify')">Загрузить</button>
+            <input id="spot-url" class="inp-field" placeholder="Spotify Link">
+            <button class="min-btn" style="width:auto; margin:0;" onclick="loadUrl('spotify')">Load</button>
         </div>
         <iframe id="fr-spotify" style="flex:1; border:none;" src="https://open.spotify.com/embed/playlist/37i9dQZF1DXcBWIGoYBM5M"></iframe>
     </div>
 
     <div id="view-youtube" class="app-view">
         <div style="padding:10px; background:#111; display:flex; gap:10px;">
-            <input id="yt-url" class="inp-field" placeholder="Поиск YouTube или ссылка">
-            <button class="min-btn" style="width:auto; margin:0;" onclick="loadUrl('youtube')">Смотреть</button>
+            <input id="yt-url" class="inp-field" placeholder="YouTube Link/Search">
+            <button class="min-btn" style="width:auto; margin:0;" onclick="loadUrl('youtube')">Watch</button>
         </div>
         <iframe id="fr-youtube" style="flex:1; border:none;" src="https://www.youtube.com/embed/dQw4w9WgXcQ"></iframe>
     </div>
     
     <div id="view-browser" class="app-view">
         <div style="padding:10px; background:#111; display:flex; gap:10px;">
-            <input id="web-url" class="inp-field" placeholder="URL сайта">
-            <button class="min-btn" style="width:auto; margin:0;" onclick="loadUrl('web')">Перейти</button>
+            <input id="web-url" class="inp-field" placeholder="URL">
+            <button class="min-btn" style="width:auto; margin:0;" onclick="loadUrl('web')">Go</button>
         </div>
         <iframe id="fr-web" style="flex:1; border:none;" src="https://www.bing.com"></iframe>
     </div>
@@ -216,7 +242,7 @@
 <div id="log-area">Система готова.</div>
 
 <script>
-    // --- 1. CONFIG ---
+    // --- 1. FIREBASE CONFIG ---
     const firebaseConfig = {
       apiKey: "AIzaSyBFAWc-An48eKYfTMGhlJICkDPdecEJbb4",
       authDomain: "kolyasurfing-1a685.firebaseapp.com",
@@ -246,7 +272,7 @@
         setTimeout(()=>l.innerText='', 5000);
     }
 
-    // --- 2. AUTH & SELF-REPAIR ---
+    // --- 2. AUTH & REPAIR ---
     fbAuth.onAuthStateChanged(async (user) => {
         if(user) {
             myNick = user.email.split('@')[0];
@@ -254,14 +280,9 @@
             document.getElementById('auth-screen').style.display='none';
             document.getElementById('app').style.display='flex';
             
-            // === АВТО-ПОЧИНКА АККАУНТА ===
-            // Проверяем, есть ли запись в базе. Если нет - создаем.
+            // Авто-починка базы данных
             const userDoc = await db.collection('users').doc(myNick).get();
-            if(!userDoc.exists) {
-                console.log("Аккаунт не найден в базе. Создаем запись...");
-                await db.collection('users').doc(myNick).set({ uid: user.uid });
-            }
-            // ============================
+            if(!userDoc.exists) await db.collection('users').doc(myNick).set({ uid: user.uid });
 
             initPeer();
             loadFriends();
@@ -289,131 +310,42 @@
         } catch(e) { errDiv.innerText = e.message; }
     }
 
-    // --- 3. FRIENDS ---
-    async function sendRequest() {
-        const target = document.getElementById('target-user').value.trim().toLowerCase();
-        if(!target || target === myNick) return alert("Некорректный никнейм");
-
-        try {
-            const doc = await db.collection('users').doc(target).get();
-            if(!doc.exists) return alert("Пользователь не найден! Попросите друга зайти в приложение, чтобы активировать профиль.");
-
-            const reqId = [myNick, target].sort().join('_');
-            await db.collection('requests').doc(reqId).set({
-                from: myNick, to: target, status: 'pending'
-            });
-            alert("Заявка отправлена!");
-            document.getElementById('add-modal').style.display='none';
-        } catch(e) {
-            alert("Ошибка поиска: " + e.message);
-        }
-    }
-
-    function listenRequests() {
-        db.collection('requests').where('to', '==', myNick).where('status','==','pending')
-        .onSnapshot(snap => {
-            const div = document.getElementById('req-section');
-            div.innerHTML = '';
-            if(snap.empty) div.style.display = 'none';
-            else {
-                div.style.display = 'block';
-                snap.forEach(d => {
-                    const data = d.data();
-                    const el = document.createElement('div'); el.className = 'req-item';
-                    el.innerHTML = `<span><b>${data.from}</b> хочет дружить</span>
-                    <div><button class="req-btn" style="background:var(--success);color:white;" onclick="acceptReq('${d.id}', '${data.from}')">Принять</button></div>`;
-                    div.appendChild(el);
-                });
-            }
-        });
-    }
-
-    async function acceptReq(reqId, friendNick) {
-        await db.collection('requests').doc(reqId).update({ status: 'accepted' });
-        const chatID = [myNick, friendNick].sort().join('_');
-        
-        await db.collection('users').doc(myNick).collection('friends').doc(friendNick).set({ chatId: chatID });
-        await db.collection('users').doc(friendNick).collection('friends').doc(myNick).set({ chatId: chatID });
-        await db.collection('chats').doc(chatID).set({ members: [myNick, friendNick] });
-    }
-
-    function loadFriends() {
-        db.collection('users').doc(myNick).collection('friends').onSnapshot(snap => {
-            const list = document.getElementById('contact-list');
-            list.innerHTML = '';
-            snap.forEach(doc => {
-                const fNick = doc.id;
-                const d = document.createElement('div');
-                d.className = 'contact';
-                d.onclick = () => openChat(fNick, doc.data().chatId);
-                d.innerHTML = `<div class="contact-avatar">${fNick[0].toUpperCase()}</div><div>${fNick}</div>`;
-                list.appendChild(d);
-            });
-        });
-    }
-
-    // --- 4. CHAT ---
-    let msgUnsub = null;
-
-    function openChat(friendNick, chatId) {
-        activeChat = friendNick;
-        activeChatDoc = chatId;
-        
-        document.getElementById('chat-title').innerText = "@" + friendNick;
-        document.getElementById('chat-actions').style.display = 'block';
-        document.getElementById('inp-area').style.display = 'flex';
-        document.querySelectorAll('.contact').forEach(e => e.classList.remove('active'));
-
-        if(msgUnsub) msgUnsub();
-        msgUnsub = db.collection('chats').doc(chatId).collection('messages')
-            .orderBy('ts', 'asc').limitToLast(50)
-            .onSnapshot(snap => {
-                const box = document.getElementById('msgs');
-                box.innerHTML = '';
-                snap.forEach(doc => {
-                    const m = doc.data();
-                    const div = document.createElement('div');
-                    div.className = 'msg ' + (m.from === myNick ? 'me' : '');
-                    let content = m.type==='img' ? `<img src="${m.txt}" style="max-width:200px;border-radius:4px;">` : 
-                                  m.type==='file' ? `<a href="${m.txt}" target="_blank" style="color:blue">Файл</a>` : m.txt;
-                    div.innerHTML = `<div class="bubble">${content}<div class="msg-time">${m.ts?new Date(m.ts.toDate()).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}):''}</div></div>`;
-                    box.appendChild(div);
-                });
-                box.scrollTop = box.scrollHeight;
-            });
-    }
-
-    function sendMsg() {
-        const t = document.getElementById('msg-txt').value.trim();
-        if(!t || !activeChatDoc) return;
-        db.collection('chats').doc(activeChatDoc).collection('messages').add({
-            txt: t, from: myNick, type: 'text',
-            ts: firebase.firestore.FieldValue.serverTimestamp()
-        });
-        document.getElementById('msg-txt').value = '';
-    }
-
-    function uploadFile() {
-        const f = document.getElementById('file-up').files[0];
-        if(!f || !activeChatDoc) return;
-        const ref = storage.ref('chats/'+activeChatDoc+'/'+Date.now());
-        ref.put(f).then(s=>s.ref.getDownloadURL()).then(u => {
-            db.collection('chats').doc(activeChatDoc).collection('messages').add({
-                txt: u, from: myNick, type: f.type.startsWith('image')?'img':'file',
-                ts: firebase.firestore.FieldValue.serverTimestamp()
-            });
-        });
-    }
-
-    // --- 5. PEERJS ---
+    // --- 3. PEERJS (FIXED FOR MOBILE/NAT) ---
     function initPeer() {
         if(peer) peer.destroy();
+        
+        // ВАЖНО: Расширенный список STUN серверов для пробива NAT
         peer = new Peer(myNick, {
             debug: 1,
-            config: {'iceServers': [{urls:'stun:stun.l.google.com:19302'}]}
+            config: {
+                'iceServers': [
+                    { urls: 'stun:stun.l.google.com:19302' },
+                    { urls: 'stun:stun1.l.google.com:19302' },
+                    { urls: 'stun:stun2.l.google.com:19302' },
+                    { urls: 'stun:stun3.l.google.com:19302' },
+                    { urls: 'stun:stun4.l.google.com:19302' },
+                    { urls: 'stun:global.stun.twilio.com:3478' }
+                ]
+            }
         });
-        peer.on('open', id => log("ID сети: " + id));
-        peer.on('error', e => log("Ошибка сети: " + e.type));
+
+        peer.on('open', id => {
+            log("Сеть: Онлайн");
+            document.getElementById('status-dot').classList.add('online');
+        });
+
+        peer.on('error', e => {
+            log("Сеть: Ошибка " + e.type);
+            document.getElementById('status-dot').classList.remove('online');
+        });
+
+        peer.on('disconnected', () => {
+            log("Сеть: Отключено (Жми обновить)");
+            document.getElementById('status-dot').classList.remove('online');
+            // Пытаемся переподключиться
+            peer.reconnect();
+        });
+
         peer.on('call', call => {
             document.getElementById('ring-modal').style.display = 'grid';
             document.getElementById('caller-nick').innerText = call.peer;
@@ -421,20 +353,35 @@
         });
     }
 
-    async function startCall(video=false) {
+    // --- 4. CALL LOGIC ---
+    async function startCall(video) {
         if(!activeChat) return alert("Выберите чат!");
-        log("Звонок " + activeChat + "...");
+        
+        // Проверка: есть ли peer соединение
+        if(!peer || peer.disconnected) {
+            alert("Нет соединения с сетью звонков. Нажми кнопку обновления (кружок) внизу слева.");
+            return;
+        }
+
+        log("Звоним " + activeChat + "...");
         const stream = await getMedia(video);
         if(!stream) return;
+
         document.getElementById('call-ui').style.display = 'flex';
-        const call = peer.call(activeChat, stream);
-        handleCall(call);
+        
+        // ВАЖНО: Задержка 500мс помогает мобильным устройствам подготовиться
+        setTimeout(() => {
+            const call = peer.call(activeChat, stream);
+            if(!call) return alert("Не удалось начать звонок. Возможно друг офлайн.");
+            handleCall(call);
+        }, 500);
     }
 
     async function answerCall() {
         document.getElementById('ring-modal').style.display = 'none';
         const stream = await getMedia(true); 
         if(!stream) return;
+
         document.getElementById('call-ui').style.display = 'flex';
         currentCall.answer(stream);
         handleCall(currentCall);
@@ -447,9 +394,13 @@
 
     function handleCall(call) {
         currentCall = call;
-        call.on('stream', rs => document.getElementById('remote-v').srcObject = rs);
+        call.on('stream', rs => {
+            const v = document.getElementById('remote-v');
+            v.srcObject = rs;
+            v.play().catch(e => console.log("Autoplay blocked:", e));
+        });
         call.on('close', closeCall);
-        call.on('error', e => { log("Звонок окончен"); closeCall(); });
+        call.on('error', e => { log("Сбой звонка"); closeCall(); });
     }
 
     async function getMedia(video) {
@@ -459,8 +410,8 @@
             document.getElementById('local-v').srcObject = s;
             return s;
         } catch(e) {
-            alert("Ошибка: " + e.message);
-            if(video) return getMedia(false);
+            alert("Ошибка доступа к устройству: " + e.message + ". На телефонах нужно разрешить доступ в браузере.");
+            if(video) return getMedia(false); 
             return null;
         }
     }
@@ -497,7 +448,122 @@
         } catch(e) {}
     }
 
-    // --- 6. UI ---
+    // --- 5. CHAT & FRIENDS ---
+    async function sendRequest() {
+        const target = document.getElementById('target-user').value.trim().toLowerCase();
+        if(!target || target === myNick) return alert("Некорректно");
+
+        try {
+            const doc = await db.collection('users').doc(target).get();
+            if(!doc.exists) return alert("Пользователь не найден! Пусть он зайдет в приложение.");
+            
+            const reqId = [myNick, target].sort().join('_');
+            await db.collection('requests').doc(reqId).set({ from: myNick, to: target, status: 'pending' });
+            alert("Отправлено!");
+            document.getElementById('add-modal').style.display='none';
+        } catch(e) { alert(e.message); }
+    }
+
+    function listenRequests() {
+        db.collection('requests').where('to', '==', myNick).where('status','==','pending')
+        .onSnapshot(snap => {
+            const div = document.getElementById('req-section');
+            div.innerHTML = '';
+            if(snap.empty) div.style.display = 'none';
+            else {
+                div.style.display = 'block';
+                snap.forEach(d => {
+                    const data = d.data();
+                    const el = document.createElement('div'); el.className = 'req-item';
+                    el.innerHTML = `<span><b>${data.from}</b></span> <button class="req-btn" style="background:var(--success);color:white;" onclick="acceptReq('${d.id}', '${data.from}')">Принять</button>`;
+                    div.appendChild(el);
+                });
+            }
+        });
+    }
+
+    async function acceptReq(reqId, friendNick) {
+        await db.collection('requests').doc(reqId).update({ status: 'accepted' });
+        const chatID = [myNick, friendNick].sort().join('_');
+        await db.collection('users').doc(myNick).collection('friends').doc(friendNick).set({ chatId: chatID });
+        await db.collection('users').doc(friendNick).collection('friends').doc(myNick).set({ chatId: chatID });
+        await db.collection('chats').doc(chatID).set({ members: [myNick, friendNick] });
+    }
+
+    function loadFriends() {
+        db.collection('users').doc(myNick).collection('friends').onSnapshot(snap => {
+            const list = document.getElementById('contact-list');
+            list.innerHTML = '';
+            snap.forEach(doc => {
+                const fNick = doc.id;
+                const d = document.createElement('div');
+                d.className = 'contact';
+                d.onclick = () => openChat(fNick, doc.data().chatId);
+                d.innerHTML = `<div class="contact-avatar">${fNick[0].toUpperCase()}</div><div>${fNick}</div>`;
+                list.appendChild(d);
+            });
+        });
+    }
+
+    let msgUnsub = null;
+    function openChat(friendNick, chatId) {
+        activeChat = friendNick;
+        activeChatDoc = chatId;
+        document.getElementById('chat-title').innerText = "@" + friendNick;
+        document.getElementById('chat-actions').style.display = 'block';
+        document.getElementById('inp-area').style.display = 'flex';
+        
+        // Мобильная адаптация: Скрываем список, показываем чат
+        if(window.innerWidth <= 600) {
+            document.getElementById('sidebar-panel').classList.add('hidden');
+            document.getElementById('chat-panel').classList.add('active');
+            document.getElementById('back-btn').style.display = 'block';
+        }
+
+        if(msgUnsub) msgUnsub();
+        msgUnsub = db.collection('chats').doc(chatId).collection('messages').orderBy('ts', 'asc').limitToLast(50).onSnapshot(snap => {
+            const box = document.getElementById('msgs');
+            box.innerHTML = '';
+            snap.forEach(doc => {
+                const m = doc.data();
+                const div = document.createElement('div');
+                div.className = 'msg ' + (m.from === myNick ? 'me' : '');
+                let content = m.type==='img' ? `<img src="${m.txt}" style="max-width:200px;border-radius:4px;">` : 
+                              m.type==='file' ? `<a href="${m.txt}" target="_blank" style="color:blue">Файл</a>` : m.txt;
+                div.innerHTML = `<div class="bubble">${content}<div class="msg-time">${m.ts?new Date(m.ts.toDate()).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}):''}</div></div>`;
+                box.appendChild(div);
+            });
+            box.scrollTop = box.scrollHeight;
+        });
+    }
+
+    function closeChatMobile() {
+        document.getElementById('sidebar-panel').classList.remove('hidden');
+        document.getElementById('chat-panel').classList.remove('active');
+        document.getElementById('back-btn').style.display = 'none';
+    }
+
+    function sendMsg() {
+        const t = document.getElementById('msg-txt').value.trim();
+        if(!t || !activeChatDoc) return;
+        db.collection('chats').doc(activeChatDoc).collection('messages').add({
+            txt: t, from: myNick, type: 'text', ts: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        document.getElementById('msg-txt').value = '';
+    }
+
+    function uploadFile() {
+        const f = document.getElementById('file-up').files[0];
+        if(!f || !activeChatDoc) return;
+        const ref = storage.ref('chats/'+activeChatDoc+'/'+Date.now());
+        ref.put(f).then(s=>s.ref.getDownloadURL()).then(u => {
+            db.collection('chats').doc(activeChatDoc).collection('messages').add({
+                txt: u, from: myNick, type: f.type.startsWith('image')?'img':'file', ts: firebase.firestore.FieldValue.serverTimestamp()
+            });
+        });
+    }
+
+    // --- 6. APPS ---
     function showApp(id) {
         document.querySelectorAll('.app-view').forEach(e=>e.style.display='none');
         document.querySelectorAll('.nav-icon').forEach(e=>e.classList.remove('active'));
@@ -518,9 +584,7 @@
             else if(!v.includes('http')) v = 'https://www.youtube.com/embed?listType=search&list='+v;
             document.getElementById('fr-youtube').src = v;
         }
-        if(type==='web') {
-            document.getElementById('fr-web').src = document.getElementById('web-url').value;
-        }
+        if(type==='web') document.getElementById('fr-web').src = document.getElementById('web-url').value;
     }
 </script>
 </body>
